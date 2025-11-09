@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Welcome to ReWatch on the Web home page!</h1>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('main.patient_details') }}">Patient Details</a></li>
+			<li><a href="{{ url_for('main.assessments') }}">Assessments</a></li>
+        </ul>
+    </nav>
+{% endblock %}
