@@ -27,7 +27,6 @@ def assessments():
 # SHORT TERM MEMORY TEST #
 ##########################
 SHAPES = ['circle', 'square', 'triangle', 'star', 'trapezoid', 'pentagon', 'hexagon']
-#NUM_ROUNDS = 5
 COLOUR_LIST = ['blue', 'red', 'green', 'yellow', 'purple', 'orange', 'pink']
 DEFAULT_COLOURS = {
     'circle': 'blue',
@@ -85,7 +84,7 @@ def generate_positions(shapes, frame_size=500, max_attempts=100):
 
 
 @main.route('/assessments/memory_test/start')
-#@login_required
+@login_required
 def start_memory_test():
     """ Initializes a short term memory test session for the current user.
 
@@ -152,7 +151,7 @@ def memory_memorize():
 
 
 @main.route('/assessments/memory_test', methods=['GET', 'POST'])
-#@login_required
+@login_required
 def memory_test():
     """ Comparison phase where user responds """
     num_rounds = session.get('num_rounds', 5)
@@ -213,7 +212,7 @@ def memory_test():
 
 
 @main.route('/assessments/memory_test/result')
-#@login_required
+@login_required
 def memory_result():
     avg_reaction = sum(session.get('reaction_times', [])) / max(len(session.get('reaction_times', [])), 1)
     score = session.get('score', 0)
@@ -222,7 +221,7 @@ def memory_result():
 
 
 @main.route("/assessments/memory_test/customize", methods=['GET', 'POST'])
-#@login_required
+@login_required
 def memory_test_customization():
     """Page for physician to configure short-term memory test settings
     """
