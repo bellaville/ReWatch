@@ -8,16 +8,18 @@
     <div id="shapes-frame">
         {% for shape in shapes %}
             <div class="shape {{ shape }}" 
-                 style="top: {{ shape_positions[loop.index0].top }}px; 
-                        left: {{ shape_positions[loop.index0].left }}px;"></div>
+                style="background-color: {{ shape_colours[loop.index0] }};
+                top: {{ shape_positions[loop.index0].top }}px;
+                left: {{ shape_positions[loop.index0].left }}px;">
+            </div>
         {% endfor %}
     </div>
 </div>
 
 <script>
-    // redirect to comparison phase after 5 seconds
+    // redirect to comparison phase after customized seconds
     setTimeout(function() {
         window.location.href = "{{ url_for('main.memory_test') }}";
-    }, 5000); // 5000 ms = 5 seconds
+    }, {{ memorization_time * 1000 }}); 
 </script>
 {% endblock %}

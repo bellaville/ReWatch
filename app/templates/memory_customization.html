@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Customize Short-Term Memory Test</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label for="num_shapes" class="form-label">Number of shapes per set:</label>
+            <input type="number" class="form-control" id="num_shapes" name="num_shapes" min="1" max="6" value="{{ num_shapes }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="memorize_time" class="form-label">Memorization time (seconds):</label>
+            <input type="number" class="form-control" id="memorization_time" name="memorization_time" min="1" max="20" value="{{ memorization_time }}" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Difficulty level:</label><br>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="difficulty" id="easy" value="easy" {% if difficulty == 'easy' %}checked{% endif %}>
+                <label class="form-check-label" for="easy">Easy (distinct color per shape)</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="difficulty" id="hard" value="hard" {% if difficulty == 'hard' %}checked{% endif %}>
+                <label class="form-check-label" for="hard">Hard (random colors)</label>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Start Test</button>
+    </form>
+</div>
+{% endblock %}

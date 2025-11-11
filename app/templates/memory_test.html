@@ -23,8 +23,10 @@
         <div id="shapes-frame">
             {% for shape in shapes %}
                 <div class="shape {{ shape }}" 
-                     style="top: {{ shape_positions[loop.index0].top }}px; 
-                            left: {{ shape_positions[loop.index0].left }}px;"></div>
+                    style="background-color: {{ shape_colours[loop.index0] }};
+                    top: {{ shape_positions[loop.index0].top }}px;
+                    left: {{ shape_positions[loop.index0].left }}px;">
+                </div>
             {% endfor %}
         </div>
 

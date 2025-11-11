@@ -1,41 +1,30 @@
 /* frame container for shapes */
 #shapes-frame {
-    width: 400px;
-    height: 300px;
-    border: 3px solid #333;
-    margin: 20px auto;
-    position: relative; /* allows absolute positioning inside */
-    background-color: #f9f9f9;
-    border-radius: 10px;
+    position: relative;
+    width: 500px;   /* match Python frame_size */
+    height: 500px;
+    margin: 0 auto;
+    border: 2px solid black;
+    background-color: #f8f9fa;
 }
 
-/* shapes inside the frame */
 .shape {
-    width: 50px;
+    position: absolute;
+    width: 50px;   /* default size for most shapes */
     height: 50px;
-    position: absolute; /* allows positioning anywhere inside frame */
-    /* default colors and styles removed to be defined per shape type */
 }
 
 /* circle */
-.shape.circle {
-    border-radius: 50%;
-    background-color: #3498db;
-}
+.shape.circle { border-radius: 50%; }
 
-/* square */
-.shape.square {
-    background-color: #e74c3c;
-}
+/* square uses default 50x50 */
 
 /* triangle */
 .shape.triangle {
-    width: 0;
-    height: 0;
-    border-left: 25px solid transparent;
-    border-right: 25px solid transparent;
-    border-bottom: 50px solid #2ecc71;
-    background-color: transparent;
+    width: 50px;
+    height: 50px;
+    background-color: #2ecc71;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
 }
 
 /* star */
@@ -48,6 +37,30 @@
         79% 91%, 50% 70%, 21% 91%, 32% 57%, 
         2% 35%, 39% 35%
     );
+}
+
+/* trapezoid */
+.shape.trapezoid {
+    width: 60px;
+    height: 50px;
+    background-color: #9b59b6;
+    clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
+}
+
+/* pentagon */
+.shape.pentagon {
+    width: 60px;
+    height: 60px;
+    background-color: #f39c12;
+    clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+}
+
+/* hexagon */
+.shape.hexagon {
+    width: 60px;
+    height: 60px;
+    background-color: #1abc9c;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
 }
 
 .hidden {

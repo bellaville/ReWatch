@@ -26,43 +26,63 @@ def assessments():
 ##########################
 # SHORT TERM MEMORY TEST #
 ##########################
-SHAPES = ['circle', 'square', 'triangle', 'star']
+SHAPES = ['circle', 'square', 'triangle', 'star', 'trapezoid', 'pentagon', 'hexagon']
 NUM_ROUNDS = 5
+COLOUR_LIST = ['blue', 'red', 'green', 'yellow', 'purple', 'orange', 'pink']
+DEFAULT_COLOURS = {
+    'circle': 'blue',
+    'square': 'red',
+    'triangle': 'green',
+    'star': 'yellow',
+    'trapezoid': 'purple',
+    'pentagon': 'pink',
+    'hexagon': 'orange'
+}
+# shape sizes (width, height)
+SHAPE_SIZES = {
+    'circle': (50, 50),
+    'square': (50, 50),
+    'triangle': (50, 50),
+    'star': (50, 50),
+    'trapezoid': (60, 50),
+    'pentagon': (60, 60),
+    'hexagon': (60, 60)
+}
 
-def generate_positions(num_shapes, frame_width=400, frame_height=300, shape_size=50):
+def generate_positions(shapes, frame_size=500, max_attempts=100):
     """Generate random top/left positions for shapes inside the frames
+    and ensure that no shapes overlap each other
     """
     positions = []
 
-    attempts_limit = 100  # prevent infinite loops
-    for _ in range(num_shapes):
-        attempts = 0
-        while attempts < attempts_limit:
-            top = random.randint(0, frame_height - shape_size)
-            left = random.randint(0, frame_width - shape_size)
-            new_frame = (top, left, top + shape_size, left + shape_size)
+    for shape in shapes:
+        width, height = SHAPE_SIZES.get(shape, (50,50))
 
-            # check overlap with existing shapes
-            overlap = False
-            for pos in positions:
-                existing_frame = (pos['top'], pos['left'], pos['top'] + shape_size, pos['left'] + shape_size)
-                # check if shape frame overlaps
-                if not (new_frame[2] <= existing_frame[0] or  # new bottom <= existing top
-                        new_frame[0] >= existing_frame[2] or  # new top >= existing bottom
-                        new_frame[3] <= existing_frame[1] or  # new right <= existing left
-                        new_frame[1] >= existing_frame[3]):   # new left >= existing right
-                    overlap = True
-                    break
+        for attempt in range(max_attempts):
+            top = random.randint(0, frame_size - height)
+            left = random.randint(0, frame_size - width)
+            new_rect = (top, left, top + height, left + width)
+
+            # check overlap
+            overlap = any(
+                not (
+                    new_rect[2] <= existing[0] or  # bottom <= top
+                    new_rect[0] >= existing[2] or  # top >= bottom
+                    new_rect[3] <= existing[1] or  # right <= left
+                    new_rect[1] >= existing[3]     # left >= right
+                )
+                for existing in positions
+            )
 
             if not overlap:
-                positions.append({'top': top, 'left': left})
+                positions.append(new_rect)
                 break
-            attempts += 1
+        else:
+            # fallback if can't find a spot
+            positions.append(new_rect)
 
-        # if we can't find a non-overlapping spot after many attempts, just place it anyway
-        if attempts == attempts_limit:
-            positions.append({'top': top, 'left': left})
-    return positions
+    return [{'top': r[0], 'left': r[1]} for r in positions]
+
 
 @main.route('/assessments/memory_test/start')
 #@login_required
@@ -79,9 +99,11 @@ def start_memory_test():
     session['reaction_times'] = []
     session['show_test'] = False # don't show the test frame yet
 
+    memorization_time = session.get('memorization_time', 5)
+
     # flash instructions
     flash(
-        "You will see a set of shapes to memorize for 5 seconds. "
+        f"You will see a set of shapes to memorize for {memorization_time} seconds. "
         "After that, a new set will appear. Decide if the shapes are the same or different. "
         "Your reaction time will be recorded. Are you ready to start?",
         "memory_test"
@@ -91,42 +113,58 @@ def start_memory_test():
 
 @main.route('/assessments/memory_test/memorize')
 def memory_memorize():
-    """ Memorization phase
-        - 10 second pause to memorize set of shapes
+    """ Memorization phase: user has a configured number of seconds to
+    memorize the displayed set of shapes
     """
     if 'round' not in session or session['round'] >= NUM_ROUNDS:
         return redirect(url_for('main.memory_result'))
     
-    # pick a random set of shapes for the user to memorize
-    current_set = random.sample(SHAPES, 3)
-    session['previous_set'] = current_set
-    session['current_set'] = current_set
+    # load settings from session (customized by physician)
+    num_shapes = session.get('num_shapes', 3)
+    difficulty = session.get('difficulty', 'easy')
+    memorization_time = session.get('memorization_time', 5)
+
+    # generate shape set and assign colors
+    current_set = random.sample(SHAPES, num_shapes)
+
+    shape_colours = []
+    for shape in current_set:
+        if difficulty == 'easy':
+            # each shape always has the same distinct color
+            shape_colours.append(DEFAULT_COLOURS.get(shape, 'gray'))
+        else:
+            # randomize colors for harder difficulty
+            shape_colours.append(random.choice(COLOUR_LIST))
 
     # generate random positions for the shapes in the test frame
-    shape_positions = generate_positions(len(current_set))
+    shape_positions = generate_positions(current_set, frame_size=500)
 
-    return render_template('memory_memorize.html', shapes=current_set, round_num=session['round']+1, shape_positions=shape_positions)
+    # save data for comparison round
+    session['previous_set'] = current_set
+    session['current_set'] = current_set
+    session['shape_colours'] = shape_colours
+    session['shape_positions'] = shape_positions
+    session['memorization_time'] = memorization_time
+
+    return render_template('memory_memorize.html', shapes=current_set, round_num=session['round']+1, shape_positions=shape_positions, shape_colours=shape_colours, memorization_time=session['memorization_time'] )
 
 
 @main.route('/assessments/memory_test', methods=['GET', 'POST'])
 #@login_required
 def memory_test():
-    """ Comparison phase where user responds
-    """
-    # if session doesn't have a round counter or all rounds are complete,
-    # redirect user to the results page
+    """ Comparison phase where user responds """
     if 'round' not in session or session['round'] >= NUM_ROUNDS:
         return redirect(url_for('main.memory_result'))
-    
+
+    num_shapes = session.get('num_shapes', 3)
+    difficulty = session.get('difficulty', 'easy')
+
     if request.method == 'POST':
         # handle user's answer
         choice = request.form.get('choice')
         reaction_time = time.time() - session['start_time']
         session['reaction_times'].append(reaction_time)
 
-        # retrieve previous and current shape sets from the session,
-        # check if current matches previous set to evaluate if user
-        # is correct with their choice of "Same" or "Different"
         prev_set = session['previous_set']
         current_set = session['current_set']
         correct = (prev_set == current_set)
@@ -134,25 +172,42 @@ def memory_test():
             session['score'] += 1
 
         session['round'] += 1
-        return redirect(url_for('main.memory_memorize')) # start next round with memorization
-    
-    # display comparison set
+        return redirect(url_for('main.memory_memorize'))  # start next memorization round
+
+    # GET request: show comparison phase
     prev_set = session['previous_set']
-    # make it a 50% chance to show the same or a new set:
+
+    # 50% chance to show same or new set
     if random.random() < 0.5:
         current_set = prev_set.copy()
-
     else:
-        current_set = random.sample(SHAPES, 3)
+        current_set = random.sample(SHAPES, num_shapes)
 
+    # assign colours
+    shape_colours = [
+        DEFAULT_COLOURS.get(shape, 'gray') if difficulty == 'easy' else random.choice(COLOUR_LIST)
+        for shape in current_set
+    ]
+
+    # generate positions
+    shape_positions = generate_positions(current_set, frame_size=500)
+
+    # save for template and reaction timing
     session['current_set'] = current_set
-    session['start_time'] = time.time() # start timing reaction
-    buttons_enabled = True
+    session['shape_colours'] = shape_colours
+    session['shape_positions'] = shape_positions
+    session['start_time'] = time.time()
 
-    # Generate random positions
-    shape_positions = generate_positions(len(current_set))
+    return render_template(
+        'memory_test.html',
+        shapes=current_set,
+        round_num=session['round'] + 1,
+        buttons_enabled=True,
+        show_test=True,
+        shape_positions=shape_positions,
+        shape_colours=shape_colours
+    )
 
-    return render_template('memory_test.html', shapes=current_set, round_num=session['round']+1, buttons_enabled=buttons_enabled, show_test=True, shape_positions=shape_positions)
 
 @main.route('/assessments/memory_test/result')
 #@login_required
@@ -160,4 +215,26 @@ def memory_result():
     avg_reaction = sum(session.get('reaction_times', [])) / max(len(session.get('reaction_times', [])), 1)
     score = session.get('score', 0)
     return render_template('memory_result.html', score=score, avg_reaction=avg_reaction)
+
+
+@main.route("/assessments/memory_test/customize", methods=['GET', 'POST'])
+#@login_required
+def memory_test_customization():
+    """Page for physician to configure short-term memory test settings
+    """
+    if request.method == "POST":
+        # store physician's inputted customization in session
+        session['num_shapes'] = int(request.form.get('num_shapes', 3))
+        session['memorization_time'] = int(request.form.get('memorization_time', 5))
+        session['difficulty'] = request.form.get('difficulty', 'easy') # easy or hard
+        return redirect(url_for('main.start_memory_test')) # go to flash instruction message
+    
+    # show default customization values as a dictionary for easier unpacking in html (GET request)
+    defaults = {
+        'num_shapes': session.get('num_shapes', 3),
+        'memorization_time': session.get('memorization_time', 5),
+        'difficulty': session.get('difficulty', 'easy')
+    }
+
+    return render_template('memory_customization.html', **defaults)
 
