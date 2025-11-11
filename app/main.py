@@ -27,7 +27,7 @@ def assessments():
 # SHORT TERM MEMORY TEST #
 ##########################
 SHAPES = ['circle', 'square', 'triangle', 'star', 'trapezoid', 'pentagon', 'hexagon']
-NUM_ROUNDS = 5
+#NUM_ROUNDS = 5
 COLOUR_LIST = ['blue', 'red', 'green', 'yellow', 'purple', 'orange', 'pink']
 DEFAULT_COLOURS = {
     'circle': 'blue',
@@ -100,12 +100,13 @@ def start_memory_test():
     session['show_test'] = False # don't show the test frame yet
 
     memorization_time = session.get('memorization_time', 5)
+    num_rounds = session.get('num_rounds', 5)
 
     # flash instructions
     flash(
         f"You will see a set of shapes to memorize for {memorization_time} seconds. "
         "After that, a new set will appear. Decide if the shapes are the same or different. "
-        "Your reaction time will be recorded. Are you ready to start?",
+        f"Your reaction time will be recorded and there will be {num_rounds} rounds. Are you ready to start?",
         "memory_test"
     )
 
@@ -116,7 +117,8 @@ def memory_memorize():
     """ Memorization phase: user has a configured number of seconds to
     memorize the displayed set of shapes
     """
-    if 'round' not in session or session['round'] >= NUM_ROUNDS:
+    num_rounds = session.get('num_rounds', 5)
+    if 'round' not in session or session['round'] >= int(num_rounds):
         return redirect(url_for('main.memory_result'))
     
     # load settings from session (customized by physician)
@@ -153,7 +155,8 @@ def memory_memorize():
 #@login_required
 def memory_test():
     """ Comparison phase where user responds """
-    if 'round' not in session or session['round'] >= NUM_ROUNDS:
+    num_rounds = session.get('num_rounds', 5)
+    if 'round' not in session or session['round'] >= int(num_rounds):
         return redirect(url_for('main.memory_result'))
 
     num_shapes = session.get('num_shapes', 3)
@@ -214,7 +217,8 @@ def memory_test():
 def memory_result():
     avg_reaction = sum(session.get('reaction_times', [])) / max(len(session.get('reaction_times', [])), 1)
     score = session.get('score', 0)
-    return render_template('memory_result.html', score=score, avg_reaction=avg_reaction)
+    total_score = session.get('num_rounds', 5)
+    return render_template('memory_result.html', score=score, avg_reaction=avg_reaction, total_score=int(total_score))
 
 
 @main.route("/assessments/memory_test/customize", methods=['GET', 'POST'])
@@ -227,13 +231,15 @@ def memory_test_customization():
         session['num_shapes'] = int(request.form.get('num_shapes', 3))
         session['memorization_time'] = int(request.form.get('memorization_time', 5))
         session['difficulty'] = request.form.get('difficulty', 'easy') # easy or hard
+        session['num_rounds'] = request.form.get('num_rounds', 5)
         return redirect(url_for('main.start_memory_test')) # go to flash instruction message
     
     # show default customization values as a dictionary for easier unpacking in html (GET request)
     defaults = {
         'num_shapes': session.get('num_shapes', 3),
         'memorization_time': session.get('memorization_time', 5),
-        'difficulty': session.get('difficulty', 'easy')
+        'difficulty': session.get('difficulty', 'easy'),
+        'num_rounds': session.get('num_rounds', 5)
     }
 
     return render_template('memory_customization.html', **defaults)
