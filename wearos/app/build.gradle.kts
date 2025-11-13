@@ -56,4 +56,11 @@ dependencies {
     androidTestImplementation(libs.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
+
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.gson)
+
+    // This is for the Samsung Health Sensor SDK
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar"))))
 }
