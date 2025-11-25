@@ -17,16 +17,12 @@ def create_app(test_config=False):
     db.init_app(app)
 
     from .models import User, Role
+    from .config.seeding import seed_roles
 
     with app.app_context():
         db.drop_all() # for development
         db.create_all()
-        # seed roles
-        if Role.query.count() == 0:
-            db.session.add(Role(id=1, name='Patient'))
-            db.session.add(Role(id=2, name='Physician'))
-            db.session.commit()
-            print("Roles created successfully!")
+        seed_roles() # seed roles
 
     # Initialize login manager
     login_manager = LoginManager()
