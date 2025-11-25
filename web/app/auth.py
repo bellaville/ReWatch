@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from .models import User, Role
 from . import db
 
-auth = Blueprint('auth', __name__)
+auth = Blueprint('auth', __name__, url_prefix='/auth')
 
 @auth.route('/login')
 def login():
@@ -48,7 +48,7 @@ def signup_post():
         new_user.roles.append(role)
     else:
         msg = "Invalid role selection"
-        return redirect(url_for('auth.signup'))
+        return redirect(url_for('auth.signup'), msg=msg)
 
     db.session.add(new_user)
     db.session.commit()

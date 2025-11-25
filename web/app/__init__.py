@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 
@@ -15,13 +15,24 @@ def create_app():
     # Initialize extensions with app
     db.init_app(app)
 
+    from .models import User, Role
+
+    with app.app_context():
+        db.drop_all() # for development
+        db.create_all()
+        # seed roles
+        if Role.query.count() == 0:
+            db.session.add(Role(id=1, name='Patient'))
+            db.session.add(Role(id=2, name='Physician'))
+            db.session.commit()
+            print("Roles created successfully!")
+
     # Initialize login manager
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
 
     # User loader function for Flask-Login
-    from .models import User
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
@@ -33,6 +44,9 @@ def create_app():
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
 
+    # handle 403 error
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('403.html'), 403
+
     return app
-
-
