@@ -32,6 +32,10 @@ def create_app():
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
+    
+    if app.debug:
+        from .acceleration_testing.test_accel import accel_test
+        app.register_blueprint(accel_test)
 
     return app
 
