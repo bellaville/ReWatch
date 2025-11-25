@@ -1,4 +1,4 @@
-from flask import Blueprint, request, send_file
+from flask import Blueprint, request, send_file, jsonify
 import json
 from datetime import datetime
 import os
@@ -32,7 +32,7 @@ def save_acceleration_test_data():
     with open(os.path.join(RESULTS_DIR, filename), "w") as f:
         json.dump(acceleration_data, f)
         
-    return "Data saved", 200
+    return jsonify({"status": "success", "message": "Data saved", "filename": filename}), 200
 
 @accel_test.route('/test/debug/accel', methods=["GET"])
 def get_acceleration_test_data():
