@@ -1,2 +1,6 @@
 **/venv/**
 **/.idea/**
+**/__pycache__/**
+
+# For accelerometer data
+**/accel_results/**

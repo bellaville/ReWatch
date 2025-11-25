@@ -4,9 +4,10 @@ from flask_login import LoginManager
 
 db = SQLAlchemy()
 
-def create_app():
+def create_app(test_config=False):
     # initialize flask app
     app = Flask(__name__)
+    app.config["TESTING"] = test_config
 
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -43,6 +44,10 @@ def create_app():
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
+    
+    if app.debug or app.config["TESTING"]:
+        from .acceleration_testing.test_accel import accel_test
+        app.register_blueprint(accel_test)
 
     # handle 403 error
     @app.errorhandler(403)
