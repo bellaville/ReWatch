@@ -30,7 +30,10 @@ def test_start_memory_test_initializes_session(test_client):
 
 
 def test_memory_memorize_generates_shapes(test_client):
-    """Ensure memorize phase generates shapes, positions, colours."""
+    """GIVEN logged-in user with initialized session for memory test
+       WHEN the memorize phase is accessed
+       THEN session variables for current set, positions, colours, and memorization time are set correctly
+    """
     user = User(name="TestUser2", email="test2@example.com", password="pass")
     db.session.add(user)
     db.session.commit()
@@ -55,7 +58,10 @@ def test_memory_memorize_generates_shapes(test_client):
 
 
 def test_memory_test_post_scoring(test_client):
-    """Test that POSTing the user's choice correctly records reaction time and increments round."""
+    """GIVEN logged-in user with a current memory test round
+       WHEN the user posts a response in the comparison phase
+       THEN reaction time is recorded, score is updated, and round is incremented
+    """
     user = User(name="TestUser3", email="test3@example.com", password="pass")
     db.session.add(user)
     db.session.commit()
@@ -82,6 +88,10 @@ def test_memory_test_post_scoring(test_client):
 
 
 def test_memory_test_get_generates_comparison_set(test_client):
+    """GIVEN logged-in user with a previous memory test round
+       WHEN the comparison phase is accessed via GET
+       THEN session variables for the current set, positions, colours, and start_time are correctly initialized
+    """
     user = User(name="TestUser4", email="test4@example.com", password="pass")
     db.session.add(user)
     db.session.commit()
