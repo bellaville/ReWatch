@@ -1,11 +1,9 @@
-from app import create_app, db
+from app import create_app
 
+# file to run the application, no configuration should be present
 app = create_app()
-
-# Optional: create tables if not exist
-with app.app_context():
-    db.create_all()
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 

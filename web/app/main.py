@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, session, redirect, url_for, request, flash
 from flask_login import login_required, current_user
+from .decorators import roles_required
 import time, random
 
 main = Blueprint('main', __name__)
@@ -11,10 +12,11 @@ def index():
 @main.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html', name=current_user.name)
+    return render_template('profile.html', name=current_user.name, roles=current_user.roles)
 
 @main.route('/patient_details')
 @login_required
+@roles_required('Physician')
 def patient_details():
     return render_template('patient_details.html')
 
