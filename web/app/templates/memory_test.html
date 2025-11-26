@@ -9,7 +9,7 @@
     {% with messages = get_flashed_messages(category_filter=["memory_test"]) %}
         {% if messages %}
             <div class="alert alert-info alert-dismissible fade show" role="alert">
-                {{ messages[0] }}
+                {{ messages[0]|safe }}
                 <hr>
                 <button id="confirm-no" class="btn btn-danger">No</button>
                 <button id="confirm-yes" class="btn btn-success">Yes</button>
@@ -31,7 +31,7 @@
         </div>
 
         {% if buttons_enabled %}
-            <form method="POST" action="{{ url_for('main.memory_test') }}">
+            <form method="POST" action="{{ url_for('memory_test.memory_test_view') }}">
                 <button type="submit" name="choice" value="Same" class="btn btn-success btn-lg">Same</button>
                 <button type="submit" name="choice" value="Different" class="btn btn-danger btn-lg">Different</button>
             </form>
@@ -52,7 +52,7 @@
             // reveal memory test frame
             testFrame.style.display = 'block';
             // start memorization phase (5s pause)
-            window.location.href = "{{ url_for('main.memory_memorize') }}";
+            window.location.href = "{{ url_for('memory_test.memory_memorize') }}";
         });
     }
 

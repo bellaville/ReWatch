@@ -29,3 +29,18 @@ class Role(db.Model):
     description = db.Column(db.String(255))
 
 
+# class PatientAssessment(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     user_id = db.Column(db.Integer, db.ForeignKey('user.id')) # link to User
+#     score = db.Column(db.Integer)
+#     avg_reaction_time = db.Column(db.Float)
+#     memorization_time = db.Column(db.Float)
+#     total_rounds = db.Column(db.Integer)
+#     num_shapes = db.Column(db.Integer)
+#     difficulty = db.Column(db.String(10))
+#     date_taken = db.Column(db.DateTime, default=db.func.current_timestamp()) # track when test was completed
+
+#     # set relationship with Patient so that we can access the associated Patient object from PatientAssessment
+#     user = db.relationship('User', backref='assessments')
+
+

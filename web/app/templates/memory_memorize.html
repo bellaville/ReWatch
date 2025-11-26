@@ -19,7 +19,7 @@
 <script>
     // redirect to comparison phase after customized seconds
     setTimeout(function() {
-        window.location.href = "{{ url_for('main.memory_test') }}";
+        window.location.href = "{{ url_for('memory_test.memory_test_view') }}";
     }, {{ memorization_time * 1000 }}); 
 </script>
 {% endblock %}

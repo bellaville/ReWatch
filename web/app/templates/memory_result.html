@@ -2,7 +2,7 @@
 {% block content %}
 <div class="container text-center mt-5">
   <h2>Test Completed</h2>
-  <p><strong>Score:</strong> {{ score }}/{{ total_score }}</p>
+  <p><strong>Score:</strong> {{ score }}/{{ total_rounds }}</p>
   <p><strong>Average Reaction Time:</strong> {{ avg_reaction | round(2) }}s</p>
 
   <a href="{{ url_for('main.assessments') }}" class="btn btn-primary mt-3">
