@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 from .decorators import roles_required
+from .models import PatientAssessment
 
 main = Blueprint('main', __name__)
 
@@ -22,5 +23,7 @@ def patient_details():
 @main.route('/assessments')
 @login_required
 def assessments():
-    return render_template('assessments.html')
+    # Get all past memory test results for the current patient
+    results = PatientAssessment.query.filter_by(user_id=current_user.id).order_by(PatientAssessment.date_taken.desc()).all()
+    return render_template('assessments.html', results=results)
 

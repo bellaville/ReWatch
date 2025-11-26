@@ -3,9 +3,8 @@
 {% block content %}
 <div class="container mt-5 text-center">
     <h2>Assessments</h2>
-    <p>View patient test results below.</p>
+    <p>View your past test results below.</p>
   
-    <!-- example past test data -->
     <table class="table mt-4">
       <thead>
         <tr>
@@ -16,19 +15,27 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>2025-11-08</td>
-          <td>Short-Term Memory Test</td>
-          <td>4/5</td>
-          <td>1.25s</td>
-        </tr>
+        {% if results %}
+          {% for r in results %}
+            <tr>
+              <td>{{ r.date_taken.strftime("%Y-%m-%d %H:%M") }}</td>
+              <td>Short-Term Memory Test</td>
+              <td>{{ r.score }}/{{ r.total_rounds }}</td>
+              <td>{{ "%.2f"|format(r.avg_reaction_time) }}s</td>
+            </tr>
+          {% endfor %}
+        {% else %}
+            <tr>
+              <td colspan="4">No past assessments found.</td>
+            </tr>
+        {% endif %}
       </tbody>
     </table>
   
     <hr>
     <h4>Perform New Assessment</h4>
-    <a href="{{ url_for('memory_test.memory_test_customization') }}" class="btn btn-primary btn-lg mt-3">
+    <a href="{{ url_for('memory_test.start_memory_test') }}" class="btn btn-primary btn-lg mt-3">
       Short-Term Memory Test
     </a>
-  </div>
+</div>
 {% endblock %}

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, session, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 import time, random
-#from .models import PatientAssessment
+from .models import PatientAssessment
 from . import db
 
 memory_test = Blueprint('memory_test', __name__)
@@ -220,17 +220,17 @@ def memory_result():
     # use the patient ID stored in the session (set by the physician or defaults to current user)
     patient_id = session.get('test_patient_id', current_user.id)
 
-    # result = PatientAssessment(
-    #         user_id=patient_id,
-    #         score=score,
-    #         total_rounds=total_rounds,
-    #         avg_reaction_time=avg_reaction,
-    #         num_shapes=num_shapes,
-    #         memorization_time=memorization_time,
-    #         diffculty=difficulty
-    # )
-    # db.session.add(result)
-    # db.session.commit()
+    result = PatientAssessment(
+            user_id=patient_id,
+            score=score,
+            total_rounds=total_rounds,
+            avg_reaction_time=avg_reaction,
+            num_shapes=num_shapes,
+            memorization_time=memorization_time,
+            difficulty=difficulty
+    )
+    db.session.add(result)
+    db.session.commit()
 
     return render_template('memory_result.html', score=score, avg_reaction=avg_reaction, total_rounds=int(total_rounds))
 
