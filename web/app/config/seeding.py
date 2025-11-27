@@ -31,9 +31,10 @@ def seed_users():
 
     # List of dummy users to seed
     dummy_users = [
-        {"email": "alice@example.com", "name": "Alice Smith", "password": "password123", "role": patient_role},
-        {"email": "bob@example.com", "name": "Bob Johnson", "password": "password123", "role": patient_role},
-        {"email": "dr.jones@example.com", "name": "Dr. Jones", "password": "password123", "role": physician_role},
+        {"email": "clark@DC.com", "name": "Clark Kent", "password": "password123", "role": patient_role},
+        {"email": "gwen@amazing.com", "name": "Gwen Stacy", "password": "password123", "role": patient_role},
+        {"email": "dr.stephen@avengers.com", "name": "Dr. Stephen Strange", "password": "password123", "role": physician_role},
+        {"email": "peter@amazing.com", "name": "Peter Parker", "password": "password123", "role": patient_role}
     ]
 
     for u in dummy_users:
