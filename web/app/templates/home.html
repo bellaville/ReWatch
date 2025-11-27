@@ -1,11 +1,21 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Welcome to ReWatch on the Web home page!</h1>
-    <nav>
-        <ul>
-            <li><a href="{{ url_for('main.patient_details') }}">Patient Details</a></li>
-			<li><a href="{{ url_for('main.assessments') }}">Assessments</a></li>
-        </ul>
-    </nav>
+<div class="text-center">
+    <h1 class="mb-4">Welcome to ReWatch on the Web!</h1>
+
+    <div class="d-flex justify-content-center">
+        <div class="list-group" style="max-width: 300px;">
+            <a href="{{ url_for('main.patient_details') }}"
+               class="list-group-item list-group-item-action">
+                Patient Details
+            </a>
+
+            <a href="{{ url_for('main.assessments') }}"
+               class="list-group-item list-group-item-action">
+                Assessments
+            </a>
+        </div>
+    </div>
+</div>
 {% endblock %}
