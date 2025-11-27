@@ -10,8 +10,11 @@ def login(test_client, user):
     with test_client.session_transaction() as sess:
         sess["_user_id"] = str(user.id)
 
-def create_patient_user(name, email):
-    """Helper to create a patient user with a Patient profile."""
+
+def create_patient_user(name, email, physician=None):
+    """Helper to create a patient user with a Patient profile.
+       Optionally assigns to a physician.
+    """
     patient_role = Role.query.filter_by(name="Patient").first()
     user = User(
         name=name,
@@ -23,6 +26,8 @@ def create_patient_user(name, email):
     db.session.commit()
 
     patient_profile = Patient(user_id=user.id)
+    if physician:
+        patient_profile.physician_id = physician.id
     db.session.add(patient_profile)
     db.session.commit()
 
@@ -46,14 +51,27 @@ def create_physician_user(name, email):
 
     return user, physician_profile
 
+
+def init_memory_test_session(sess, patient_id=None):
+    """Helper to initialize session variables for memory test."""
+    sess["round"] = 0
+    sess["score"] = 0
+    sess["reaction_times"] = []
+    sess["show_test"] = False
+    sess["num_shapes"] = 3
+    sess["difficulty"] = "easy"
+    sess["num_rounds"] = 5
+    sess["memorization_time"] = 5
+    if patient_id:
+        sess["test_patient_id"] = patient_id
+
+
 def test_start_memory_test_initializes_session(test_client):
     """GIVEN logged-in user
        WHEN start_memory_test is accessed
        THEN session variables should initialize properly
     """
-    user = User(name="TestUser", email="test@example.com", password="pass")
-    db.session.add(user)
-    db.session.commit()
+    user, patient = create_patient_user("TestUser", "test@example.com")
     login(test_client, user)
 
     response = test_client.get("/assessments/memory_test/start")
@@ -64,6 +82,7 @@ def test_start_memory_test_initializes_session(test_client):
         assert sess["score"] == 0
         assert sess["reaction_times"] == []
         assert sess["show_test"] is False
+        assert sess["test_patient_id"] == patient.id
 
 
 def test_memory_memorize_generates_shapes(test_client):
@@ -71,17 +90,11 @@ def test_memory_memorize_generates_shapes(test_client):
        WHEN the memorize phase is accessed
        THEN session variables for current set, positions, colours, and memorization time are set correctly
     """
-    user = User(name="TestUser2", email="test2@example.com", password="pass")
-    db.session.add(user)
-    db.session.commit()
+    user, patient = create_patient_user("TestUser2", "test2@example.com")
     login(test_client, user)
 
-    # Initialize session values
     with test_client.session_transaction() as sess:
-        sess["round"] = 0
-        sess["num_shapes"] = 3
-        sess["difficulty"] = "easy"
-        sess["num_rounds"] = 5
+        init_memory_test_session(sess, patient_id=patient.id)
 
     response = test_client.get("/assessments/memory_test/memorize")
     assert response.status_code == 200
@@ -99,13 +112,11 @@ def test_memory_test_post_scoring(test_client):
        WHEN the user posts a response in the comparison phase
        THEN reaction time is recorded, score is updated, and round is incremented
     """
-    user = User(name="TestUser3", email="test3@example.com", password="pass")
-    db.session.add(user)
-    db.session.commit()
+    user, patient = create_patient_user("TestUser3", "test3@example.com")
     login(test_client, user)
 
     with test_client.session_transaction() as sess:
-        sess["round"] = 0
+        init_memory_test_session(sess, patient_id=patient.id)
         sess["previous_set"] = ["circle", "square"]
         sess["current_set"] = ["circle", "square"]   # Same
         sess["reaction_times"] = []
@@ -156,12 +167,12 @@ def test_saving_patient_assessment(test_client):
        THEN a new PatientAssessment is saved in the database with correct values
     """
     user, patient_profile = create_patient_user("Test Patient", "patient1@example.com")
-    
+    login(test_client, user)
+
     # Simulate test session
     with test_client.session_transaction() as sess:
-        sess["test_patient_id"] = patient_profile.id
+        init_memory_test_session(sess, patient_id=patient_profile.id)
         sess["score"] = 3
-        sess["num_rounds"] = 5
         sess["reaction_times"] = [0.5, 0.6, 0.4]
 
     # Call the result route to save assessment
@@ -173,8 +184,7 @@ def test_saving_patient_assessment(test_client):
     assert assessment is not None
     assert assessment.score == 3
     assert assessment.total_rounds == 5
-    # average reaction time
-    expected_avg = sum([0.5, 0.6, 0.4])/3
+    expected_avg = sum([0.5, 0.6, 0.4]) / 3
     assert pytest.approx(assessment.avg_reaction_time, 0.01) == expected_avg
 
 def test_physician_can_save_assessment_for_patient(test_client):
@@ -183,18 +193,14 @@ def test_physician_can_save_assessment_for_patient(test_client):
        THEN the PatientAssessment is correctly linked to the patient
     """
     physician_user, physician_profile = create_physician_user("Dr. Strange", "drstrange@example.com")
-    patient_user, patient_profile = create_patient_user("Peter Parker", "peter@example.com")
-
-    # Assign patient to physician
-    patient_profile.physician_id = physician_profile.id
-    db.session.commit()
+    patient_user, patient_profile = create_patient_user("Peter Parker", "peter@example.com", physician=physician_profile)
+    login(test_client, physician_user)
 
     # Simulate physician session selecting patient
     with test_client.session_transaction() as sess:
         sess["_user_id"] = str(physician_user.id)
-        sess["test_patient_id"] = patient_profile.id
+        init_memory_test_session(sess, patient_id=patient_profile.id)
         sess["score"] = 4
-        sess["num_rounds"] = 5
         sess["reaction_times"] = [0.5, 0.7, 0.6, 0.8]
 
     # Call result route

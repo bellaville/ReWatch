@@ -67,6 +67,3 @@ def assessments():
                                          .order_by(PatientAssessment.date_taken.desc()).all()
 
     return render_template('assessments.html', results=results)
-
-
-
