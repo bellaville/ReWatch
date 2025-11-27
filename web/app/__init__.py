@@ -40,6 +40,9 @@ def create_app(test_config=False):
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
+
+    from .memory_test import memory_test as memory_test_blueprint
+    app.register_blueprint(memory_test_blueprint, url_prefix='/assessments/memory_test')
     
     if app.debug or app.config["TESTING"]:
         from .acceleration_testing.test_accel import accel_test
