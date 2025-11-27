@@ -224,8 +224,14 @@ def memory_result():
     score = session.get('score', 0)
     total_rounds = session.get('num_rounds', 5)
 
-    # use the patient ID stored in the session (set by the physician or defaults to current user)
-    patient_id = session.get('test_patient_id', current_user.id)
+    # use the patient ID stored in the session (set by the physician selecting the patient)
+    patient_id = session.get('test_patient_id')
+    if not patient_id:
+        # check if currently logged-in user is a patient, if so, use their own id
+        if current_user.patient_profile:
+            patient_id = current_user.patient_profile.id
+        else:
+            return redirect(url_for('main.index'))
 
     result = PatientAssessment(
             patient_id=patient_id,

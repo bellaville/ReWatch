@@ -11,7 +11,7 @@
             <select name="patient_id" id="patient_id" class="form-select d-inline w-auto">
                 <option value="">--Choose patient--</option>
                 {% for p in patients %}
-                    <option value="{{ p.id }}" {% if selected_patient_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                <option value="{{ p.patient_profile.id }}" {% if selected_patient_id == p.patient_profile.id %}selected{% endif %}>{{ p.name }}</option>
                 {% endfor %}
             </select>
             <button type="submit" class="btn btn-primary">View</button>
