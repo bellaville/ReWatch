@@ -3,39 +3,52 @@
 {% block content %}
 <div class="container mt-5 text-center">
     <h2>Assessments</h2>
-    <p>View your past test results below.</p>
-  
+    <p>View past test results below.</p>
+
+    {% if patients %}
+        <form method="POST" class="mb-4">
+            <label for="patient_id">Select Patient:</label>
+            <select name="patient_id" id="patient_id" class="form-select d-inline w-auto">
+                <option value="">--Choose patient--</option>
+                {% for p in patients %}
+                    <option value="{{ p.id }}" {% if selected_patient_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary">View</button>
+        </form>
+    {% endif %}
+
     <table class="table mt-4">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Test Type</th>
-          <th>Score</th>
-          <th>Reaction Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% if results %}
-          {% for r in results %}
+        <thead>
             <tr>
-              <td>{{ r.date_taken.strftime("%Y-%m-%d %H:%M") }}</td>
-              <td>Short-Term Memory Test</td>
-              <td>{{ r.score }}/{{ r.total_rounds }}</td>
-              <td>{{ "%.2f"|format(r.avg_reaction_time) }}s</td>
+                <th>Date</th>
+                <th>Test Type</th>
+                <th>Score</th>
+                <th>Reaction Time</th>
             </tr>
-          {% endfor %}
-        {% else %}
-            <tr>
-              <td colspan="4">No past assessments found.</td>
-            </tr>
-        {% endif %}
-      </tbody>
+        </thead>
+        <tbody>
+            {% if results %}
+                {% for r in results %}
+                    <tr>
+                        <td>{{ r.date_taken.strftime("%Y-%m-%d %H:%M") }}</td>
+                        <td>Short-Term Memory Test</td>
+                        <td>{{ r.score }}/{{ r.total_rounds }}</td>
+                        <td>{{ "%.2f"|format(r.avg_reaction_time) }}s</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="4">No past assessments found.</td>
+                </tr>
+            {% endif %}
+        </tbody>
     </table>
-  
+
     <hr>
     <h4>Perform New Assessment</h4>
-    <a href="{{ url_for('memory_test.start_memory_test') }}" class="btn btn-primary btn-lg mt-3">
-      Short-Term Memory Test
+    <a href="{{ url_for('memory_test.memory_test_customization') }}" class="btn btn-primary btn-lg mt-3">
+        Short-Term Memory Test
     </a>
 </div>
 {% endblock %}

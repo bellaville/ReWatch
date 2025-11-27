@@ -1,6 +1,6 @@
 from werkzeug.security import generate_password_hash
 
-from app.models import Role, User
+from app.models import Role, User, Patient
 from app import db
 
 
@@ -51,6 +51,12 @@ def seed_users():
                 new_user.roles.append(u["role"])
 
             db.session.add(new_user)
+            db.session.flush() # db generated ID is assigned
+
+            # if user is a patient, create a corresponding Patient profile
+            if u["role"] == patient_role:
+                patient_profile = Patient(user_id=new_user.id)
+                db.session.add(patient_profile)
 
     db.session.commit()
     print("Dummy users seeded successfully (duplicates skipped).")

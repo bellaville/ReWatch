@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, session, redirect, url_for, flash
 from flask_login import login_required, current_user
 from .decorators import roles_required
 from .models import User, Role, PatientAssessment
@@ -28,10 +28,37 @@ def patient_details():
         users = []
     return render_template('patient_details.html', users=users)
 
-@main.route('/assessments')
+@main.route('/assessments', methods=['GET', 'POST'])
 @login_required
 def assessments():
-    # Get all past memory test results for the current patient
-    results = PatientAssessment.query.filter_by(user_id=current_user.id).order_by(PatientAssessment.date_taken.desc()).all()
+    selected_patient_id = None
+    results = []
+
+    # Check if user is a physician
+    if current_user.has_role('Physician'):
+        # Get list of patients assigned to this physician
+        patients = [u for u in User.query.all() if not u.has_role('Physician')]
+
+        # Physician selects patient from dropdown
+        if request.method == 'POST':
+            selected_patient = request.form.get('patient_id')
+            if not selected_patient:
+                return redirect(url_for('main.assessments'))
+
+            selected_patient_id = int(selected_patient)
+            session['selected_patient_id'] = selected_patient_id
+        else:
+            # for GET request, always show the placeholder by default
+            selected_patient_id = None
+
+        # If patient is selected, fetch their past results
+        if selected_patient_id:
+            results = PatientAssessment.query.filter_by(patient_id=selected_patient_id)\
+                                             .order_by(PatientAssessment.date_taken.desc()).all()
+        
+        return render_template('assessments.html', results=results, patients=patients, selected_patient_id=selected_patient_id)
+
+    # Logged-in user is a patient, show their own past results
+    results = PatientAssessment.query.filter_by(patient_id=current_user.id).order_by(PatientAssessment.date_taken.desc()).all()
     return render_template('assessments.html', results=results)
 

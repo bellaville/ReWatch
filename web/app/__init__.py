@@ -20,7 +20,7 @@ def create_app(test_config=False):
     from .config.seeding import seed_roles, seed_users
 
     with app.app_context():
-        #db.drop_all() # for development
+        db.drop_all() # for development
         db.create_all()
         seed_roles()
         seed_users()

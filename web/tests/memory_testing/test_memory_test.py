@@ -1,13 +1,50 @@
 import pytest
 import time
 from flask import session
-from app.models import User
+from app.models import User, Patient, Physician, PatientAssessment, Role
 from app import db
+from werkzeug.security import generate_password_hash
 
 def login(test_client, user):
     """Logs in a test user by manipulating the session."""
     with test_client.session_transaction() as sess:
         sess["_user_id"] = str(user.id)
+
+def create_patient_user(name, email):
+    """Helper to create a patient user with a Patient profile."""
+    patient_role = Role.query.filter_by(name="Patient").first()
+    user = User(
+        name=name,
+        email=email,
+        password=generate_password_hash("password123")
+    )
+    user.roles.append(patient_role)
+    db.session.add(user)
+    db.session.commit()
+
+    patient_profile = Patient(user_id=user.id)
+    db.session.add(patient_profile)
+    db.session.commit()
+
+    return user, patient_profile
+
+def create_physician_user(name, email):
+    """Helper to create a physician user with Physician profile."""
+    physician_role = Role.query.filter_by(name="Physician").first()
+    user = User(
+        name=name,
+        email=email,
+        password=generate_password_hash("password123")
+    )
+    user.roles.append(physician_role)
+    db.session.add(user)
+    db.session.commit()
+
+    physician_profile = Physician(user_id=user.id)
+    db.session.add(physician_profile)
+    db.session.commit()
+
+    return user, physician_profile
 
 def test_start_memory_test_initializes_session(test_client):
     """GIVEN logged-in user
@@ -112,3 +149,59 @@ def test_memory_test_get_generates_comparison_set(test_client):
         assert "shape_colours" in sess
         assert "start_time" in sess
 
+
+def test_saving_patient_assessment(test_client):
+    """GIVEN a patient user
+       WHEN they complete a memory test
+       THEN a new PatientAssessment is saved in the database with correct values
+    """
+    user, patient_profile = create_patient_user("Test Patient", "patient1@example.com")
+    
+    # Simulate test session
+    with test_client.session_transaction() as sess:
+        sess["test_patient_id"] = patient_profile.id
+        sess["score"] = 3
+        sess["num_rounds"] = 5
+        sess["reaction_times"] = [0.5, 0.6, 0.4]
+
+    # Call the result route to save assessment
+    response = test_client.get("/assessments/memory_test/result")
+    assert response.status_code == 200
+
+    # Verify database
+    assessment = PatientAssessment.query.filter_by(patient_id=patient_profile.id).first()
+    assert assessment is not None
+    assert assessment.score == 3
+    assert assessment.total_rounds == 5
+    # average reaction time
+    expected_avg = sum([0.5, 0.6, 0.4])/3
+    assert pytest.approx(assessment.avg_reaction_time, 0.01) == expected_avg
+
+def test_physician_can_save_assessment_for_patient(test_client):
+    """GIVEN a physician and a patient assigned to them
+       WHEN physician initiates memory test for patient
+       THEN the PatientAssessment is correctly linked to the patient
+    """
+    physician_user, physician_profile = create_physician_user("Dr. Strange", "drstrange@example.com")
+    patient_user, patient_profile = create_patient_user("Peter Parker", "peter@example.com")
+
+    # Assign patient to physician
+    patient_profile.physician_id = physician_profile.id
+    db.session.commit()
+
+    # Simulate physician session selecting patient
+    with test_client.session_transaction() as sess:
+        sess["_user_id"] = str(physician_user.id)
+        sess["test_patient_id"] = patient_profile.id
+        sess["score"] = 4
+        sess["num_rounds"] = 5
+        sess["reaction_times"] = [0.5, 0.7, 0.6, 0.8]
+
+    # Call result route
+    response = test_client.get("/assessments/memory_test/result")
+    assert response.status_code == 200
+
+    assessment = PatientAssessment.query.filter_by(patient_id=patient_profile.id).first()
+    assert assessment is not None
+    assert assessment.score == 4
+    assert assessment.total_rounds == 5
