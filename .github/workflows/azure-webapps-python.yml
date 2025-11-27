@@ -59,8 +59,8 @@ jobs:
         with:
           name: python-app
           path: |
-            ./web
-            !venv/
+            web/
+            !web/venv/
 
   deploy:
     permissions:
