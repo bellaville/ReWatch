@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, session, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 import time, random
-#from .models import PatientAssessment
+from .models import PatientAssessment
 from . import db
 
 memory_test = Blueprint('memory_test', __name__)
@@ -80,6 +80,15 @@ def start_memory_test():
     allowing the memory test to track progress and user responses
     throughout multiple rounds.
     """
+    # if user is physician, use the selected patient from session
+    if current_user.has_role('Physician'):
+        patient_id = session.get('selected_patient_id')
+    else:
+        # patient is performing their own test, use their own id from db/login
+        patient_id = current_user.patient_profile.id
+
+    session['test_patient_id'] = patient_id 
+
     # initialize session variables
     session['round'] = 0
     session['score'] = 0
@@ -104,6 +113,7 @@ def start_memory_test():
 # MEMORIZATION PHASE #
 ######################
 @memory_test.route('/memorize')
+@login_required
 def memory_memorize():
     """ Memorization phase: user has a configured number of seconds to
     memorize the displayed set of shapes
@@ -213,24 +223,24 @@ def memory_result():
     avg_reaction = sum(session.get('reaction_times', [])) / max(len(session.get('reaction_times', [])), 1)
     score = session.get('score', 0)
     total_rounds = session.get('num_rounds', 5)
-    num_shapes = session.get('num_shapes', 5)
-    memorization_time = session.get('memorization_time', 5)
-    difficulty = session.get('difficulty', 'easy')
 
-    # use the patient ID stored in the session (set by the physician or defaults to current user)
-    patient_id = session.get('test_patient_id', current_user.id)
+    # use the patient ID stored in the session (set by the physician selecting the patient)
+    patient_id = session.get('test_patient_id')
+    if not patient_id:
+        # check if currently logged-in user is a patient, if so, use their own id
+        if current_user.patient_profile:
+            patient_id = current_user.patient_profile.id
+        else:
+            return redirect(url_for('main.index'))
 
-    # result = PatientAssessment(
-    #         user_id=patient_id,
-    #         score=score,
-    #         total_rounds=total_rounds,
-    #         avg_reaction_time=avg_reaction,
-    #         num_shapes=num_shapes,
-    #         memorization_time=memorization_time,
-    #         diffculty=difficulty
-    # )
-    # db.session.add(result)
-    # db.session.commit()
+    result = PatientAssessment(
+            patient_id=patient_id,
+            score=score,
+            total_rounds=total_rounds,
+            avg_reaction_time=avg_reaction,
+    )
+    db.session.add(result)
+    db.session.commit()
 
     return render_template('memory_result.html', score=score, avg_reaction=avg_reaction, total_rounds=int(total_rounds))
 
