@@ -47,9 +47,8 @@ class MainActivity : ComponentActivity() {
         toggle.isEnabled = true
 
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-        var sensor : Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        var sensor : Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
         sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
-
         status.text = "Sensor loaded"
     }
 
@@ -77,14 +76,14 @@ class MainActivity : ComponentActivity() {
     /*
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) {isGranted: Boolean ->
         if(isGranted) {
-            println("sensor access granted")
+            println("SENSOR ACCESS GRANTED")
         }
     }
 
 
     private val connectionListener = object : ConnectionListener {
         override fun onConnectionSuccess() {
-            println("connected")
+            println("CONNECTED")
             var availableTrackers : List<HealthTrackerType> = healthTrackingService!!.trackingCapability.supportHealthTrackerTypes
             if(!availableTrackers.contains(HealthTrackerType.ACCELEROMETER_CONTINUOUS)) {
                 // Accelerometer not available
