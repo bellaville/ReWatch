@@ -50,8 +50,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="#3F51B5"
-        android:checked="true"
+        android:checked="false"
         android:foregroundTint="#3F51B5"
-        android:text="Start Tracking" />
+        android:textOff="Start"
+        android:textOn="Stop" />
 
 </LinearLayout>
