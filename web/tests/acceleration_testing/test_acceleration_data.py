@@ -12,13 +12,11 @@ def wipe_acceleration_data(test_client: FlaskClient):
     Args:
         test_client: Flask test client used to send requests to the application.
     """
-    # Wipe existing data
     db.session.query(AssessmentStageData).delete()
     db.session.commit()
     
     yield
     
-    # Wipe data again after test
     db.session.query(AssessmentStageData).delete()
     db.session.commit()
 

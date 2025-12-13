@@ -10,4 +10,4 @@ def user_injection_url(user: User):
     """
     Capture user ID, inject user information into the URL, and respond with it
     """
-    return jsonify({"userid": user.id})
+    return jsonify({"userid": user.id, "email": user.email}), 200
