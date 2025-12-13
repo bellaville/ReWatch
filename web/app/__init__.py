@@ -1,8 +1,6 @@
 from flask import Flask, render_template
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
-
-db = SQLAlchemy()
+from .db import db
 
 def create_app(test_config=False):
     # initialize flask app
@@ -44,10 +42,6 @@ def create_app(test_config=False):
 
     from .memory_test import memory_test as memory_test_blueprint
     app.register_blueprint(memory_test_blueprint, url_prefix='/assessments/memory_test')
-    
-    if app.debug or app.config["TESTING"]:
-        from .acceleration_testing.test_accel import accel_test
-        app.register_blueprint(accel_test)
 
     # handle 403 error
     @app.errorhandler(403)

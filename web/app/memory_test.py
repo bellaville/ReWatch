@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, session, redirect, url_for, reques
 from flask_login import login_required, current_user
 import time, random
 from .models import PatientAssessment
-from . import db
+from .db import db
 
 memory_test = Blueprint('memory_test', __name__)
 
