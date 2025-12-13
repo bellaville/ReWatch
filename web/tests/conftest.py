@@ -1,4 +1,3 @@
-import os
 import pytest
 from run import create_app
 
@@ -8,6 +7,10 @@ from run import create_app
 def test_client():
     # Set the Testing configuration prior to creating the Flask application
     flask_app = create_app(test_config=True)
+    
+    # Add testing endpoints
+    from tests.endpoint_creation import register_testing_endpoints
+    register_testing_endpoints(flask_app)
 
     # Create a test client using the Flask application configured for testing
     with flask_app.test_client() as testing_client:

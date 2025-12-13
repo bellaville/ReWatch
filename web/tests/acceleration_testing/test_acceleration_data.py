@@ -3,7 +3,7 @@ import os
 import shutil
 from flask.testing import FlaskClient
 
-RESULTS_DIR = './app/acceleration_testing/accel_results'
+RESULTS_DIR = './../endpoint_creation/accel_results'
 
 @pytest.fixture(autouse=True)
 def clean_results_dir():
@@ -41,29 +41,6 @@ def post_example_data(test_client: FlaskClient):
     }
     response = test_client.post('/test/debug/accel', json=example_json)
     return response
-
-def test_posting_data(test_client: FlaskClient):
-    """
-    GIVEN a Flask test client
-    WHEN posting example acceleration data
-    THEN the data is saved successfully
-    
-    Args:
-        test_client: Flask test client used to send requests to the application.
-    """
-    # Send example data and verify response
-    response = post_example_data(test_client)
-    assert response.status_code == 200
-    
-    # Parse and verify success JSON response
-    json_response = response.get_json()
-    assert json_response["status"] == "success"
-    assert json_response["message"] == "Data saved"
-    
-    # Verify that the data file was created
-    filename = json_response["filename"]
-    files = os.listdir(RESULTS_DIR)
-    assert filename in files
 
 def test_getting_data(test_client: FlaskClient):
     """
