@@ -79,9 +79,19 @@ class AssessmentStageData(db.Model):
     
     @classmethod
     def from_json(cls, json_data: dict[str, Any]) -> "AssessmentStageData":
+        """
+        Create an AssessmentStageData instance from JSON data.
+        
+        :param cls: Class reference
+        :type cls: AssessmentStageData
+        :param json_data: JSON data
+        :type json_data: dict[str, Any]
+        :return: AssessmentStageData instance
+        :rtype: AssessmentStageData
+        """
         stage = AssessmentStage(json_data["stage"].lower())
         stage_data = cls(
-            assessment_id=json_data["experimentID"],
+            assessment_id=json_data["assessmentID"],
             stage=stage
         )
         

@@ -42,7 +42,7 @@ def post_example_data(test_client: FlaskClient):
     """
     example_json = {
         "ts": 12321233232,
-        "experimentID": 1,
+        "asesessmentID": 1,
         "stage": "gait",
         "data": [
             {
