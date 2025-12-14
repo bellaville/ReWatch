@@ -82,12 +82,11 @@ class AssessmentStageData(db.Model):
         """
         Create an AssessmentStageData instance from JSON data.
         
-        :param cls: Class reference
-        :type cls: AssessmentStageData
-        :param json_data: JSON data
-        :type json_data: dict[str, Any]
-        :return: AssessmentStageData instance
-        :rtype: AssessmentStageData
+        Args:
+            json_data (dict[str, Any]): JSON data containing assessment stage information.
+            
+        Returns:
+            AssessmentStageData: The created AssessmentStageData instance.
         """
         stage = AssessmentStage(json_data["stage"].lower())
         stage_data = cls(
@@ -107,6 +106,12 @@ class AssessmentStageData(db.Model):
         return stage_data
     
     def to_json(self) -> dict[str, Any]:
+        """
+        Convert the AssessmentStageData instance to JSON format.
+        
+        Returns:
+            dict[str, Any]: JSON representation of the AssessmentStageData.
+        """
         return {
             "assessmentID": self.assessment_id,
             "stage": self.stage.value,

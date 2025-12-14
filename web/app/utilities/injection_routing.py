@@ -14,11 +14,11 @@ def identify_possible_endpoint_objects(endpoint: str) -> list[str]:
     """
     Identifies all instances of <*_id> notation in a given URL
     
-    
-    :param endpoint: Description
-    :type endpoint: str
-    :return: List of extracted parameters from URL
-    :rtype: list[str]
+    Args:
+        endpoint (str): Endpoint URL pattern to analyze
+        
+    Returns:
+        list[str]: List of extracted parameter names
     """
     return re.findall(URL_PATTERN, endpoint)
 
@@ -26,12 +26,12 @@ def get_injection_type(type_hints: dict[str, Any], class_name: str) -> Optional[
     """
     Gets the injection type for a corresponding extracted ID
     
-    :param type_hints: Type hints that are provided for bottom-level function
-    :type type_hints: dict[str, Any]
-    :param class_name: Name of parameter extracted from URL
-    :type class_name: str
-    :return: Class for the injected type
-    :rtype: Any
+    Args:
+        type_hints (dict[str, Any]): Type hints from the function
+        class_name (str): Class name to extract type for
+        
+    Returns:
+        Optional[Any]: Extracted type or None if not found
     """
     return type_hints.get(class_name)
 
@@ -45,32 +45,38 @@ def injection_route(blueprint: Blueprint, endpoint: str, *args, **kwargs):
     From class_id, maps to the parameter in the function, retrieves the type, then
     calls a query on the id from the class object.
     
-    :param blueprint: Blueprint to add injection endpoint to
-    :type blueprint: Blueprint
-    :param endpoint: Endpoint pattern for blueprint
-    :type endpoint: str
-    :param args: Arguments for blueprint addition
-    :param kwargs: Keyword arguments for blueprint addition
+    Args:
+        blueprint (Blueprint): Blueprint to add injection endpoint to
+        endpoint (str): Endpoint pattern for blueprint
+        *args: Arguments for blueprint addition
+        **kwargs: Keyword arguments for blueprint addition
+        
+    Returns:
+        callable: Decorated function with injection capabilities
     """
 
-    def decorator(fn: callable):
+    def decorator(fn: callable) -> callable:
         """
         Decorator to be placed on top of the bottom-level calling function
         
-        :param fn: Function to be decorated on
-        :type fn: callable
+        Args:
+            fn (callable): Bottom-level function to decorate
+            
+        Returns:
+            callable: Wrapped function with injection capabilities
         """
         bottom_level_function = inspect.unwrap(fn)
         type_hints = get_type_hints(bottom_level_function)
         
         @wraps(fn)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> Any:
             """
             Wraps the function and actievly injects matching parameters.
             Aborts if no instance is found for the given user
             
-            :param args: Argument for bottom level class
-            :param kwargs: Keyword arguments for bottom level class
+            Args:
+                args: Argument for bottom level class
+                kwargs: Keyword arguments for bottom level class
             """
             
             injection_kwargs = {}

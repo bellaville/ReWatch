@@ -22,6 +22,12 @@ def wipe_acceleration_data(test_client: FlaskClient):
 
 @pytest.fixture(scope='function', autouse=True)
 def create_assessment(test_client: FlaskClient):
+    """
+    Fixture to create a PatientAssessment entry before each test.
+    
+    Args:
+        test_client: Flask test client used to send requests to the application.
+    """
     new_assessment = PatientAssessment(
         patient_id=1,
         score=0,
@@ -42,7 +48,7 @@ def post_example_data(test_client: FlaskClient):
     """
     example_json = {
         "ts": 12321233232,
-        "asesessmentID": 1,
+        "assessmentID": 1,
         "stage": "gait",
         "data": [
             {
