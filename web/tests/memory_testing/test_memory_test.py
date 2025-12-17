@@ -1,8 +1,8 @@
 import pytest
 import time
-from flask import session
+
 from app.models import User, Patient, Physician, PatientAssessment, Role
-from app import db
+from app.db import db
 from werkzeug.security import generate_password_hash
 
 def login(test_client, user):

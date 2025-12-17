@@ -1,4 +1,5 @@
 import pytest
+
 from run import create_app
 
 # Based off example at: https://testdriven.io/blog/flask-pytest/
