@@ -1,6 +1,7 @@
 from flask import Flask, render_template
 from flask_login import LoginManager
-from .db import db
+
+from app.db import db
 
 def create_app(test_config=False):
     # initialize flask app

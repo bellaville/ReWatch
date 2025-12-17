@@ -3,7 +3,7 @@ import enum
 from typing import Any
 from flask_login import UserMixin
 
-from .db import db
+from app.db import db
 
 # association table for users and roles (many to many)
 roles_users = db.Table('roles_users',
