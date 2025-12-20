@@ -1,7 +1,8 @@
 import os
 
 required_env_vars = [
-    'REDIS_URL'
+    'REDIS_URL',
+    'FLASK_ENV'
 ]
 
 missing_vars = [var for var in required_env_vars if var not in os.environ]
