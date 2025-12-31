@@ -4,6 +4,7 @@ from flask import session
 from app.models import User, Patient, Physician, PatientAssessment, Role
 from app import db
 from werkzeug.security import generate_password_hash
+from unittest.mock import patch
 
 def login(test_client, user):
     """Logs in a test user by manipulating the session."""
@@ -324,3 +325,78 @@ def test_memory_test_hard_mode_different_choice_correct(test_client):
         assert sess["score"] == 1
         assert sess["round"] == 1
 
+
+def test_memory_test_full_run_easy_mode(test_client):
+    """
+    GIVEN a patient in easy mode with pre-determined shapes
+    WHEN the user completes all rounds choosing 'Same' with identical shape sets
+    THEN the score, round count, and reaction times should increment correctly
+    """
+    user, patient = create_patient_user("EasyFullRun", "easyfullrun@example.com")
+    login(test_client, user)
+
+    with test_client.session_transaction() as sess:
+        init_memory_test_session(sess, patient_id=patient.id)
+        sess["difficulty"] = "easy"
+        sess["num_rounds"] = 2
+
+    # setting shapes to always be identifical between rounds
+    with patch("app.memory_test.random.sample") as mock_sample:
+        mock_sample.return_value = ["circle", "square", "triangle"]
+
+        for _ in range(2):
+            # memorize phase
+            response = test_client.get("/assessments/memory_test/memorize")
+            assert response.status_code == 200
+
+            # comparison GET
+            response = test_client.get("/assessments/memory_test/response")
+            assert response.status_code == 200
+
+            # submitn correct answer
+            response = test_client.post("/assessments/memory_test/response", data={"choice": "Same"})
+            assert response.status_code == 302 # "found", redirects user to another page
+
+    with test_client.session_transaction() as sess:
+        assert sess["round"] == 2
+        assert sess["score"] == 2
+        assert len(sess["reaction_times"]) == 2
+        
+
+def test_memory_test_full_run_hard_mode(test_client):
+    """
+    GIVEN a patient in hard with pre-determined shapes and colours
+    WHEN the user completes all rounds choosing 'Same' with identical shape-colour sets
+    THEN the score, round count, and reaction times should increment correctly
+    """
+    user, patient = create_patient_user("HardFullRun", "hardfull@example.com")
+    login(test_client, user)
+
+    with test_client.session_transaction() as sess:
+        init_memory_test_session(sess, patient_id=patient.id)
+        sess["difficulty"] = "hard"
+        sess["num_rounds"] = 2
+
+    # pre-assign shapes and colours using patch
+    # random.random: force < 0.5 to always reuse memorized set
+    with patch("app.memory_test.random.random", return_value=0.0), \
+        patch("app.memory_test.random.sample") as mock_sample, \
+        patch("app.memory_test.random.choice") as mock_choice:
+        mock_sample.return_value = ["circle", "square", "triangle"]
+        mock_choice.return_value = "red" # just make all shapes red to keep it simple
+        # since we already covered testing for colour correctness in previous test cases
+
+        for _ in range(2):
+            response = test_client.get("/assessments/memory_test/memorize")
+            assert response.status_code == 200
+
+            response = test_client.get("/assessments/memory_test/response")
+            assert response.status_code == 200
+
+            response = test_client.post("/assessments/memory_test/response", data={"choice": "Same"})
+            assert response.status_code == 302
+        
+    with test_client.session_transaction() as sess:
+        assert sess["round"] == 2
+        assert sess["score"] == 2
+        assert len(sess["reaction_times"]) == 2
