@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash
 from flask_login import login_required, current_user
-from .decorators import roles_required
-from .models import User, Role, PatientAssessment, Patient
+
+from app.decorators import roles_required
+from app.models import Role, PatientAssessment
 
 main = Blueprint('main', __name__)
 

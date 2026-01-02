@@ -1,7 +1,7 @@
 from werkzeug.security import generate_password_hash
 
 from app.models import Role, User, Patient, Physician
-from app import db
+from app.db import db
 
 
 def seed_roles():

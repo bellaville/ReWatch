@@ -5,3 +5,6 @@
 # For accelerometer data
 **/accel_results/**
 /web/instance/
+
+# For vscode configs
+**/.vscode/**
