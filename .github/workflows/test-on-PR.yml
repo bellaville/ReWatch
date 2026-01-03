@@ -39,7 +39,7 @@ jobs:
       - name: Test with PyTest
         run: |
           cd web
-          celery -A celery_worker.celery worker --loglevel=info &
+          ./run_celery.sh &
           CELERY_PID=$!
           trap "kill $CELERY_PID" EXIT
           sleep 10  # Give Celery time to start
