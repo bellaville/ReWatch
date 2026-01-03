@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      REDIS_URL: ${{ secrets.REDIS_URL }}
+      REDIS_URL: redis://${{ secrets.REDIS_URL }}
       FLASK_ENV: testing
 
     steps:
