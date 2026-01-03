@@ -33,4 +33,6 @@ jobs:
       - name: Test with PyTest
         run: |
           cd web
+          exec celery -A celery_worker.celery worker --loglevel=info &
+          sleep 10  # Give Celery time to start
           python -m pytest tests/
