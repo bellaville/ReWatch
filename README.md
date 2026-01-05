@@ -27,3 +27,9 @@ $env:REDIS_URL = "redis://redis:6379/0"
 - `FLASK_ENV`: Either `testing` or `production`
 
 An `EnvironmentError` indicates that one or more of these haven't been set
+
+## Web Libraries & Frameworks
+
+### Celery
+
+Celery is for the queuing and processing of background tasks. In this project, it will be a seperate thread working on data processing as required by the backend. These tasks can be worked on asynchronously and results can be returned as they are readied. This queue is maintained through a Redis instance.
