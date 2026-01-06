@@ -1,4 +1,4 @@
-from celery_worker import celery
+from celery_app import celery
 
 @celery.task(name="add_task")
 def add(x: int, y: int) -> int:
