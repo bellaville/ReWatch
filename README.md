@@ -20,6 +20,12 @@ cd web
 docker compose up -d
 $env:REDIS_URL = "redis://redis:6379/0"
 ```
+For Mac users (macOS does not recognize redis as a hostname):
+```
+cd web
+docker compose -f docker-compose.dev.yaml up -d
+export REDIS_URL="redis://127.0.0.1:6379/0"
+```
 
 ### Env. Vars
 
