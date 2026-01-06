@@ -2,8 +2,8 @@ from flask import Blueprint, render_template, request, session, redirect, url_fo
 from flask_login import login_required, current_user
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from .decorators import roles_required
-from .models import User, Role, PatientAssessment, Patient
+from app.decorators import roles_required
+from app.models import Role, PatientAssessment
 
 main = Blueprint('main', __name__)
 

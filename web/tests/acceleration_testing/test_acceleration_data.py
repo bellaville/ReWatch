@@ -1,25 +1,43 @@
-import pytest
-import os
-import shutil
 from flask.testing import FlaskClient
+import pytest
 
-RESULTS_DIR = './app/acceleration_testing/accel_results'
+from app.models import AssessmentStageData, PatientAssessment
+from app.db import db
 
-@pytest.fixture(autouse=True)
-def clean_results_dir():
+@pytest.fixture(scope='function')
+def wipe_acceleration_data(test_client: FlaskClient):
     """
-    Fixture to clean up the acceleration results directory before and after tests.
-    Ensures a fresh state for each test run.
-    """    
-    # Clean up before test
-    if os.path.exists(RESULTS_DIR):
-        shutil.rmtree(RESULTS_DIR)
-        
+    Fixture to wipe acceleration test data before each test.
+    
+    Args:
+        test_client: Flask test client used to send requests to the application.
+    """
+    db.session.query(AssessmentStageData).delete()
+    db.session.commit()
+    
     yield
     
-    # Clean up after test
-    if os.path.exists(RESULTS_DIR):
-        shutil.rmtree(RESULTS_DIR)
+    db.session.query(AssessmentStageData).delete()
+    db.session.commit()
+
+@pytest.fixture(scope='function', autouse=True)
+def create_assessment(test_client: FlaskClient):
+    """
+    Fixture to create a PatientAssessment entry before each test.
+    
+    Args:
+        test_client: Flask test client used to send requests to the application.
+    """
+    new_assessment = PatientAssessment(
+        patient_id=1,
+        score=0,
+        avg_reaction_time=1.0,
+        total_rounds=3
+    )
+
+    db.session.add(new_assessment)
+    db.session.commit()
+
 
 def post_example_data(test_client: FlaskClient):
     """
@@ -30,6 +48,8 @@ def post_example_data(test_client: FlaskClient):
     """
     example_json = {
         "ts": 12321233232,
+        "assessmentID": 1,
+        "stage": "gait",
         "data": [
             {
                 "ts": 12321233233,
@@ -42,41 +62,26 @@ def post_example_data(test_client: FlaskClient):
     response = test_client.post('/test/debug/accel', json=example_json)
     return response
 
-def test_posting_data(test_client: FlaskClient):
-    """
-    GIVEN a Flask test client
-    WHEN posting example acceleration data
-    THEN the data is saved successfully
-    
-    Args:
-        test_client: Flask test client used to send requests to the application.
-    """
-    # Send example data and verify response
-    response = post_example_data(test_client)
-    assert response.status_code == 200
-    
-    # Parse and verify success JSON response
-    json_response = response.get_json()
-    assert json_response["status"] == "success"
-    assert json_response["message"] == "Data saved"
-    
-    # Verify that the data file was created
-    filename = json_response["filename"]
-    files = os.listdir(RESULTS_DIR)
-    assert filename in files
-
 def test_getting_data(test_client: FlaskClient):
     """
     GIVEN a Flask test client
     WHEN adding data, then requesting the acceleration data archive
-    THEN a ZIP file containing the data is returned
+    THEN the data is properly saved and returned.
     
     Args:
         test_client: Flask test client used to send requests to the application.
     """
-    # Ensure there is at least one file to zip
     post_example_data(test_client)
     response = test_client.get('/test/debug/accel')
     assert response.status_code == 200
-    assert response.headers['Content-Type'] == 'application/zip'
-    assert 'attachment; filename=accel_data_archive.zip' in response.headers['Content-Disposition']
+    assert response.is_json
+    
+    data = response.get_json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert data[0]["assessmentID"] == 1
+    assert data[0]["stage"] == "gait"
+    assert len(data[0]["data"]) == 1
+    assert data[0]["data"][0]["x"] == 1
+    assert data[0]["data"][0]["y"] == 1
+    assert data[0]["data"][0]["z"] == 1

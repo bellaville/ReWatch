@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, session, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 import time, random
-from .models import PatientAssessment
-from . import db
+from app.models import PatientAssessment
+from app.db import db
 
 memory_test = Blueprint('memory_test', __name__)
 
