@@ -17,14 +17,14 @@ Docker is required for development of this project, or the creation of a third p
 This projects requires the use of a Redis Key-Value store that is to be used by celery. See below for how to set it up it within the project. To start it, use `web/docker-compose.dev.yaml` to create the required docker containers, as well as setting the below `REDIS_URL` to `redis://redis:6379/0`. See below for relevant windows commands:
 ```
 cd web
-docker compose up -d
 $env:REDIS_URL = "redis://redis:6379/0"
+docker compose -f docker-compose.dev.yaml up -d
 ```
 For Mac users (macOS does not recognize redis as a hostname):
 ```
 cd web
-docker compose -f docker-compose.dev.yaml up -d
 export REDIS_URL="redis://127.0.0.1:6379/0"
+docker compose -f docker-compose.dev.yaml up -d
 ```
 
 ### Env. Vars
@@ -33,6 +33,14 @@ export REDIS_URL="redis://127.0.0.1:6379/0"
 - `FLASK_ENV`: Either `testing` or `production`
 
 An `EnvironmentError` indicates that one or more of these haven't been set
+
+### Running Tests
+
+To run web tests, use the following commands:
+```
+cd web
+python -m pytest
+```
 
 ## Web Libraries & Frameworks
 
