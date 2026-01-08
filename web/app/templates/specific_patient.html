@@ -34,7 +34,7 @@
                             <th>Date</th>
                             <th>Test Type</th>
                             <th>Score</th>
-                            <th>Reaction Time</th>
+                            <th>Avg Reaction Time</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -59,16 +59,85 @@
     </div>
 
      <!-- Charts -->
-    <div class="row mt-5">
-        <div class="col-12">
-            <div class="border rounded p-5 text-center text-muted">
-                <p class="mb-0">
-                    charts
-                </p>
+    <div class="container mt-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title mb-4 text-center">Assessment Charts</h3>
+                <div class="row">
+                    <!-- Memory Score Chart-->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="mb-2">Memory Scores Over Time</h5>
+                                <canvas id="scoreChart" style="max-height:400px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                 <!-- Reaction Time Chart-->
+                 <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="mb-2">Reaction Times Over Time</h5>
+                            <canvas id="reactionChart" style="max-height:400px;"></canvas>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-
-    
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Need to convert Flask lists to JS arrays
+    const labels = {{ chart_labels|tojson }};
+    const scores = {{ chart_scores|tojson }};
+    const reactionTimes = {{ chart_reaction_times|tojson }};
+
+    // Memory chart
+    new Chart(document.getElementById('scoreChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Memory Score(s)',
+                data: scores,
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: { y: { title: { display: true, text: 'Score' }}}
+        }
+    });
+
+    // Reaction Time chart
+    new Chart(document.getElementById('reactionChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Reaction Time (s)',
+                data: reactionTimes,
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: { y: { title: { display: true, text: 'Time (s)' }}}
+        }
+    });
+
+</script>
 {% endblock %}

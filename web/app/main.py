@@ -35,7 +35,13 @@ def patient_details():
         # Show completed tests if any
         results = PatientAssessment.query.filter_by(patient_id=patient_id)\
                                          .order_by(PatientAssessment.date_taken.desc()).all()
-        return render_template('specific_patient.html', name=current_user.name, results=results)
+        
+        # Create the dataset from the memory test for charts
+        chart_labels = [r.date_taken.strftime("%Y-%m-%d") for r in results]
+        chart_scores = [r.score for r in results]
+        chart_reaction_times = [r.avg_reaction_time for r in results]
+
+        return render_template('specific_patient.html', name=current_user.name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_reaction_times=chart_reaction_times)
 
 @main.route('/assessments', methods=['GET', 'POST'])
 @login_required
