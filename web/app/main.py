@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, request, session, redirect, url_fo
 from flask_login import login_required, current_user
 
 from app.decorators import roles_required
-from app.models import Role, PatientAssessment
+from app.models import Role, PatientAssessment, Patient, User
+from app.utilities.utils import get_patient_assessment_data
 
 main = Blueprint('main', __name__)
 
@@ -27,19 +28,22 @@ def patient_details():
             users = patient_role.users.all()
         else:
             users = []
+
+        patient_id = request.args.get('patient_id', type=int)
+
+        if patient_id:
+            results, chart_labels, chart_scores, chart_reaction_times = get_patient_assessment_data(patient_id)
+            patient_user = User.query.join(Patient).filter(Patient.id == patient_id).first()
+            patient_name = patient_user.name if patient_user else "Unknown"
+            return render_template('specific_patient.html', name=patient_name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_reaction_times=chart_reaction_times)
+        
         return render_template('patient_details.html', users=users)
     
     # If patient, redirect to specific patient page
     if current_user.patient_profile:
         patient_id = current_user.patient_profile.id
         # Show completed tests if any
-        results = PatientAssessment.query.filter_by(patient_id=patient_id)\
-                                         .order_by(PatientAssessment.date_taken.desc()).all()
-        
-        # Create the dataset from the memory test for charts
-        chart_labels = [r.date_taken.strftime("%Y-%m-%d") for r in results]
-        chart_scores = [r.score for r in results]
-        chart_reaction_times = [r.avg_reaction_time for r in results]
+        results, chart_labels, chart_scores, chart_reaction_times = get_patient_assessment_data(patient_id)
 
         return render_template('specific_patient.html', name=current_user.name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_reaction_times=chart_reaction_times)
 
