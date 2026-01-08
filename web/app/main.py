@@ -17,17 +17,25 @@ def profile():
 
 @main.route('/patient_details')
 @login_required
-@roles_required('Physician')
 def patient_details():
-    # Find the Role object for 'Patient'
-    patient_role = Role.query.filter_by(name='Patient').first()
+    if current_user.has_role('Physician'):
+        # Find the Role object for 'Patient'
+        patient_role = Role.query.filter_by(name='Patient').first()
 
-    if patient_role:
-        # Get all users that have this role
-        users = patient_role.users.all()
-    else:
-        users = []
-    return render_template('patient_details.html', users=users)
+        if patient_role:
+            # Get all users that have this role
+            users = patient_role.users.all()
+        else:
+            users = []
+        return render_template('patient_details.html', users=users)
+    
+    # If patient, redirect to specific patient page
+    if current_user.patient_profile:
+        patient_id = current_user.patient_profile.id
+        # Show completed tests if any
+        results = PatientAssessment.query.filter_by(patient_id=patient_id)\
+                                         .order_by(PatientAssessment.date_taken.desc()).all()
+        return render_template('specific_patient.html', name=current_user.name, results=results)
 
 @main.route('/assessments', methods=['GET', 'POST'])
 @login_required
