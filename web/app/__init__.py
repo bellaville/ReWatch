@@ -2,6 +2,7 @@ from flask import Flask, render_template
 from flask_login import LoginManager
 
 from app.db import db
+from app.config.environment import *  # Import environment variable checks
 
 def create_app(test_config=False):
     # initialize flask app
