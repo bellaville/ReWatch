@@ -3,8 +3,13 @@ from zoneinfo import ZoneInfo
 import enum
 from typing import Any
 from flask_login import UserMixin
+from sqlalchemy import event
+from sqlalchemy.orm import Session
 
 from app.db import db
+
+PATIENT_ROLE = "Patient"
+PHYSICIAN_ROLE = "Physician"
 
 # association table for users and roles (many to many)
 roles_users = db.Table('roles_users',
@@ -153,3 +158,24 @@ class StageDataPoint(db.Model):
     x = db.Column(db.Float)
     y = db.Column(db.Float)
     z = db.Column(db.Float)
+
+########################################### event listeners ##############################################
+
+# listens for new users and adds patient or physician profile based on user role
+@event.listens_for(Session, "after_flush")
+def create_profiles_for_new_users(session, flush_context):
+    # go through instances that were added in this flush
+    for obj in session.new:
+        if isinstance(obj, User):
+            # role names for this user (assuming roles are already attached)
+            role_names = {r.name for r in obj.roles}
+
+            # create patient profile if user has patient role and no profile yet
+            if PATIENT_ROLE in role_names and obj.patient_profile is None:
+                patient = Patient(user=obj)
+                session.add(patient)
+
+            # create physician profile if user has physician role and no profile yet
+            if PHYSICIAN_ROLE in role_names and obj.physician_profile is None:
+                physician = Physician(user=obj)
+                session.add(physician)
