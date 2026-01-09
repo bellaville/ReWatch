@@ -31,7 +31,7 @@
             {% if results %}
                 {% for r in results %}
                     <tr>
-                        <td>{{ r.date_taken.strftime("%Y-%m-%d %H:%M") }}</td>
+                        <td>{{ r.local_date_taken.strftime("%Y-%m-%d %H:%M") }}</td>
                         <td>Short-Term Memory Test</td>
                         <td>{{ r.score }}/{{ r.total_rounds }}</td>
                         <td>{{ "%.2f"|format(r.avg_reaction_time) }}s</td>
