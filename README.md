@@ -5,3 +5,45 @@ efficiently provide an indication of whether or not a patient shows any signs of
 The web platform is where patients can register, carry out tests involving the smartwatch, and view test results and notes from their physician.
 
 Physicians can register on ReWatchWeb, as well as view patient test data, assing tests to patients, and make notes on patient results.
+
+## Setup
+
+### Requirements
+
+Docker is required for development of this project, or the creation of a third party celery worker with a redis instance.
+
+### Third party apps
+
+This projects requires the use of a Redis Key-Value store that is to be used by celery. See below for how to set it up it within the project. To start it, use `web/docker-compose.dev.yaml` to create the required docker containers, as well as setting the below `REDIS_URL` to `redis://redis:6379/0`. See below for relevant windows commands:
+```
+cd web
+$env:REDIS_URL = "redis://localhost:6379/0"
+docker compose -f docker-compose.dev.yaml up -d
+```
+For Mac users (macOS does not recognize redis as a hostname):
+```
+cd web
+export REDIS_URL="redis://127.0.0.1:6379/0"
+docker compose -f docker-compose.dev.yaml up -d
+```
+
+### Env. Vars
+
+- `REDIS_URL`: URL For the Redis instance being utilized
+- `FLASK_ENV`: Either `testing` or `production`
+
+An `EnvironmentError` indicates that one or more of these haven't been set
+
+### Running Tests
+
+To run web tests, use the following commands:
+```
+cd web
+python -m pytest
+```
+
+## Web Libraries & Frameworks
+
+### Celery
+
+Celery is for the queuing and processing of background tasks. In this project, it will be a seperate thread working on data processing as required by the backend. These tasks can be worked on asynchronously and results can be returned as they are readied. This queue is maintained through a Redis instance.

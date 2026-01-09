@@ -35,6 +35,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+
+    env:
+      REDIS_URL: redis://localhost:6379
+      FLASK_ENV: testing
+
     steps:
       - uses: actions/checkout@v4
 
@@ -51,8 +61,18 @@ jobs:
       - name: Install dependencies
         run: pip install -r web/requirements.txt
 
-      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
+      - name: Make run_celery.sh executable
+        run: chmod +x web/run_celery.sh
 
+      - name: Test with PyTest
+        run: |
+          cd web
+          ./run_celery.sh &
+          CELERY_PID=$!
+          trap "kill $CELERY_PID" EXIT
+          sleep 10  # Give Celery time to start
+          python -m pytest tests/
+          
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
