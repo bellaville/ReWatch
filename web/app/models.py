@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import enum
 from typing import Any
 from flask_login import UserMixin
@@ -65,6 +66,25 @@ class PatientAssessment(db.Model):
 
     # set relationship with Patient so that we can access the associated Patient object from PatientAssessment
     patient = db.relationship('Patient', backref='assessments')
+
+    @property
+    def local_date_taken(self):
+        """
+        Convert stored UTC timestamp to America/Toronto time
+        """
+        if not self.date_taken:
+            return None
+        
+        eastern = ZoneInfo("America/Toronto")
+
+        # if timezone not identifiedd, assume UTC
+        if self.date_taken.tzinfo is None:
+            utc_dt = self.date_taken.replace(tzinfo=timezone.utc)
+        else:
+            utc_dt = self.date_taken
+
+        return utc_dt.astimezone(eastern)
+
 
 class AssessmentStage(enum.Enum):
     GAIT = "gait"

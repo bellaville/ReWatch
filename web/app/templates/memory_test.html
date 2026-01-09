@@ -45,6 +45,24 @@
     const testFrame = document.getElementById('test-frame');
     const alertBox = yesBtn ? yesBtn.parentElement : null;
 
+    // Handle leaving via back button
+    // Replace current history entry with a custom state object, {page:1}
+    // so the page exists in the stack
+    history.replaceState({page:1}, null, location.href);
+    // Push a dummy state {page:2} on top so the back button triggers popstate
+    history.pushState({page:2}, null, location.href);
+
+    window.addEventListener('popstate', function (event) {
+        const goBack = confirm("Warning: your progress will be lost if you go back. Do you wish to continue?");
+        if (goBack) {
+            // Redirect to main assessments page
+            window.location.href = "{{ url_for('main.assessments') }}";
+        } else {
+            // User cancelled: push dummy state again to block back navigation
+            history.pushState({page:2}, null, location.href);
+        }
+    })
+
     if (yesBtn) {
         yesBtn.addEventListener('click', function() {
             // hide instructions
