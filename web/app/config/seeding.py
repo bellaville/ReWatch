@@ -1,7 +1,9 @@
 from werkzeug.security import generate_password_hash
 
-from app.models import Role, User, Patient, Physician
+from app.models import Role, User, Patient, Physician, PatientAssessment
 from app.db import db
+import random
+from datetime import datetime, timedelta, timezone
 
 
 def seed_roles():
@@ -77,3 +79,36 @@ def seed_users():
 
     db.session.commit()
     print("Dummy users seeded successfully (duplicates skipped).")
+
+
+def seed_patient_assessments():
+    """
+    Seeds the database with PatientAssessment data for each seeded patient
+    """
+
+    patients = Patient.query.all()
+
+    if not patients:
+        print("No patients found. Seed users first.")
+        return
+    
+    for patient in patients:
+        # Skip if patient already has assessments
+        if patient.assessments:
+            continue
+
+        # Create 3-6 assessments per patient
+        num_assessments = random.randint(3, 6)
+
+        for i in range(num_assessments):
+            assessment = PatientAssessment(
+                patient_id=patient.id,
+                score=random.randint(6,10),
+                total_rounds=10,
+                avg_reaction_time=round(random.uniform(0.6, 1.5),2),
+                date_taken=datetime.now(timezone.utc) - timedelta(days=(num_assessments-i)*3)
+            )
+            db.session.add(assessment)
+    
+    db.session.commit()
+    print("Patient assessments seeded successfully!")
