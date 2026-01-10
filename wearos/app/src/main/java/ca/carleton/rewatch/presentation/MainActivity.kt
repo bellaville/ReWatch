@@ -12,6 +12,9 @@ import android.hardware.SensorEventListener
 import android.util.Log
 import ca.carleton.rewatch.dataclasses.SensorReading
 
+/**
+ * Main Activity that gathers accelerometer data.
+ */
 class MainActivity : ComponentActivity() {
 
     private lateinit var status : TextView
