@@ -1,0 +1,14 @@
+FROM python:3.14-slim
+
+WORKDIR /usr/src/app
+
+COPY ./requirements.txt .
+
+RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
+
+COPY . .
+
+ARG REDIS_URL
+ENV REDIS_URL=${REDIS_URL}
+
+CMD ["celery","-A","celery_worker.celery","worker","--loglevel=debug"]
