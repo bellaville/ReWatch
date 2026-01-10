@@ -9,7 +9,7 @@
     {% with messages = get_flashed_messages(category_filter=["memory_test"]) %}
         {% if messages %}
             <div class="alert alert-info alert-dismissible fade show" role="alert">
-                {{ messages[0] }}
+                {{ messages[0]|safe }}
                 <hr>
                 <button id="confirm-no" class="btn btn-danger">No</button>
                 <button id="confirm-yes" class="btn btn-success">Yes</button>
@@ -31,7 +31,7 @@
         </div>
 
         {% if buttons_enabled %}
-            <form method="POST" action="{{ url_for('main.memory_test') }}">
+            <form method="POST" action="{{ url_for('memory_test.memory_test_view') }}">
                 <button type="submit" name="choice" value="Same" class="btn btn-success btn-lg">Same</button>
                 <button type="submit" name="choice" value="Different" class="btn btn-danger btn-lg">Different</button>
             </form>
@@ -45,6 +45,24 @@
     const testFrame = document.getElementById('test-frame');
     const alertBox = yesBtn ? yesBtn.parentElement : null;
 
+    // Handle leaving via back button
+    // Replace current history entry with a custom state object, {page:1}
+    // so the page exists in the stack
+    history.replaceState({page:1}, null, location.href);
+    // Push a dummy state {page:2} on top so the back button triggers popstate
+    history.pushState({page:2}, null, location.href);
+
+    window.addEventListener('popstate', function (event) {
+        const goBack = confirm("Warning: your progress will be lost if you go back. Do you wish to continue?");
+        if (goBack) {
+            // Redirect to main assessments page
+            window.location.href = "{{ url_for('main.assessments') }}";
+        } else {
+            // User cancelled: push dummy state again to block back navigation
+            history.pushState({page:2}, null, location.href);
+        }
+    })
+
     if (yesBtn) {
         yesBtn.addEventListener('click', function() {
             // hide instructions
@@ -52,7 +70,7 @@
             // reveal memory test frame
             testFrame.style.display = 'block';
             // start memorization phase (5s pause)
-            window.location.href = "{{ url_for('main.memory_memorize') }}";
+            window.location.href = "{{ url_for('memory_test.memory_memorize') }}";
         });
     }
 

@@ -1,0 +1,50 @@
+name: Test on Pull Request
+
+env:
+  PYTHON_VERSION: '3.14'
+
+on:
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+
+    env:
+      REDIS_URL: redis://localhost:6379
+      FLASK_ENV: testing
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python version
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -r web/requirements.txt
+
+      - name: Make run_celery.sh executable
+        run: chmod +x web/run_celery.sh
+
+
+      - name: Test with PyTest
+        run: |
+          cd web
+          ./run_celery.sh &
+          CELERY_PID=$!
+          trap "kill $CELERY_PID" EXIT
+          sleep 10  # Give Celery time to start
+          python -m pytest tests/

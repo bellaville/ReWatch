@@ -1,10 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from .models import User
-from . import db
 
-auth = Blueprint('auth', __name__)
+from app.models import User, Role
+from app.db import db
+
+auth = Blueprint('auth', __name__, url_prefix='/auth')
 
 @auth.route('/login')
 def login():
@@ -42,6 +43,14 @@ def signup_post():
         return redirect(url_for('auth.signup'))
 
     new_user = User(email=email, name=name, password=generate_password_hash(password))
+
+    role = Role.query.filter_by(id=int(request.form['options'])).first()
+    if role:
+        new_user.roles.append(role)
+    else:
+        msg = "Invalid role selection"
+        return redirect(url_for('auth.signup'), msg=msg)
+
     db.session.add(new_user)
     db.session.commit()
 

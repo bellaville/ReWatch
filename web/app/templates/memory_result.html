@@ -2,11 +2,23 @@
 {% block content %}
 <div class="container text-center mt-5">
   <h2>Test Completed</h2>
-  <p><strong>Score:</strong> {{ score }}/{{ total_score }}</p>
+  <p><strong>Score:</strong> {{ score }}/{{ total_rounds }}</p>
   <p><strong>Average Reaction Time:</strong> {{ avg_reaction | round(2) }}s</p>
 
   <a href="{{ url_for('main.assessments') }}" class="btn btn-primary mt-3">
     Back to Assessments
   </a>
 </div>
+<script>
+  // Handle leaving via back button
+  // Replace current entry with results page state
+  history.replaceState({page:1}, null, location.href);
+  // Push dummy state to block back button
+  history.pushState({page:2}, null, location.href);
+
+  window.addEventListener('popstate', function () {
+      // Redirect to main assessments page
+      window.location.href = "{{ url_for('main.assessments') }}";
+  });
+</script>
 {% endblock %}

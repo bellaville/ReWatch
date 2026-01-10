@@ -3,4 +3,7 @@
 {% block content %}
 <h1>Profile</h1>
     <p>Welcome, {{ name }}!</p>
+    <p>Role: {% for role in roles%}
+                    {{role.name}}
+           {% endfor %} <br><br></p>
 {% endblock %}
