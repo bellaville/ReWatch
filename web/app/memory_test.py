@@ -103,7 +103,7 @@ def start_memory_test():
          "<strong>THIS IS NOT A MEDICAL DIAGNOSIS!</strong><br><br>"
         f"You will see a set of shapes to memorize for {memorization_time} seconds. "
         "After that, a new set will appear. Decide if the shapes are the same or different. "
-        f"Your reaction time will be recorded and there will be {num_rounds} rounds. Are you ready to start?",
+        f"Try to respond as quickly as possible as your reaction time will be recorded. There will be {num_rounds} rounds. Are you ready to start?",
         "memory_test"
     )
 
@@ -171,8 +171,9 @@ def memory_test_view():
     if request.method == 'POST':
         # handle user's answer
         choice = request.form.get('choice')
-        reaction_time = time.time() - session['start_time']
-        session['reaction_times'].append(reaction_time)
+        reaction_time = request.form.get('reaction_time', type=float)
+        if reaction_time is not None:
+            session['reaction_times'].append(reaction_time)
 
         prev_shapes= session['previous_shapes']
         prev_colours = session['previous_colours']
@@ -215,7 +216,6 @@ def memory_test_view():
     session['current_shapes'] = current_shapes
     session['current_colours'] = current_colours
     session['shape_positions'] = shape_positions
-    session['start_time'] = time.time()
 
     return render_template(
         'memory_test.html',
