@@ -81,12 +81,23 @@
         });
     }
     // Capture more accurate reaction time using performance.now()
-    let startTime = performance.now();
-    document.querySelectorAll("button[name='choice'").forEach(button => {
-        button.addEventListener("click", () => {
-            const reactionTime = (performance.now() - startTime); // milliseconds
-            document.getElementById("reaction_time").value = reactionTime.toFixed(2);
-        });
-    });    
+    let startTime = null;
+    window.addEventListener("DOMContentLoaded", () => {
+        const choiceButtons = document.querySelectorAll("button[name='choice']");
+
+        // Begin recording time once the choice buttons become available to user
+        if (choiceButtons.length > 0){
+            startTime = performance.now();
+
+            choiceButtons.forEach(button => {
+                button.addEventListener("click", () => {
+                    if (startTime !== null) {
+                        const reactionTime = performance.now() - startTime;
+                        document.getElementById("reaction_time").value = reactionTime.toFixed(2);
+                    }
+                });
+            });
+        }
+    });
 </script>
 {% endblock %}
