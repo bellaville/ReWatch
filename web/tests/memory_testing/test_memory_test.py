@@ -1,5 +1,4 @@
 import pytest
-import time
 
 from app.models import User, Patient, Physician, PatientAssessment, Role
 from app.db import db
@@ -120,18 +119,20 @@ def test_memory_test_post_scoring(test_client):
         init_memory_test_session(sess, patient_id=patient.id)
         sess["previous_shapes"] = ["circle", "square"]
         sess["current_shapes"] = ["circle", "square"]   # Same
-        sess["reaction_times"] = []
-        sess["start_time"] = time.time() - 0.5  # simulate reaction time
 
     response = test_client.post(
-        "/assessments/memory_test/response",
-        data={"choice": "Same"}
+        "assessments/memory_test/response",
+        data={
+            "choice": "Same",
+            "reaction_time": 1200.34 # ms for performance.now()
+        }
     )
 
     assert response.status_code == 302  # redirect to next memorize phase
 
     with test_client.session_transaction() as sess:
         assert len(sess["reaction_times"]) == 1
+        assert sess["reaction_times"] == [1200.34]
         assert sess["score"] == 1   # Correct answer
         assert sess["round"] == 1
 
@@ -160,8 +161,6 @@ def test_memory_test_get_generates_comparison_set(test_client):
         assert "current_shapes" in sess
         assert "shape_positions" in sess
         assert "current_colours" in sess
-        assert "start_time" in sess
-
 
 def test_saving_patient_assessment(test_client):
     """GIVEN a patient user
@@ -229,7 +228,6 @@ def test_memory_test_hard_mode_correct_match(test_client):
         sess["previous_colours"] = ["blue", "red"]
         sess["current_shapes"] = ["circle", "square"]
         sess["current_colours"] = ["blue", "red"]
-        sess["start_time"] = time.time() - 0.3
 
     response = test_client.post(
         "/assessments/memory_test/response",
@@ -257,7 +255,6 @@ def test_memory_test_hard_mode_wrong_colour(test_client):
         sess["previous_colours"] = ["blue", "red"]
         sess["current_shapes"] = ["circle", "square"]
         sess["current_colours"] = ["green", "red"]  # one colour differs
-        sess["start_time"] = time.time() - 0.4
 
     response = test_client.post(
         "/assessments/memory_test/response",
@@ -285,7 +282,6 @@ def test_memory_test_hard_mode_wrong_shape(test_client):
         sess["previous_colours"] = ["blue", "red"]
         sess["current_shapes"] = ["circle", "triangle"]  # shape differs
         sess["current_colours"] = ["blue", "red"]
-        sess["start_time"] = time.time() - 0.2
 
     response = test_client.post(
         "/assessments/memory_test/response",
@@ -313,7 +309,6 @@ def test_memory_test_hard_mode_different_choice_correct(test_client):
         sess["previous_colours"] = ["blue", "red"]
         sess["current_shapes"] = ["triangle", "star"]
         sess["current_colours"] = ["green", "yellow"]
-        sess["start_time"] = time.time() - 0.1
 
     response = test_client.post(
         "/assessments/memory_test/response",
@@ -344,7 +339,7 @@ def test_memory_test_full_run_easy_mode(test_client):
     with patch("app.memory_test.random.sample") as mock_sample:
         mock_sample.return_value = ["circle", "square", "triangle"]
 
-        for _ in range(2):
+        for i in range(2):
             # memorize phase
             response = test_client.get("/assessments/memory_test/memorize")
             assert response.status_code == 200
@@ -353,10 +348,15 @@ def test_memory_test_full_run_easy_mode(test_client):
             response = test_client.get("/assessments/memory_test/response")
             assert response.status_code == 200
 
-            # submitn correct answer
-            response = test_client.post("/assessments/memory_test/response", data={"choice": "Same"})
-            assert response.status_code == 302 # "found", redirects user to another page
-
+            response = test_client.post(
+                "/assessments/memory_test/response",
+                data={
+                    "choice": "Same",
+                    "reaction_time": 1000 + i * 100  # simulate different RTs for each round
+                }
+            )
+            assert response.status_code == 302
+            
     with test_client.session_transaction() as sess:
         assert sess["round"] == 2
         assert sess["score"] == 2
@@ -386,17 +386,91 @@ def test_memory_test_full_run_hard_mode(test_client):
         mock_choice.return_value = "red" # just make all shapes red to keep it simple
         # since we already covered testing for colour correctness in previous test cases
 
-        for _ in range(2):
+        for i in range(2):
             response = test_client.get("/assessments/memory_test/memorize")
             assert response.status_code == 200
 
             response = test_client.get("/assessments/memory_test/response")
             assert response.status_code == 200
 
-            response = test_client.post("/assessments/memory_test/response", data={"choice": "Same"})
+            response = test_client.post(
+                "/assessments/memory_test/response",
+                data={
+                    "choice": "Same",
+                    "reaction_time": 1000 + i * 100  # simulate different RTs for each round
+                }
+            )
             assert response.status_code == 302
         
     with test_client.session_transaction() as sess:
         assert sess["round"] == 2
         assert sess["score"] == 2
         assert len(sess["reaction_times"]) == 2
+
+def test_reaction_time_is_stored_in_milliseconds(test_client):
+    """
+    GIVEN a user submitting a reaction time from performance.now()
+    WHEN the response is posted
+    THEN the reaction time is stored in milliseconds
+    """
+    user, patient = create_patient_user("RTTest", "rt@example.com")
+    login(test_client, user)
+
+    with test_client.session_transaction() as sess:
+        init_memory_test_session(sess, patient_id=patient.id)
+        sess["previous_shapes"] = ["circle"]
+        sess["previous_colours"] = ["blue"]
+        sess["current_shapes"] = ["circle"]
+        sess["current_colours"] = ["blue"]
+
+    response = test_client.post(
+        "/assessments/memory_test/response",
+        data={
+            "choice": "Same",
+            "reaction_time": 1234.75
+        }
+    )
+    assert response.status_code == 302
+    with test_client.session_transaction() as sess:
+        assert sess["reaction_times"][0] == 1234.75
+
+def test_multiple_reaction_times_append_correctly(test_client):
+    """
+    GIVEN multiple rounds with reaction times
+    WHEN the user submits responses
+    THEN reaction times are appended in order
+    """
+    user, patient = create_patient_user("MultiRT", "multirt@example.com")
+    login(test_client, user)
+
+    with test_client.session_transaction() as sess:
+        init_memory_test_session(sess, patient_id = patient.id)
+        sess["previous_shapes"] = ["circle"]
+        sess["previous_colours"] = ["blue"]
+        sess["current_shapes"] = ["circle"]
+        sess["current_colours"] = ["blue"]
+
+    test_client.post(
+        "/assessments/memory_test/response",
+        data={
+            "choice": "Same",
+            "reaction_time": 999.99
+        }
+    )
+
+    with test_client.session_transaction() as sess:
+        sess["previous_shapes"] = ["square"]
+        sess["previous_colours"] = ["red"]
+        sess["current_shapes"] = ["square"]
+        sess["current_colours"] = ["red"]
+
+    test_client.post(
+        "/assessments/memory_test/response",
+        data={
+            "choice": "Same",
+            "reaction_time": 2222.22
+        }
+    )   
+
+    with test_client.session_transaction() as sess:
+        assert sess["reaction_times"] == [999.99, 2222.22]
