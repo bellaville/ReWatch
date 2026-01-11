@@ -15,8 +15,11 @@
         </thead>
         <tbody>
             {% for user in users %}
-            <tr>
-                <td>{{ user.name }}</td>
+            <tr class="position-relative">
+                <td>
+                    <a href="{{ url_for('main.patient_details', patient_id=user.patient_profile.id) }}" class="stretched-link"></a>
+                    {{ user.name }}
+                </td>
                 <td>{{ user.email }}</td>
             </tr>
             {% else %}
