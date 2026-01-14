@@ -39,7 +39,7 @@
                     </thead>
                     <tbody>
                         {% if results %}
-                            {% for r in results %}
+                            {% for r in results | reverse %}
                                 <tr>
                                     <td>{{ r.date_taken.strftime("%Y-%m-%d %H:%M") }}</td>
                                     <td>Short-Term Memory Test</td>

@@ -80,24 +80,30 @@
             window.location.href = "{{ url_for('main.assessments') }}";
         });
     }
-    // Capture more accurate reaction time using performance.now()
+    // Capture more accurate reaction time using performance.now() and requestAnimationFrame
     let startTime = null;
+
+    function startTimer(timestamp){
+        // timestamp will be provided by requestAnimationFrame
+        startTime = timestamp;
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
         const choiceButtons = document.querySelectorAll("button[name='choice']");
 
-        // Begin recording time once the choice buttons become available to user
-        if (choiceButtons.length > 0){
-            startTime = performance.now();
+        if (choiceButtons.length == 0) return;
 
-            choiceButtons.forEach(button => {
-                button.addEventListener("click", () => {
-                    if (startTime !== null) {
-                        const reactionTime = performance.now() - startTime;
-                        document.getElementById("reaction_time").value = reactionTime.toFixed(2);
-                    }
-                });
-            });
-        }
+        // Start timing on the first rendered frame
+        requestAnimationFrame(startTimer);
+        
+        choiceButtons.forEach(button => { 
+            button.addEventListener("click", () => {
+                if (startTime !== null) {
+                    const reactionTime = performance.now() - startTime;
+                    document.getElementById("reaction_time").value = reactionTime.toFixed(2);
+                }
+            })
+        })
     });
 </script>
 {% endblock %}
