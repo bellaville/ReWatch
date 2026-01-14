@@ -1,72 +1,102 @@
-/* While this template provides a good starting point for using Wear Compose, you can always
- * take a look at https://github.com/android/wear-os-samples/tree/main/ComposeStarter to find the
- * most up to date changes to the libraries and their usages.
- */
-
 package ca.carleton.rewatch.presentation
 
+import android.hardware.Sensor
+import android.hardware.SensorEvent
 import android.os.Bundle
+import android.widget.TextView
+import android.widget.ToggleButton
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.wear.compose.material.MaterialTheme
-import androidx.wear.compose.material.Text
-import androidx.wear.compose.material.TimeText
-import androidx.wear.tooling.preview.devices.WearDevices
 import ca.carleton.rewatch.R
-import ca.carleton.rewatch.presentation.theme.RewatchTheme
+import android.hardware.SensorManager
+import android.hardware.SensorEventListener
+import android.util.Log
+import ca.carleton.rewatch.dataclasses.SensorReading
 
+/**
+ * Main Activity that gathers accelerometer data.
+ */
 class MainActivity : ComponentActivity() {
+
+    private lateinit var status : TextView
+    private lateinit var accelX : TextView
+    private lateinit var accelY : TextView
+    private lateinit var accelZ : TextView
+    private lateinit var toggle : ToggleButton
+    private var isRecording: Boolean = false
+    private var recordedData = mutableListOf<SensorReading>()
+    private lateinit var sensorManager : SensorManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
-
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-        setTheme(android.R.style.Theme_DeviceDefault)
+        status = findViewById(R.id.statusText)
+        accelX = findViewById(R.id.accel_x)
+        accelY = findViewById(R.id.accel_y)
+        accelZ = findViewById(R.id.accel_z)
+        toggle = findViewById(R.id.toggle_button)
+        toggle.isEnabled = true
+        toggle.setOnClickListener {
+            toggleClick()
+        }
 
-        setContent {
-            WearApp("ReWatch")
+        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
+        val sensor : Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+        sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+        status.text = "Status: Sensor loaded"
+    }
+
+    private val listener = object : SensorEventListener {
+        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
+        }
+
+        override fun onSensorChanged(event: SensorEvent?) {
+            event?.let {
+                if (isRecording && it.sensor.type == Sensor.TYPE_LINEAR_ACCELERATION) {
+
+                    var x : Float = it.values[0]
+                    var y : Float = it.values[1]
+                    var z : Float = it.values[2]
+
+                    val reading = SensorReading(
+                        timestamp = System.currentTimeMillis(),
+                        x = x,
+                        y = y,
+                        z = z
+                    )
+
+                    recordedData.add(reading)
+
+                    accelX.text = "X: $x"
+                    accelY.text = "Y: $y"
+                    accelZ.text = "Z: $z"
+                }
+            }
         }
     }
-}
 
-@Composable
-fun WearApp(greetingName: String) {
-    RewatchTheme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colors.background),
-            contentAlignment = Alignment.Center
-        ) {
-            TimeText()
-            Greeting(greetingName = greetingName)
+    override fun onDestroy() {
+        super.onDestroy()
+        sensorManager.unregisterListener(listener)
+    }
+
+    fun toggleClick() {
+        if(!isRecording) {
+            isRecording = true
+            status.text = "Status: Recording..."
+        } else {
+            isRecording = false
+            status.text = "Status: idle..."
+            accelX.text = "X: 0"
+            accelY.text = "Y: 0"
+            accelZ.text = "Z: 0"
+            handleFinishedRecording()
         }
     }
-}
 
-@Composable
-fun Greeting(greetingName: String) {
-    Text(
-        modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colors.primary,
-        text = stringResource(R.string.hello_world, greetingName)
-    )
-}
-
-@Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
-@Composable
-fun DefaultPreview() {
-    WearApp("Welcome to ReWatch")
+    private fun handleFinishedRecording() {
+        Log.d("ReWatch", "Recording finished. Captured ${recordedData.size} data points.")
+        Log.v("ReWatch", "Recording finished. Captured Data:\n${recordedData}")
+        recordedData.clear()
+    }
 }
