@@ -97,7 +97,7 @@
         requestAnimationFrame(startTimer);
         
         choiceButtons.forEach(button => { 
-            button.addEventListener("click", () => {
+            button.addEventListener("pointerdown", () => {
                 if (startTime !== null) {
                     const reactionTime = performance.now() - startTime;
                     document.getElementById("reaction_time").value = reactionTime.toFixed(2);
