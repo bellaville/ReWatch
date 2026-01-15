@@ -1,0 +1,1 @@
+from app.celery_tasks.peak_identification import identify_peaks
