@@ -236,6 +236,7 @@ def memory_result():
     avg_reaction = sum(session.get('reaction_times', [])) / max(len(session.get('reaction_times', [])), 1)
     score = session.get('score', 0)
     total_rounds = session.get('num_rounds', 5)
+    reaction_times = session.get('reaction_times')
 
     # use the patient ID stored in the session (set by the physician selecting the patient)
     patient_id = session.get('test_patient_id')
@@ -251,6 +252,7 @@ def memory_result():
             score=score,
             total_rounds=total_rounds,
             avg_reaction_time=avg_reaction,
+            reaction_times=reaction_times,
     )
     db.session.add(result)
     db.session.commit()

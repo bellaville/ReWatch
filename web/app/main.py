@@ -33,10 +33,10 @@ def patient_details():
         patient_id = request.args.get('patient_id', type=int)
 
         if patient_id:
-            results, chart_labels, chart_scores, chart_reaction_times = get_patient_assessment_data(patient_id)
+            results, chart_labels, chart_scores, chart_avg_reactions, all_reaction_times = get_patient_assessment_data(patient_id)
             patient_user = User.query.join(Patient).filter(Patient.id == patient_id).first()
             patient_name = patient_user.name if patient_user else "Unknown"
-            return render_template('specific_patient.html', name=patient_name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_reaction_times=chart_reaction_times)
+            return render_template('specific_patient.html', name=patient_name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_avg_reactions=chart_avg_reactions, all_reaction_times=all_reaction_times)
         
         return render_template('patient_details.html', users=users)
     
@@ -44,9 +44,9 @@ def patient_details():
     if current_user.patient_profile:
         patient_id = current_user.patient_profile.id
         # Show completed tests if any
-        results, chart_labels, chart_scores, chart_reaction_times = get_patient_assessment_data(patient_id)
+        results, chart_labels, chart_scores, chart_avg_reactions, all_reaction_times = get_patient_assessment_data(patient_id)
 
-        return render_template('specific_patient.html', name=current_user.name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_reaction_times=chart_reaction_times)
+        return render_template('specific_patient.html', name=current_user.name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_avg_reactions=chart_avg_reactions, all_reaction_times=all_reaction_times)
 
 @main.route('/assessments', methods=['GET', 'POST'])
 @login_required

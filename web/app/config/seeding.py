@@ -101,12 +101,17 @@ def seed_patient_assessments():
         num_assessments = random.randint(3, 6)
 
         for i in range(num_assessments):
+            reaction_times = []
+            for u in range(10):
+                reaction_times.append(round(random.uniform(920, 4200), 2))
+
             assessment = PatientAssessment(
                 patient_id=patient.id,
                 score=random.randint(6,10),
                 total_rounds=10,
-                avg_reaction_time=round(random.uniform(920, 4200)),
-                date_taken=datetime.now(timezone.utc) - timedelta(days=(num_assessments-i)*3)
+                avg_reaction_time=round(sum(reaction_times)/10, 2),
+                date_taken=datetime.now(timezone.utc) - timedelta(days=(num_assessments-i)*3),
+                reaction_times=reaction_times,
             )
             db.session.add(assessment)
     

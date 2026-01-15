@@ -93,7 +93,8 @@
     // Need to convert Flask lists to JS arrays
     const labels = {{ chart_labels|tojson }};
     const scores = {{ chart_scores|tojson }};
-    const reactionTimes = {{ chart_reaction_times|tojson }};
+    const avgReactions = {{ chart_avg_reactions|tojson }};
+    const allReactions = {{ all_reaction_times|tojson  }}
 
     // Memory chart
     new Chart(document.getElementById('scoreChart'), {
@@ -119,16 +120,25 @@
 
     // Reaction Time chart
     new Chart(document.getElementById('reactionChart'), {
-        type: 'line',
+        type: 'scatter',
         data: {
             labels: labels,
-            datasets: [{
-                label: 'Reaction Time (ms)',
-                data: reactionTimes,
-                borderColor: 'rgb(54, 162, 235)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                tension: 0.3
-            }]
+            datasets: [
+                {
+                    label: 'Average Reaction Time (ms)',
+                    data: avgReactions,
+                    borderColor: 'rgb(54, 162, 235)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    tension: 0.3
+                },
+                {
+                    label: 'Reaction Time (ms)',
+                    data: allReactions,
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.3
+                }
+            ]
         },
         options: {
             responsive: true,

@@ -3,6 +3,7 @@ from zoneinfo import ZoneInfo
 import enum
 from typing import Any
 from flask_login import UserMixin
+from sqlalchemy import JSON
 
 from app.db import db
 
@@ -63,6 +64,7 @@ class PatientAssessment(db.Model):
     avg_reaction_time = db.Column(db.Float)
     total_rounds = db.Column(db.Integer)
     date_taken = db.Column(db.DateTime, default=db.func.current_timestamp()) # track when test was completed
+    reaction_times = db.Column(JSON) # store reaction times as a list
 
     # set relationship with Patient so that we can access the associated Patient object from PatientAssessment
     patient = db.relationship('Patient', backref='assessments')
