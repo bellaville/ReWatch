@@ -4,7 +4,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from app.decorators import roles_required
 from app.models import Role, PatientAssessment, Patient, User
-from app.utilities.utils import get_patient_assessment_data
+from app.utilities.utils import get_patient_assessment_data, get_patient_information
 from app.db import db
 
 main = Blueprint('main', __name__)
@@ -21,16 +21,18 @@ def profile():
         age = request.form['age']
         height = request.form['height']
         gender = request.form['gender']
+        weight = request.form['weight']
 
         patient_to_update = Patient.query.filter_by(user_id=current_user.id).first()
 
         patient_to_update.age = age
         patient_to_update.height = height
         patient_to_update.gender = gender
+        patient_to_update.weight = weight
 
         db.session.commit()
 
-        return render_template('profile.html', name=current_user.name, roles=current_user.roles, age=age, height=height, gender=gender, patient=True)
+        return render_template('profile.html', name=current_user.name, roles=current_user.roles, age=age, height=height, gender=gender, weight=weight, patient=True)
 
 
     else:
@@ -41,7 +43,8 @@ def profile():
             age = Patient.query.filter_by(user_id=current_user.id).first().age
             height = Patient.query.filter_by(user_id=current_user.id).first().height
             gender = Patient.query.filter_by(user_id=current_user.id).first().gender
-            return render_template('profile.html', name=current_user.name, roles=current_user.roles, age=age, height=height, gender=gender, patient=True)
+            weight = Patient.query.filter_by(user_id=current_user.id).first().weight
+            return render_template('profile.html', name=current_user.name, roles=current_user.roles, age=age, height=height, gender=gender, weight=weight, patient=True)
         else:
             return render_template('profile.html', name=current_user.name, roles=current_user.roles)
 
@@ -64,17 +67,22 @@ def patient_details():
             results, chart_labels, chart_scores, chart_reaction_times = get_patient_assessment_data(patient_id)
             patient_user = User.query.join(Patient).filter(Patient.id == patient_id).first()
             patient_name = patient_user.name if patient_user else "Unknown"
-            return render_template('specific_patient.html', name=patient_name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_reaction_times=chart_reaction_times)
+            age, height, gender, weight = get_patient_information(patient_id)
+
+            return render_template('specific_patient.html', name=patient_name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_reaction_times=chart_reaction_times, age=age, gender=gender, height=height, weight=weight)
         
         return render_template('patient_details.html', users=users)
     
     # If patient, redirect to specific patient page
     if current_user.patient_profile:
         patient_id = current_user.patient_profile.id
+
+        age, height, gender, weight = get_patient_information(patient_id)
+
         # Show completed tests if any
         results, chart_labels, chart_scores, chart_reaction_times = get_patient_assessment_data(patient_id)
 
-        return render_template('specific_patient.html', name=current_user.name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_reaction_times=chart_reaction_times)
+        return render_template('specific_patient.html', name=current_user.name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_reaction_times=chart_reaction_times, age=age, gender=gender, height=height, weight=weight)
 
 @main.route('/assessments', methods=['GET', 'POST'])
 @login_required

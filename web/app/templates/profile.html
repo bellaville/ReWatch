@@ -15,6 +15,7 @@
                 <th>Age</th>
                 <th>Gender</th>
                 <th>Height</th>
+                <th>Weight</th>
             </tr>
         </thead>
         <tbody>
@@ -23,6 +24,7 @@
                 <td>{{ age }}</td>
                 <td>{{ gender }}</td>
                 <td>{{ height }}</td>
+                <td>{{ weight }}</td>
             </tr>
         <tbody>
     </table>
@@ -65,6 +67,12 @@
           <div class="mb-3">
             <label for="height" class="form-label">Height (cm)</label>
             <input type="number" class="form-control" id="height" name="height" min="1" max="213" step="1" required>
+          </div>
+
+            <!-- Weight input -->
+          <div class="mb-3">
+            <label for="weight" class="form-label">Weight (kg)</label>
+            <input type="number" class="form-control" id="weight" name="weight" min="1" max="230" step="1" required>
           </div>
         </div>
 

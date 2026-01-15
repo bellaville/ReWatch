@@ -61,6 +61,7 @@ class Patient(db.Model):
     age = db.Column(db.Integer)
     height = db.Column(db.Integer)
     gender = db.Column(db.String(80))
+    weight = db.Column(db.Integer)
 
 # model for a patient's assessment
 class PatientAssessment(db.Model):
