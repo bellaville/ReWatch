@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 from app.decorators import roles_required
 from app.models import Role, PatientAssessment, Patient, User
 from app.utilities.utils import get_patient_assessment_data
+from app.db import db
 
 main = Blueprint('main', __name__)
 
@@ -12,10 +13,37 @@ main = Blueprint('main', __name__)
 def index():
     return render_template('home.html')
 
-@main.route('/profile')
+@main.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    return render_template('profile.html', name=current_user.name, roles=current_user.roles)
+
+    if request.method == 'POST':
+        age = request.form['age']
+        height = request.form['height']
+        gender = request.form['gender']
+
+        patient_to_update = Patient.query.filter_by(user_id=current_user.id).first()
+
+        patient_to_update.age = age
+        patient_to_update.height = height
+        patient_to_update.gender = gender
+
+        db.session.commit()
+
+        return render_template('profile.html', name=current_user.name, roles=current_user.roles, age=age, height=height, gender=gender, patient=True)
+
+
+    else:
+
+        if current_user.has_role('Physician'):
+            return render_template('profile.html', name=current_user.name, roles=current_user.roles)
+        if current_user.has_role('Patient'):
+            age = Patient.query.filter_by(user_id=current_user.id).first().age
+            height = Patient.query.filter_by(user_id=current_user.id).first().height
+            gender = Patient.query.filter_by(user_id=current_user.id).first().gender
+            return render_template('profile.html', name=current_user.name, roles=current_user.roles, age=age, height=height, gender=gender, patient=True)
+        else:
+            return render_template('profile.html', name=current_user.name, roles=current_user.roles)
 
 @main.route('/patient_details')
 @login_required

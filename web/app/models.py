@@ -58,6 +58,9 @@ class Patient(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True) # link to User
     # each Patient belongs to exactly 1 Physician
     physician_id = db.Column(db.Integer, db.ForeignKey('physician.id'))
+    age = db.Column(db.Integer)
+    height = db.Column(db.Integer)
+    gender = db.Column(db.String(80))
 
 # model for a patient's assessment
 class PatientAssessment(db.Model):

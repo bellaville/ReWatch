@@ -6,4 +6,82 @@
     <p>Role: {% for role in roles%}
                     {{role.name}}
            {% endfor %} <br><br></p>
+
+    {% if patient %}
+    <h2>Your Information</h2>
+    <table class="table mt-4">
+        <thead>
+            <tr>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Height</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+            <tr>
+                <td>{{ age }}</td>
+                <td>{{ gender }}</td>
+                <td>{{ height }}</td>
+            </tr>
+        <tbody>
+    </table>
+
+
+<!-- Trigger button -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myFormModal">
+  Edit Your Information
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="myFormModal" tabindex="-1" aria-labelledby="myFormModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="myFormModalLabel">Edit Your Information</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <form method="post">
+        <div class="modal-body">
+          <!-- Age input -->
+          <div class="mb-3">
+            <label for="age" class="form-label">Age (years)</label>
+            <input type="number" class="form-control" id="age" name="age" min="1" max="100" step="1" required>
+          </div>
+
+          <!-- Gender select -->
+          <div class="mb-3">
+            <label for="gender" class="form-label">Gender</label>
+            <select class="form-select" id="gender" name="gender" required>
+              <option value="">Choose...</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="non-binary">Non-binary</option>
+            </select>
+          </div>
+
+          <!-- Height input -->
+          <div class="mb-3">
+            <label for="height" class="form-label">Height (cm)</label>
+            <input type="number" class="form-control" id="height" name="height" min="1" max="213" step="1" required>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- Modal -->
+
+    {% endif %}
+
+
+
+
+
 {% endblock %}
