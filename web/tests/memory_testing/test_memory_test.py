@@ -1,10 +1,18 @@
 import pytest
 import time
 
-from app.models import User, Patient, Physician, PatientAssessment, Role
+from sqlalchemy import event
+
+from app.models import User, Patient, Physician, PatientAssessment, Role, create_profiles_for_new_users, Session
 from app.db import db
 from werkzeug.security import generate_password_hash
 from unittest.mock import patch
+
+@pytest.fixture(autouse=True)
+def disable_profiles_listener():
+    event.remove(Session, "after_flush", create_profiles_for_new_users)
+    yield
+    event.listen(Session, "after_flush", create_profiles_for_new_users)
 
 def login(test_client, user):
     """Logs in a test user by manipulating the session."""
