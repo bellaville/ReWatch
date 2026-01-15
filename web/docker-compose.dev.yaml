@@ -14,3 +14,5 @@ services:
       FLASK_ENV: testing
     depends_on:
       - redis
+    volumes: # Mount SQLite database
+      - ./instance/db.sqlite:/usr/src/app/instance/db.sqlite

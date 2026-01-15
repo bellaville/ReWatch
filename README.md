@@ -18,13 +18,13 @@ This projects requires the use of a Redis Key-Value store that is to be used by 
 ```
 cd web
 $env:REDIS_URL = "redis://localhost:6379/0"
-docker compose -f docker-compose.dev.yaml up -d
+docker compose -f docker-compose.dev.yaml up -d --build
 ```
 For Mac users (macOS does not recognize redis as a hostname):
 ```
 cd web
 export REDIS_URL="redis://127.0.0.1:6379/0"
-docker compose -f docker-compose.dev.yaml up -d
+docker compose -f docker-compose.dev.yaml up -d --build
 ```
 
 ### Env. Vars
