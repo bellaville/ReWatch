@@ -92,7 +92,7 @@ def start_memory_test():
     # initialize session variables
     session['round'] = 0
     session['score'] = 0
-    session['reaction_times'] = []
+    session['reaction_records'] = []
     session['show_test'] = False # don't show the test frame yet
 
     memorization_time = session.get('memorization_time', 5)
@@ -172,8 +172,6 @@ def memory_test_view():
         # handle user's answer
         choice = request.form.get('choice')
         reaction_time = request.form.get('reaction_time', type=float)
-        if reaction_time is not None:
-            session['reaction_times'].append(reaction_time)
 
         prev_shapes= session['previous_shapes']
         prev_colours = session['previous_colours']
@@ -187,8 +185,20 @@ def memory_test_view():
             prev_map = dict(zip(prev_shapes, prev_colours))
             curr_map = dict(zip(curr_shapes, curr_colours))
             correct = prev_map == curr_map
-        if (choice == 'Same' and correct) or (choice == 'Different' and not correct):
+        
+        user_correct = (
+            (choice == 'Same' and correct) or (choice == 'Different' and not correct)
+        )
+        if user_correct:
             session['score'] += 1
+
+        if reaction_time is not None:
+            session['reaction_records'].append({
+                "time": reaction_time,
+                "correct": user_correct,
+                "difficulty": difficulty,
+                "num_shapes": num_shapes,
+            })
 
         session['round'] += 1
         return redirect(url_for('memory_test.memory_memorize'))  # start next memorization round
@@ -233,10 +243,10 @@ def memory_test_view():
 @memory_test.route('/result')
 @login_required
 def memory_result():
-    avg_reaction = sum(session.get('reaction_times', [])) / max(len(session.get('reaction_times', [])), 1)
+    reaction_records = session.get('reaction_records', [])
+    avg_reaction = sum(r["time"] for r in reaction_records) / max(len(reaction_records), 1)
     score = session.get('score', 0)
     total_rounds = session.get('num_rounds', 5)
-    reaction_times = session.get('reaction_times')
 
     # use the patient ID stored in the session (set by the physician selecting the patient)
     patient_id = session.get('test_patient_id')
@@ -252,7 +262,7 @@ def memory_result():
             score=score,
             total_rounds=total_rounds,
             avg_reaction_time=avg_reaction,
-            reaction_times=reaction_times,
+            reaction_records=reaction_records,
     )
     db.session.add(result)
     db.session.commit()

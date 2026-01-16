@@ -7,14 +7,12 @@ def get_patient_assessment_data(patient_id):
     results = PatientAssessment.query.filter_by(patient_id=patient_id)\
                                          .order_by(PatientAssessment.date_taken.asc()).all()
 
-    # Reverse once so charts go from oldest to newest
-    #results = list(reversed(results))    
-    
     # Create the dataset from the memory test for charts
     chart_labels = [r.date_taken.strftime("%Y-%m-%d") for r in results]
     chart_scores = [r.score for r in results]
     chart_avg_reactions = []
-    all_reaction_times = []
+    correct_reactions = []
+    incorrect_reactions = []
 
     for assessment in results:
         date_label = assessment.date_taken.strftime("%Y-%m-%d")
@@ -25,10 +23,17 @@ def get_patient_assessment_data(patient_id):
         })
 
         # Individual reaction times (many per assessment)
-        for rt in assessment.reaction_times:
-            all_reaction_times.append({
+        for rt in assessment.reaction_records:
+            point = {
                 "x": date_label,
-                "y": rt,
-            })
+                "y": rt["time"],
+                "difficulty": rt["diffculty"],
+                "num_shapes": rt["num_shapes"],
+            }
 
-    return results, chart_labels, chart_scores, chart_avg_reactions, all_reaction_times
+            if rt["correct"]:
+                correct_reactions.append(point)
+            else:
+                incorrect_reactions.append(point)
+
+    return results, chart_labels, chart_scores, chart_avg_reactions, correct_reactions, incorrect_reactions

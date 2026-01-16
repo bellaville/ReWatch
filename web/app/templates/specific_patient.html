@@ -94,7 +94,8 @@
     const labels = {{ chart_labels|tojson }};
     const scores = {{ chart_scores|tojson }};
     const avgReactions = {{ chart_avg_reactions|tojson }};
-    const allReactions = {{ all_reaction_times|tojson  }}
+    const correctReactions = {{ correct_reactions|tojson }}
+    const incorrectReactions = {{ incorrect_reactions|tojson }}
 
     // Memory chart
     new Chart(document.getElementById('scoreChart'), {
@@ -133,16 +134,24 @@
                     type: 'line',
                     label: 'Average Reaction Time (ms)',
                     data: avgReactions,
-                    borderColor: 'rgb(255, 99, 132)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgb(54, 162, 235)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     tension: 0.3
                 },
                 {
                     type: 'scatter',
-                    label: 'Reaction Time (ms)',
-                    data: allReactions,
-                    borderColor: 'rgb(54, 162, 235)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    label: 'Correct Response, Reaction Time (ms)',
+                    data: correctReactions,
+                    backgroundColor: 'rgba(75, 192, 75, 0.7)',
+                borderColor: 'rgba(75, 192, 75, 1)',
+                    tension: 0.3
+                },
+                {
+                    type: 'scatter',
+                    label: 'Incorrect Response, Reaction Time (ms)',
+                    data: incorrectReactions,
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
                     tension: 0.3
                 }
             ]
@@ -150,7 +159,14 @@
         options: {
             responsive: true,
             plugins: {
-                legend: { display: false }
+                legend: { 
+                    display: true,
+                    positions: 'right',
+                    labels: {
+                        boxWidth: 20,
+                        padding: 15
+                    }
+                 }
             },
             scales: { 
                 x: {
