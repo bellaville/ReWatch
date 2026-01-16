@@ -114,28 +114,35 @@
             plugins: {
                 legend: { display: false }
             },
-            scales: { y: { title: { display: true, text: 'Score' }}}
+            scales: { x: {
+                    type: 'category',
+                    title: {
+                        display: true,
+                        text: 'Assessment Date',
+                    }
+                },
+                y: { title: { display: true, text: 'Score' }}}
         }
     });
 
     // Reaction Time chart
     new Chart(document.getElementById('reactionChart'), {
-        type: 'scatter',
         data: {
-            labels: labels,
             datasets: [
                 {
+                    type: 'line',
                     label: 'Average Reaction Time (ms)',
                     data: avgReactions,
-                    borderColor: 'rgb(54, 162, 235)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     tension: 0.3
                 },
                 {
+                    type: 'scatter',
                     label: 'Reaction Time (ms)',
                     data: allReactions,
-                    borderColor: 'rgb(255, 99, 132)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgb(54, 162, 235)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     tension: 0.3
                 }
             ]
@@ -145,7 +152,21 @@
             plugins: {
                 legend: { display: false }
             },
-            scales: { y: { title: { display: true, text: 'Time (ms)' }}}
+            scales: { 
+                x: {
+                    type: 'category',
+                    title: {
+                        display: true,
+                        text: 'Assessment Date',
+                    }
+                },
+                y: { 
+                    title: { 
+                        display: true, 
+                        text: 'Reaction Time (ms)' 
+                    }
+                }
+            }
         }
     });
 
