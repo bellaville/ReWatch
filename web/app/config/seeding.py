@@ -104,10 +104,10 @@ def seed_patient_assessments():
             reaction_records = []
             total_reaction_time = 0
             num_rounds = random.randint(10, 20)
+            difficulty = random.choice(["Easy", "Hard"])
 
             for u in range(num_rounds):
                 time = round(random.uniform(920, 4200), 2)
-                difficulty = random.choice(["easy", "hard"])
                 num_shapes = random.randint(3,7)
                 correct = random.choice([True, False])
 
@@ -129,6 +129,7 @@ def seed_patient_assessments():
                 total_rounds=num_rounds,
                 avg_reaction_time=avg_reaction_time,
                 date_taken=datetime.now(timezone.utc) - timedelta(days=(num_assessments-i)*3),
+                difficulty=difficulty,
                 reaction_records=reaction_records,
             )
             db.session.add(assessment)

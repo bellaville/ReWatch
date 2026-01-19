@@ -35,6 +35,7 @@
                             <th>Test Type</th>
                             <th>Score</th>
                             <th>Avg Reaction Time (ms)</th>
+                            <th>Difficulty</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -45,6 +46,7 @@
                                     <td>Short-Term Memory Test</td>
                                     <td>{{ r.score }}/{{ r.total_rounds }}</td>
                                     <td>{{ "%.2f"|format(r.avg_reaction_time) }}</td>
+                                    <td>{{ r.difficulty }}</td>
                                 </tr>
                             {% endfor %}
                         {% else %}
