@@ -179,3 +179,10 @@ class TroughIndex(db.Model):
     analysis_id = db.Column(db.Integer, db.ForeignKey('zerocrossinganalysis.id'))
     index = db.Column(db.Integer)
 
+class MemoryAnalysis(db.Model):
+    __tablename__ = 'memoryanalysis'
+    id = db.Column(db.Integer, primary_key=True)
+    assessment_stage_data_id = db.Column(db.Integer, db.ForeignKey('assessmentstagedata.id'))
+    time_to_move = db.Column(db.Float)
+    average_accl_post_threshold = db.Column(db.Float)
+    max_accl = db.Column(db.Float)

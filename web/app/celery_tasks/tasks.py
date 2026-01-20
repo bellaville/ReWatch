@@ -1,1 +1,2 @@
 from app.celery_tasks.peak_identification import identify_peaks
+from app.celery_tasks.memory_analysis import memory_analysis
