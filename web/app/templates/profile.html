@@ -49,30 +49,30 @@
           <!-- Age input -->
           <div class="mb-3">
             <label for="age" class="form-label">Age (years)</label>
-            <input type="number" class="form-control" id="age" name="age" min="1" max="100" step="1" required>
+            <input type="number" class="form-control" id="age" name="age" min="1" max="100" step="1" value="{{ age or '' }}" required>
           </div>
 
           <!-- Gender select -->
           <div class="mb-3">
             <label for="gender" class="form-label">Gender</label>
             <select class="form-select" id="gender" name="gender" required>
-              <option value="">Choose...</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="non-binary">Non-binary</option>
+                <option value="" {% if not gender %}selected{% endif %}>Choose...</option>
+                <option value="Male" {% if gender == 'Male' %}selected{% endif %}>Male</option>
+                <option value="Female" {% if gender == 'Female' %}selected{% endif %}>Female</option>
+                <option value="Non-Binary" {% if gender == 'Non-Binary' %}selected{% endif %}>Non-binary</option>
             </select>
           </div>
 
           <!-- Height input -->
           <div class="mb-3">
             <label for="height" class="form-label">Height (cm)</label>
-            <input type="number" class="form-control" id="height" name="height" min="1" max="213" step="1" required>
+            <input type="number" class="form-control" id="height" name="height" min="1" max="213" step="1" value="{{ height or '' }}" required>
           </div>
 
             <!-- Weight input -->
           <div class="mb-3">
             <label for="weight" class="form-label">Weight (kg)</label>
-            <input type="number" class="form-control" id="weight" name="weight" min="1" max="230" step="1" required>
+            <input type="number" class="form-control" id="weight" name="weight" min="1" max="230" step="1" value="{{ weight or '' }}" required>
           </div>
         </div>
 
