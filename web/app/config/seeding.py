@@ -93,7 +93,7 @@ def seed_patient_assessments():
                 patient_id=patient.id,
                 score=random.randint(6,10),
                 total_rounds=10,
-                avg_reaction_time=round(random.uniform(0.6, 1.5),2),
+                avg_reaction_time=round(random.uniform(920, 4200)),
                 date_taken=datetime.now(timezone.utc) - timedelta(days=(num_assessments-i)*3)
             )
             db.session.add(assessment)

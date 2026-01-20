@@ -32,6 +32,7 @@
 
         {% if buttons_enabled %}
             <form method="POST" action="{{ url_for('memory_test.memory_test_view') }}">
+                <input type="hidden" name="reaction_time" id="reaction_time">
                 <button type="submit" name="choice" value="Same" class="btn btn-success btn-lg">Same</button>
                 <button type="submit" name="choice" value="Different" class="btn btn-danger btn-lg">Different</button>
             </form>
@@ -79,5 +80,30 @@
             window.location.href = "{{ url_for('main.assessments') }}";
         });
     }
+    // Capture more accurate reaction time using performance.now() and requestAnimationFrame
+    let startTime = null;
+
+    function startTimer(timestamp){
+        // timestamp will be provided by requestAnimationFrame
+        startTime = timestamp;
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+        const choiceButtons = document.querySelectorAll("button[name='choice']");
+
+        if (choiceButtons.length == 0) return;
+
+        // Start timing on the first rendered frame
+        requestAnimationFrame(startTimer);
+        
+        choiceButtons.forEach(button => { 
+            button.addEventListener("pointerdown", () => {
+                if (startTime !== null) {
+                    const reactionTime = performance.now() - startTime;
+                    document.getElementById("reaction_time").value = reactionTime.toFixed(2);
+                }
+            })
+        })
+    });
 </script>
 {% endblock %}

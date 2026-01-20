@@ -34,17 +34,17 @@
                             <th>Date</th>
                             <th>Test Type</th>
                             <th>Score</th>
-                            <th>Avg Reaction Time</th>
+                            <th>Avg Reaction Time (ms)</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if results %}
-                            {% for r in results %}
+                            {% for r in results | reverse %}
                                 <tr>
                                     <td>{{ r.date_taken.strftime("%Y-%m-%d %H:%M") }}</td>
                                     <td>Short-Term Memory Test</td>
                                     <td>{{ r.score }}/{{ r.total_rounds }}</td>
-                                    <td>{{ "%.2f"|format(r.avg_reaction_time) }}s</td>
+                                    <td>{{ "%.2f"|format(r.avg_reaction_time) }}</td>
                                 </tr>
                             {% endfor %}
                         {% else %}
@@ -123,7 +123,7 @@
         data: {
             labels: labels,
             datasets: [{
-                label: 'Reaction Time (s)',
+                label: 'Reaction Time (ms)',
                 data: reactionTimes,
                 borderColor: 'rgb(54, 162, 235)',
                 backgroundColor: 'rgba(54, 162, 235, 0.2)',
@@ -135,7 +135,7 @@
             plugins: {
                 legend: { display: false }
             },
-            scales: { y: { title: { display: true, text: 'Time (s)' }}}
+            scales: { y: { title: { display: true, text: 'Time (ms)' }}}
         }
     });
 
