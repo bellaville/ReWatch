@@ -8,8 +8,7 @@ def get_patient_assessment_data(patient_id):
                                          .order_by(PatientAssessment.date_taken.asc()).all()
 
     # Create the dataset from the memory test for charts
-    chart_labels = [r.date_taken.strftime("%Y-%m-%d") for r in results]
-    chart_scores = [r.score for r in results]
+    chart_scores = []
     chart_avg_reactions = []
     correct_reactions = []
     incorrect_reactions = []
@@ -19,7 +18,13 @@ def get_patient_assessment_data(patient_id):
         # average reactoin time (one per assessment)
         chart_avg_reactions.append({
             "x": date_label,
-            "y": assessment.avg_reaction_time
+            "y": assessment.avg_reaction_time,
+            "difficulty": assessment.difficulty
+        })
+        chart_scores.append({
+            "x": date_label,
+            "y": assessment.score,
+            "difficulty": assessment.difficulty
         })
 
         # Individual reaction times (many per assessment)
@@ -27,7 +32,7 @@ def get_patient_assessment_data(patient_id):
             point = {
                 "x": date_label,
                 "y": rt["time"],
-                "difficulty": rt["diffculty"],
+                "difficulty": assessment.difficulty,
                 "num_shapes": rt["num_shapes"],
             }
 
@@ -36,4 +41,4 @@ def get_patient_assessment_data(patient_id):
             else:
                 incorrect_reactions.append(point)
 
-    return results, chart_labels, chart_scores, chart_avg_reactions, correct_reactions, incorrect_reactions
+    return results, chart_scores, chart_avg_reactions, correct_reactions, incorrect_reactions

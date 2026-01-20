@@ -196,7 +196,6 @@ def memory_test_view():
             session['reaction_records'].append({
                 "time": reaction_time,
                 "correct": user_correct,
-                "difficulty": difficulty,
                 "num_shapes": num_shapes,
             })
 

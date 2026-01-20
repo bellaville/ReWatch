@@ -63,8 +63,18 @@
      <!-- Charts -->
     <div class="container mt-5">
         <div class="card shadow-sm">
-            <div class="card-body">
-                <h3 class="card-title mb-4 text-center">Assessment Charts</h3>
+            <div class="card-body text-center mb-4">
+                <h3 class="card-title mb-3">Assessment Charts</h3>
+                <div class="d-inline-flex align-items-center gap-2 mb-4">
+                    <label for="difficultyFilter" class="form-label mb-0 small">
+                        Filter by Difficulty
+                    </label>
+                    <select id="difficultyFilter" class="form-select form-select-sm w-auto">
+                        <option value="Both">Both</option>
+                        <option value="Easy">Easy only</option>
+                        <option value="Hard">Hard only</option>
+                    </select>
+                </div>
                 <div class="row">
                     <!-- Memory Score Chart-->
                     <div class="col-md-6 mb-4">
@@ -93,20 +103,18 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // Need to convert Flask lists to JS arrays
-    const labels = {{ chart_labels|tojson }};
-    const scores = {{ chart_scores|tojson }};
+    const scorePoints = {{ chart_scores|tojson }};
     const avgReactions = {{ chart_avg_reactions|tojson }};
     const correctReactions = {{ correct_reactions|tojson }}
     const incorrectReactions = {{ incorrect_reactions|tojson }}
 
     // Memory chart
-    new Chart(document.getElementById('scoreChart'), {
+    const scoreChart = new Chart(document.getElementById('scoreChart'), {
         type: 'line',
         data: {
-            labels: labels,
             datasets: [{
                 label: 'Memory Score(s)',
-                data: scores,
+                data: scorePoints,
                 borderColor: 'rgb(54, 162, 235)',
                 backgroundColor: 'rgba(54, 162, 235, 0.2)',
                 tension: 0.3
@@ -129,7 +137,7 @@
     });
 
     // Reaction Time chart
-    new Chart(document.getElementById('reactionChart'), {
+    const reactionChart = new Chart(document.getElementById('reactionChart'), {
         data: {
             datasets: [
                 {
@@ -145,7 +153,7 @@
                     label: 'Correct Response, Reaction Time (ms)',
                     data: correctReactions,
                     backgroundColor: 'rgba(75, 192, 75, 0.7)',
-                borderColor: 'rgba(75, 192, 75, 1)',
+                    borderColor: 'rgba(75, 192, 75, 1)',
                     tension: 0.3
                 },
                 {
@@ -187,6 +195,50 @@
             }
         }
     });
+
+    function filterByDifficulty(difficulty){
+        // if difficulty = both, then return everything without filtering
+        if (difficulty === 'Both'){
+            return {
+                scores: scorePoints,
+                avg: avgReactions,
+                correct: correctReactions,
+                incorrect: incorrectReactions
+            }
+        }
+
+        // otherwise, filter each dataset by difficulty
+        return {
+            scores: scorePoints.filter(function (point) {
+                // find the datapoint with the filtered difficulty
+                return point.difficulty === difficulty;
+            }),
+            avg: avgReactions.filter(function (point) {
+                return point.difficulty === difficulty;
+            }),
+            correct: correctReactions.filter(function (point) {
+                return point.difficulty === difficulty;
+            }),
+            incorrect: incorrectReactions.filter(function (point) {
+                return point.difficulty === difficulty;
+            })
+        }
+    }
+
+    document.getElementById('difficultyFilter').addEventListener('change', (e) => {
+        const selected = e.target.value;
+        const filtered = filterByDifficulty(selected);
+
+        // Update reactionChart data
+        reactionChart.data.datasets[0].data = filtered.avg;
+        reactionChart.data.datasets[1].data = filtered.correct;
+        reactionChart.data.datasets[2].data = filtered.incorrect;
+        reactionChart.update();
+
+        // Update scoreChart data
+        scoreChart.data.datasets[0].data = filtered.scores;
+        scoreChart.update();
+    })
 
 </script>
 {% endblock %}
