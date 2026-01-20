@@ -24,7 +24,7 @@
                 <th>Date</th>
                 <th>Test Type</th>
                 <th>Score</th>
-                <th>Reaction Time</th>
+                <th>Reaction Time (ms)</th>
             </tr>
         </thead>
         <tbody>
@@ -34,7 +34,7 @@
                         <td>{{ r.local_date_taken.strftime("%Y-%m-%d %H:%M") }}</td>
                         <td>Short-Term Memory Test</td>
                         <td>{{ r.score }}/{{ r.total_rounds }}</td>
-                        <td>{{ "%.2f"|format(r.avg_reaction_time) }}s</td>
+                        <td>{{ "%.2f"|format(r.avg_reaction_time) }}</td>
                     </tr>
                 {% endfor %}
             {% else %}
