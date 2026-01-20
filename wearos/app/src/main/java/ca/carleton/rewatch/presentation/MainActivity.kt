@@ -10,7 +10,9 @@ import ca.carleton.rewatch.R
 import android.hardware.SensorManager
 import android.hardware.SensorEventListener
 import android.util.Log
+import ca.carleton.rewatch.BuildConfig
 import ca.carleton.rewatch.dataclasses.SensorReading
+import retrofit2.Retrofit
 
 /**
  * Main Activity that gathers accelerometer data.
@@ -25,6 +27,9 @@ class MainActivity : ComponentActivity() {
     private var isRecording: Boolean = false
     private var recordedData = mutableListOf<SensorReading>()
     private lateinit var sensorManager : SensorManager
+
+    val webAppUrl = Retrofit.Builder().baseUrl(BuildConfig.BASE_URL).build()
+    val test = BuildConfig.BASE_URL
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,5 +103,9 @@ class MainActivity : ComponentActivity() {
         Log.d("ReWatch", "Recording finished. Captured ${recordedData.size} data points.")
         Log.v("ReWatch", "Recording finished. Captured Data:\n${recordedData}")
         recordedData.clear()
+    }
+
+    private fun transferData(data: List<SensorReading>) {
+        Log.d("ReWatch", "${data}")
     }
 }
