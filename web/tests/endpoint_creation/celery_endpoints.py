@@ -1,7 +1,7 @@
 import os
 import time
 from flask import Blueprint
-from celery_worker import celery
+from celery_app import celery
 from celery.result import AsyncResult
 
 from tests.task_creation.celery_tasks import add

@@ -156,3 +156,29 @@ class StageDataPoint(db.Model):
     x = db.Column(db.Float)
     y = db.Column(db.Float)
     z = db.Column(db.Float)
+
+# Models for Peak and Trough Indices and Zero Crossing Analysis
+
+class ZeroCrossingAnalysis(db.Model):
+    __tablename__ = 'zerocrossinganalysis'
+    id = db.Column(db.Integer, primary_key=True)
+    stage_data_id = db.Column(db.Integer, db.ForeignKey('assessmentstagedata.id'))
+    peak_indices = db.relationship('PeakIndex', backref='analysis', cascade="all, delete-orphan")
+    trough_indices = db.relationship('TroughIndex', backref='analysis', cascade="all, delete-orphan")
+    avg_peak_distance = db.Column(db.Float)
+    std_dev_peak_distance = db.Column(db.Float)
+    avg_trough_distance = db.Column(db.Float)
+    std_dev_trough_distance = db.Column(db.Float)
+
+class PeakIndex(db.Model):
+    __tablename__ = 'peakindex'
+    id = db.Column(db.Integer, primary_key=True)
+    analysis_id = db.Column(db.Integer, db.ForeignKey('zerocrossinganalysis.id'))
+    index = db.Column(db.Integer)
+
+class TroughIndex(db.Model):
+    __tablename__ = 'troughindex'
+    id = db.Column(db.Integer, primary_key=True)
+    analysis_id = db.Column(db.Integer, db.ForeignKey('zerocrossinganalysis.id'))
+    index = db.Column(db.Integer)
+
