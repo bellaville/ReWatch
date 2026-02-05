@@ -55,11 +55,12 @@ def patient_details():
         # Find the Role object for 'Patient'
         patient_role = Role.query.filter_by(name='Patient').first()
 
+        physician_profile = current_user.physician_profile
         if patient_role:
             # Get all users that have this role
-            users = patient_role.users.all()
+            patients = physician_profile.patients
         else:
-            users = []
+            patients = []
 
         patient_id = request.args.get('patient_id', type=int)
 
@@ -71,7 +72,7 @@ def patient_details():
 
             return render_template('specific_patient.html', name=patient_name, results=results, chart_scores=chart_scores, chart_avg_reactions=chart_avg_reactions, correct_reactions=correct_reactions, incorrect_reactions=incorrect_reactions, age=age, gender=gender, height=height, weight=weight)
         
-        return render_template('patient_details.html', users=users)
+        return render_template('patient_details.html', patients=patients)
     
     # If patient, redirect to specific patient page
     if current_user.patient_profile:
