@@ -1,4 +1,4 @@
-from app.models import PatientAssessment
+from app.models import PatientAssessment, Patient
 
 def get_patient_assessment_data(patient_id):
     """
@@ -42,3 +42,11 @@ def get_patient_assessment_data(patient_id):
                 incorrect_reactions.append(point)
 
     return results, chart_scores, chart_avg_reactions, correct_reactions, incorrect_reactions
+
+def get_patient_information(patient_id):
+    patient_age = Patient.query.filter_by(id=patient_id).first().age
+    patient_height = Patient.query.filter_by(id=patient_id).first().height
+    patient_gender = Patient.query.filter_by(id=patient_id).first().gender
+    patient_weight = Patient.query.filter_by(id=patient_id).first().weight
+
+    return patient_age, patient_height, patient_gender, patient_weight

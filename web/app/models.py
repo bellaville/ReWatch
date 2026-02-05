@@ -3,9 +3,14 @@ from zoneinfo import ZoneInfo
 import enum
 from typing import Any
 from flask_login import UserMixin
+from sqlalchemy import event
+from sqlalchemy.orm import Session
 from sqlalchemy import JSON
 
 from app.db import db
+
+PATIENT_ROLE = "Patient"
+PHYSICIAN_ROLE = "Physician"
 
 # association table for users and roles (many to many)
 roles_users = db.Table('roles_users',
@@ -54,6 +59,10 @@ class Patient(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True) # link to User
     # each Patient belongs to exactly 1 Physician
     physician_id = db.Column(db.Integer, db.ForeignKey('physician.id'))
+    age = db.Column(db.Integer)
+    height = db.Column(db.Integer)
+    gender = db.Column(db.String(80))
+    weight = db.Column(db.Integer)
 
 # model for a patient's assessment
 class PatientAssessment(db.Model):
@@ -182,3 +191,23 @@ class TroughIndex(db.Model):
     analysis_id = db.Column(db.Integer, db.ForeignKey('zerocrossinganalysis.id'))
     index = db.Column(db.Integer)
 
+########################################### event listeners ##############################################
+
+# listens for new users and adds patient or physician profile based on user role
+@event.listens_for(Session, "after_flush")
+def create_profiles_for_new_users(session, flush_context):
+    # go through instances that were added in this flush
+    for obj in session.new:
+        if isinstance(obj, User):
+            # role names for this user (assuming roles are already attached)
+            role_names = {r.name for r in obj.roles}
+
+            # create patient profile if user has patient role and no profile yet
+            if PATIENT_ROLE in role_names and obj.patient_profile is None:
+                patient = Patient(user=obj)
+                session.add(patient)
+
+            # create physician profile if user has physician role and no profile yet
+            if PHYSICIAN_ROLE in role_names and obj.physician_profile is None:
+                physician = Physician(user=obj)
+                session.add(physician)

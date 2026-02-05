@@ -1,6 +1,6 @@
 from werkzeug.security import generate_password_hash
 
-from app.models import Role, User, Patient, Physician, PatientAssessment
+from app.models import Role, User, Patient, PatientAssessment, Physician
 from app.db import db
 import random
 from datetime import datetime, timedelta, timezone
@@ -31,27 +31,12 @@ def seed_users():
     patient_role = Role.query.filter_by(name='Patient').first()
     physician_role = Role.query.filter_by(name='Physician').first()
 
-    # create Physician user
-    physician_user = User.query.filter_by(email="dr.stephen@avengers.com").first()
-    if not physician_user:
-        physician_user = User(
-            email= "dr.stephen@avengers.com", 
-            name= "Dr. Stephen Strange",
-            password=generate_password_hash("password123")
-        )
-        physician_user.roles.append(physician_role)
-        db.session.add(physician_user)
-        db.session.flush()
-    
-    # double check that the physician profile exists
-    physician_profile = physician_user.physician_profile
-    if not physician_profile:
-        physician_profile = Physician(user_id=physician_user.id)
-        db.session.add(physician_profile)
-        db.session.flush()
-
     # List of dummy users to seed
     dummy_users = [
+        {"email": "dr.stephen@avengers.com", "name": "Stephen Strange", "password": "password123",
+         "role": physician_role},
+        {"email": "dr.batman@dc.com", "name": "Bruce Wayne", "password": "password123",
+         "role": physician_role},
         {"email": "clark@DC.com", "name": "Clark Kent", "password": "password123", "role": patient_role},
         {"email": "gwen@amazing.com", "name": "Gwen Stacy", "password": "password123", "role": patient_role},
         {"email": "peter@amazing.com", "name": "Peter Parker", "password": "password123", "role": patient_role}
@@ -73,13 +58,16 @@ def seed_users():
             db.session.add(new_user)
             db.session.flush() # db generated ID is assigned
 
-            # create Patient Profile with assigned Physician
-            patient_profile = Patient(user_id=new_user.id, physician_id=physician_profile.id)
-            db.session.add(patient_profile)
-
     db.session.commit()
     print("Dummy users seeded successfully (duplicates skipped).")
 
+    #assign patients to physicians
+    patients = Patient.query.all()
+    for p in patients:
+        if p.id%2 == 0:
+            p.physician_id = Physician.query.join(User).filter(User.email=="dr.stephen@avengers.com").first().id
+        else:
+            p.physician_id = Physician.query.join(User).filter(User.email=="dr.batman@dc.com").first().id
 
 def seed_patient_assessments():
     """
