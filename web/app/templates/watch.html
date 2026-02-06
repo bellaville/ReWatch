@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1 class="mb-4">Connect Your Galaxy Watch 7</h1>
+    <form method="POST">
+        <button type="submit" class="btn btn-primary">
+            {% if watch_connected %}
+                Disconnect Watch
+            {% else %}
+                Connect Watch
+            {% endif %}
+        </button>
+    </form>
+
+{% endblock %}

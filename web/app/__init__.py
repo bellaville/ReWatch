@@ -1,6 +1,5 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, session
 from flask_login import LoginManager
-
 from app.db import db
 from app.config.environment import *  # Import environment variable checks
 
@@ -35,6 +34,10 @@ def create_app(test_config=False):
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+    @app.context_processor
+    def inject_watch_status():
+        return dict(watch_connected=session.get('watch_connected', False))
 
     # Register blueprints
     from .auth import auth as auth_blueprint

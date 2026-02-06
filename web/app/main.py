@@ -4,7 +4,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from app.decorators import roles_required
 from app.models import Role, PatientAssessment, Patient, User
-from app.utilities.utils import get_patient_assessment_data, get_patient_information
+from app.utilities.utils import get_patient_assessment_data, get_patient_information, connect_watch, disconnect_watch, get_real_watch_status
 from app.db import db
 
 main = Blueprint('main', __name__)
@@ -12,6 +12,25 @@ main = Blueprint('main', __name__)
 @main.route('/')
 def index():
     return render_template('home.html')
+
+@main.route('/watch', methods=['GET', 'POST'])
+@login_required
+def toggle_watch_status():
+    current_status = get_real_watch_status(current_user.id)
+
+    if request.method == 'POST':
+        if current_status: # currently connected
+            disconnect_watch(current_user.id)
+            new_status = False
+        else:
+            success = connect_watch(current_user.id)
+            new_status = success  # true if connection succeeded
+
+        # Persist verified status
+        session['watch_connected'] = new_status
+
+    watch_connected = session.get('watch_connected', False)
+    return render_template('watch.html', watch_connected=watch_connected)
 
 @main.route('/profile', methods=['GET', 'POST'])
 @login_required
