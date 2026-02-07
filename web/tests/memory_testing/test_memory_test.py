@@ -64,7 +64,7 @@ def init_memory_test_session(sess, patient_id=None):
     """Helper to initialize session variables for memory test."""
     sess["round"] = 0
     sess["score"] = 0
-    sess["reaction_times"] = []
+    sess["reaction_records"] = []
     sess["show_test"] = False
     sess["num_shapes"] = 3
     sess["difficulty"] = "easy"
@@ -88,7 +88,7 @@ def test_start_memory_test_initializes_session(test_client):
     with test_client.session_transaction() as sess:
         assert sess["round"] == 0
         assert sess["score"] == 0
-        assert sess["reaction_times"] == []
+        assert sess["reaction_records"] == []
         assert sess["show_test"] is False
         assert sess["test_patient_id"] == patient.id
 
@@ -139,9 +139,9 @@ def test_memory_test_post_scoring(test_client):
     assert response.status_code == 302  # redirect to next memorize phase
 
     with test_client.session_transaction() as sess:
-        assert len(sess["reaction_times"]) == 1
-        assert sess["reaction_times"] == [1200.34]
-        assert sess["score"] == 1   # Correct answer
+        assert len(sess["reaction_records"]) == 1
+        assert sess["reaction_records"][0]["time"] == 1200.34
+        assert sess["reaction_records"][0]["correct"] is True  # Correct answer
         assert sess["round"] == 1
 
 
@@ -181,8 +181,13 @@ def test_saving_patient_assessment(test_client):
     # Simulate test session
     with test_client.session_transaction() as sess:
         init_memory_test_session(sess, patient_id=patient_profile.id)
-        sess["score"] = 3
-        sess["reaction_times"] = [0.5, 0.6, 0.4]
+        sess["score"] = 2
+
+        sess["reaction_records"] = [
+            {"time": 999, "correct": True, "difficulty": "easy", "num_shapes": 3},
+            {"time": 1010, "correct": True, "difficulty": "easy", "num_shapes": 3},
+            {"time": 1234, "correct": False, "difficulty": "easy", "num_shapes": 3},
+        ]
 
     # Call the result route to save assessment
     response = test_client.get("/assessments/memory_test/result")
@@ -191,9 +196,9 @@ def test_saving_patient_assessment(test_client):
     # Verify database
     assessment = PatientAssessment.query.filter_by(patient_id=patient_profile.id).first()
     assert assessment is not None
-    assert assessment.score == 3
+    assert assessment.score == 2
     assert assessment.total_rounds == 5
-    expected_avg = sum([0.5, 0.6, 0.4]) / 3
+    expected_avg = sum([999, 1010, 1234]) / 3
     assert pytest.approx(assessment.avg_reaction_time, 0.01) == expected_avg
 
 def test_physician_can_save_assessment_for_patient(test_client):
@@ -344,7 +349,8 @@ def test_memory_test_full_run_easy_mode(test_client):
         sess["num_rounds"] = 2
 
     # setting shapes to always be identifical between rounds
-    with patch("app.memory_test.random.sample") as mock_sample:
+    with patch("app.memory_test.random.random", return_value=0.0), \
+        patch("app.memory_test.random.sample") as mock_sample:
         mock_sample.return_value = ["circle", "square", "triangle"]
 
         for i in range(2):
@@ -368,7 +374,7 @@ def test_memory_test_full_run_easy_mode(test_client):
     with test_client.session_transaction() as sess:
         assert sess["round"] == 2
         assert sess["score"] == 2
-        assert len(sess["reaction_times"]) == 2
+        assert len(sess["reaction_records"]) == 2
         
 
 def test_memory_test_full_run_hard_mode(test_client):
@@ -413,7 +419,7 @@ def test_memory_test_full_run_hard_mode(test_client):
     with test_client.session_transaction() as sess:
         assert sess["round"] == 2
         assert sess["score"] == 2
-        assert len(sess["reaction_times"]) == 2
+        assert len(sess["reaction_records"]) == 2
 
 def test_reaction_time_is_stored_in_milliseconds(test_client):
     """
@@ -440,7 +446,7 @@ def test_reaction_time_is_stored_in_milliseconds(test_client):
     )
     assert response.status_code == 302
     with test_client.session_transaction() as sess:
-        assert sess["reaction_times"][0] == 1234.75
+        assert sess["reaction_records"][0]["time"] == 1234.75
 
 def test_multiple_reaction_times_append_correctly(test_client):
     """
@@ -481,4 +487,5 @@ def test_multiple_reaction_times_append_correctly(test_client):
     )   
 
     with test_client.session_transaction() as sess:
-        assert sess["reaction_times"] == [999.99, 2222.22]
+        times = [r["time"] for r in sess["reaction_records"]]
+        assert times == [999.99, 2222.22]

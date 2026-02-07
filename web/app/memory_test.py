@@ -92,7 +92,7 @@ def start_memory_test():
     # initialize session variables
     session['round'] = 0
     session['score'] = 0
-    session['reaction_times'] = []
+    session['reaction_records'] = []
     session['show_test'] = False # don't show the test frame yet
 
     memorization_time = session.get('memorization_time', 5)
@@ -124,7 +124,7 @@ def memory_memorize():
     
     # load settings from session (customized by physician)
     num_shapes = session.get('num_shapes', 3)
-    difficulty = session.get('difficulty', 'easy')
+    difficulty = session.get('difficulty', 'Easy')
     memorization_time = session.get('memorization_time', 5)
 
     # generate shape set and assign colors
@@ -132,7 +132,7 @@ def memory_memorize():
 
     current_colours = []
     for shape in current_shapes:
-        if difficulty == 'easy':
+        if difficulty == 'Easy':
             # each shape always has the same distinct colour
             current_colours.append(DEFAULT_COLOURS.get(shape, 'gray'))
         else:
@@ -166,29 +166,38 @@ def memory_test_view():
         return redirect(url_for('memory_test.memory_result'))
 
     num_shapes = session.get('num_shapes', 3)
-    difficulty = session.get('difficulty', 'easy')
+    difficulty = session.get('difficulty', 'Easy')
 
     if request.method == 'POST':
         # handle user's answer
         choice = request.form.get('choice')
         reaction_time = request.form.get('reaction_time', type=float)
-        if reaction_time is not None:
-            session['reaction_times'].append(reaction_time)
 
         prev_shapes= session['previous_shapes']
         prev_colours = session['previous_colours']
         curr_shapes = session['current_shapes']
         curr_colours = session['current_colours']
 
-        if difficulty == 'easy':
+        if difficulty == 'Easy':
             correct = set(prev_shapes) == set(curr_shapes)
         else:
             # for hard mode, check if shape AND colour match
             prev_map = dict(zip(prev_shapes, prev_colours))
             curr_map = dict(zip(curr_shapes, curr_colours))
             correct = prev_map == curr_map
-        if (choice == 'Same' and correct) or (choice == 'Different' and not correct):
+        
+        user_correct = (
+            (choice == 'Same' and correct) or (choice == 'Different' and not correct)
+        )
+        if user_correct:
             session['score'] += 1
+
+        if reaction_time is not None:
+            session['reaction_records'].append({
+                "time": reaction_time,
+                "correct": user_correct,
+                "num_shapes": num_shapes,
+            })
 
         session['round'] += 1
         return redirect(url_for('memory_test.memory_memorize'))  # start next memorization round
@@ -205,7 +214,7 @@ def memory_test_view():
         current_shapes = random.sample(SHAPES, num_shapes)
         # assign colours
         current_colours = [
-            DEFAULT_COLOURS.get(shape, 'gray') if difficulty == 'easy' else random.choice(COLOUR_LIST)
+            DEFAULT_COLOURS.get(shape, 'gray') if difficulty == 'Easy' else random.choice(COLOUR_LIST)
             for shape in current_shapes
         ]
 
@@ -233,7 +242,9 @@ def memory_test_view():
 @memory_test.route('/result')
 @login_required
 def memory_result():
-    avg_reaction = sum(session.get('reaction_times', [])) / max(len(session.get('reaction_times', [])), 1)
+    reaction_records = session.get('reaction_records', [])
+    difficulty = session.get('difficulty', 'Easy')
+    avg_reaction = sum(r["time"] for r in reaction_records) / max(len(reaction_records), 1)
     score = session.get('score', 0)
     total_rounds = session.get('num_rounds', 5)
 
@@ -251,6 +262,8 @@ def memory_result():
             score=score,
             total_rounds=total_rounds,
             avg_reaction_time=avg_reaction,
+            difficulty=difficulty,
+            reaction_records=reaction_records,
     )
     db.session.add(result)
     db.session.commit()
@@ -269,7 +282,7 @@ def memory_test_customization():
         # store physician's inputted customization in session
         session['num_shapes'] = int(request.form.get('num_shapes', 3))
         session['memorization_time'] = int(request.form.get('memorization_time', 5))
-        session['difficulty'] = request.form.get('difficulty', 'easy') # easy or hard
+        session['difficulty'] = request.form.get('difficulty', 'Easy') # Easy or hard
         session['num_rounds'] = request.form.get('num_rounds', 5)
         return redirect(url_for('memory_test.start_memory_test')) # go to flash instruction message
     
@@ -277,7 +290,7 @@ def memory_test_customization():
     defaults = {
         'num_shapes': session.get('num_shapes', 3),
         'memorization_time': session.get('memorization_time', 5),
-        'difficulty': session.get('difficulty', 'easy'),
+        'difficulty': session.get('difficulty', 'Easy'),
         'num_rounds': session.get('num_rounds', 5)
     }
 

@@ -89,12 +89,36 @@ def seed_patient_assessments():
         num_assessments = random.randint(3, 6)
 
         for i in range(num_assessments):
+            reaction_records = []
+            total_reaction_time = 0
+            num_rounds = random.randint(10, 20)
+            difficulty = random.choice(["Easy", "Hard"])
+
+            for u in range(num_rounds):
+                time = round(random.uniform(920, 4200), 2)
+                num_shapes = random.randint(3,7)
+                correct = random.choice([True, False])
+
+                reaction_records.append({
+                    "time": time,
+                    "diffculty": difficulty,
+                    "num_shapes": num_shapes,
+                    "correct": correct,
+                })
+                total_reaction_time += time
+
+            avg_reaction_time = round(total_reaction_time/num_rounds, 2)
+            correct_reactions = [r for r in reaction_records if r["correct"]]
+            score = len(correct_reactions)
+
             assessment = PatientAssessment(
                 patient_id=patient.id,
-                score=random.randint(6,10),
-                total_rounds=10,
-                avg_reaction_time=round(random.uniform(920, 4200)),
-                date_taken=datetime.now(timezone.utc) - timedelta(days=(num_assessments-i)*3)
+                score=score,
+                total_rounds=num_rounds,
+                avg_reaction_time=avg_reaction_time,
+                date_taken=datetime.now(timezone.utc) - timedelta(days=(num_assessments-i)*3),
+                difficulty=difficulty,
+                reaction_records=reaction_records,
             )
             db.session.add(assessment)
     
