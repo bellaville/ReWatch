@@ -14,4 +14,7 @@ interface RequestJoinExperiment {
 
     @GET("/join/{experimentID}")
     suspend fun join(@Path("experimentID") experimentID: String): JoinedExperiment
+
+    @GET("/join/{experimentID}/status")
+    suspend fun pollStatus(@Path("experimentID") experimentID: String): JoinedExperiment
 }

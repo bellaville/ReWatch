@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
+import ca.carleton.rewatch.presentation.AwaitingStart
+import ca.carleton.rewatch.presentation.CalibrationView
 import ca.carleton.rewatch.presentation.JoinExperimentView
 import ca.carleton.rewatch.presentation.LoadingSpinner
 import ca.carleton.rewatch.presentation.Screen
@@ -30,6 +32,12 @@ fun NavigationStack() {
         }
         composable(Screen.Loading.route) {
             LoadingSpinner()
+        }
+        composable(Screen.AwaitingStart.route) {
+            AwaitingStart(navController)
+        }
+        composable(Screen.Calibration.route) {
+            CalibrationView(navController)
         }
     }
 }

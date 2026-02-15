@@ -1,6 +1,5 @@
 package ca.carleton.rewatch.presentation
 
-import android.inputmethodservice.Keyboard
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding

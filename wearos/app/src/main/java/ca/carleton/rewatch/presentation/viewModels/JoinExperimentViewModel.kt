@@ -9,11 +9,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import ca.carleton.rewatch.dataclasses.JoinedExperiment
 import ca.carleton.rewatch.presentation.Screen
-import ca.carleton.rewatch.service.RequestJoinExperiment
 import ca.carleton.rewatch.service.Requestor
 import kotlinx.coroutines.launch
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 /**
  * The view model for joining an experiment.
@@ -57,13 +54,17 @@ class JoinExperimentViewModel : ViewModel() {
      * and takes appropriate action based on request result
      */
     fun submitExperiment(navController: NavController) {
+        if (experimentID == "") return
         viewModelScope.launch {
             navController.navigate(Screen.Loading.route)
             var joinedExperiment: JoinedExperiment? = sendRequest()
             if (joinedExperiment != null) {
                 Log.d("EXPJOIN", joinedExperiment.experimentID)
                 Log.d("EXPJOIN", joinedExperiment.stage)
-                navController.navigate(Screen.JoinExperiment.route)
+                navController.navigate(Screen.AwaitingStart.route.replace(
+                    oldValue = "{experimentID}",
+                    newValue = experimentID
+                ))
             } else {
                 navController.navigate(Screen.JoinExperiment.route)
             }

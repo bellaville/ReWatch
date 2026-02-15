@@ -16,8 +16,21 @@ def index():
 
 @main.route('/join/<experimentID>', methods=['GET'])
 def joinExp(experimentID: str):
-    time.sleep(4)
+    time.sleep(1)
     return jsonify({'experimentID': experimentID, 'stage': 'WAITING'}), 200
+
+state = 0
+
+@main.route('/join/<experimentID>/status', methods=['GET'])
+def joinExpStatus(experimentID: str):
+    stage = "WAITING"
+    global state
+    if state > 5:
+        stage = "GAIT"
+    if state > 15:
+        stage = "NEXTSTEP"
+    state += 1
+    return jsonify({'experimentID': experimentID, 'stage': stage}), 200
 
 @main.route('/profile', methods=['GET', 'POST'])
 @login_required
