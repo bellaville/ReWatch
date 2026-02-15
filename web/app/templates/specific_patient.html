@@ -86,15 +86,35 @@
                         </div>
                     </div>
 
-                 <!-- Reaction Time Chart-->
-                 <div class="col-md-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="mb-2">Reaction Times Over Time</h5>
-                            <canvas id="reactionChart" style="max-height:400px;"></canvas>
+                    <!-- Reaction Time Chart-->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="mb-2">Reaction Times Over Time</h5>
+                                <canvas id="reactionChart" style="max-height:400px;"></canvas>
+                            </div>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Correct Reaction Time Chart-->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="mb-2">Correct Response Reaction Times</h5>
+                                <canvas id="correctReactionChart" style="max-height:400px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Incorrect Reaction Time Chart-->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="mb-2">Incorrect Response Reaction Times</h5>
+                                <canvas id="incorrectReactionChart" style="max-height:400px;"></canvas>
+                            </div>
+                        </div>
+                    </div>
             </div>
         </div>
     </div>
@@ -105,8 +125,33 @@
     // Need to convert Flask lists to JS arrays
     const scorePoints = {{ chart_scores|tojson }};
     const avgReactions = {{ chart_avg_reactions|tojson }};
-    const correctReactions = {{ correct_reactions|tojson }}
-    const incorrectReactions = {{ incorrect_reactions|tojson }}
+    const correctReactions = {{ correct_reactions|tojson }};
+    const incorrectReactions = {{ incorrect_reactions|tojson }};
+    const reactionStd = {{ chart_reaction_std|tojson }};
+
+    const rawData = {
+        scores: scorePoints,
+        avg: avgReactions,
+        correct: correctReactions,
+        incorrect: incorrectReactions,
+        std: reactionStd
+    };
+
+    function buildStdBounds(avg, std) {
+        return {
+            upper: avg.map((avgPoint, i) => ({
+                x: avgPoint.x,
+                y: avgPoint.y + std[i].y, // avg + std
+                difficulty: avgPoint.difficulty
+            })),
+            lower: avg.map((avgPoint, i) => ({
+                x: avgPoint.x,
+                y: avgPoint.y - std[i].y, // avg - std
+                difficulty: avgPoint.difficulty
+            }))
+        }
+    }
+    let {upper: upperBound, lower: lowerBound} = buildStdBounds(avgReactions, reactionStd);
 
     // Memory chart
     const scoreChart = new Chart(document.getElementById('scoreChart'), {
@@ -132,7 +177,11 @@
                         text: 'Assessment Date',
                     }
                 },
-                y: { title: { display: true, text: 'Score' }}}
+                y: { 
+                    title: { display: true, text: 'Score (%)' },
+                    suggestedMin: 0,
+                    suggestedMax: 100
+                }}
         }
     });
 
@@ -147,6 +196,24 @@
                     borderColor: 'rgb(54, 162, 235)',
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     tension: 0.3
+                },
+                { // + std dev bound
+                    type: 'line',
+                    label: '+1 Standard Deviation',
+                    data: upperBound,
+                    borderColor: 'rgba(54, 162, 235, 0)',
+                    //backgroundColor: 'rgba(54, 162, 235, 0.15)',
+                    fill: '-1',
+                    pointRadius: 0
+                },
+                { // - std dev bound
+                    type: 'line',
+                    label: '-1 Standard Deviation',
+                    data: lowerBound,
+                    borderColor: 'rgba(54, 162, 235, 0)',
+                    //backgroundColor: 'rgba(54, 162, 235, 0.15)',
+                    fill: false,
+                    pointRadius: 0
                 },
                 {
                     type: 'scatter',
@@ -196,48 +263,148 @@
         }
     });
 
+    // Correct responses chart
+    const correctReactionChart = new Chart(document.getElementById('correctReactionChart'), {
+        data: {
+            datasets:[
+                {
+                    type: 'line',
+                    label: 'Average Reaction Time (ms)',
+                    data: avgReactions,
+                    borderColor: 'rgb(54, 162, 235)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    tension: 0.3
+                },
+                {
+                    type: 'scatter',
+                    label: 'Reaction Time (ms)',
+                    data: correctReactions,
+                    backgroundColor: 'rgba(75, 192, 75, 0.7)',
+                    borderColor: 'rgba(75, 192, 75, 1)',
+                    tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { 
+                    display: true,
+                    positions: 'right',
+                    labels: {
+                        boxWidth: 20,
+                        padding: 15
+                    }
+                 }
+            },
+            scales: { x: {
+                    type: 'category',
+                    title: {
+                        display: true,
+                        text: 'Assessment Date',
+                    }
+                },
+                y: { title: { display: true, text: 'Reaction Time (ms)' }}}
+        }
+    });
+
+    // Incorrect responses chart
+    const incorrectReactionChart = new Chart(document.getElementById('incorrectReactionChart'), {
+        data: {
+            datasets:[
+                {
+                    type: 'line',
+                    label: 'Average Reaction Time (ms)',
+                    data: avgReactions,
+                    borderColor: 'rgb(54, 162, 235)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    tension: 0.3
+                },
+                {
+                    type: 'scatter',
+                    label: 'Reaction Time (ms)',
+                    data: incorrectReactions,
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { 
+                    display: true,
+                    positions: 'right',
+                    labels: {
+                        boxWidth: 20,
+                        padding: 15
+                    }
+                 }
+            },
+            scales: { x: {
+                    type: 'category',
+                    title: {
+                        display: true,
+                        text: 'Assessment Date',
+                    }
+                },
+                y: { title: { display: true, text: 'Reaction Time (ms)' }}}
+        }
+    });
+
+    const charts = {
+        score: scoreChart,
+        reaction: reactionChart,
+        correct: correctReactionChart,
+        incorrect: incorrectReactionChart
+    }
+
     function filterByDifficulty(difficulty){
         // if difficulty = both, then return everything without filtering
         if (difficulty === 'Both'){
-            return {
-                scores: scorePoints,
-                avg: avgReactions,
-                correct: correctReactions,
-                incorrect: incorrectReactions
-            }
+            return rawData;
         }
 
         // otherwise, filter each dataset by difficulty
-        return {
-            scores: scorePoints.filter(function (point) {
-                // find the datapoint with the filtered difficulty
-                return point.difficulty === difficulty;
-            }),
-            avg: avgReactions.filter(function (point) {
-                return point.difficulty === difficulty;
-            }),
-            correct: correctReactions.filter(function (point) {
-                return point.difficulty === difficulty;
-            }),
-            incorrect: incorrectReactions.filter(function (point) {
-                return point.difficulty === difficulty;
-            })
+        return { // find the datapoint with the filtered difficulty
+            scores: rawData.scores.filter(p=> p.difficulty === difficulty),
+            avg: rawData.avg.filter(p=> p.difficulty === difficulty),
+            correct: rawData.correct.filter(p=> p.difficulty === difficulty),
+            incorrect: rawData.incorrect.filter(p=> p.difficulty === difficulty),
+            std: rawData.std.filter(p=> p.difficulty === difficulty),
         }
+    }
+
+    function updateAllCharts(filtered){
+        const bounds = buildStdBounds(filtered.avg, filtered.std);
+
+        // score chart
+        charts.score.data.datasets[0].data = filtered.scores;
+        charts.score.update();
+
+        // reactionChart chart
+        charts.reaction.data.datasets[0].data = filtered.avg;
+        charts.reaction.data.datasets[1].data = bounds.upper;
+        charts.reaction.data.datasets[2].data = bounds.lower;
+        charts.reaction.data.datasets[3].data = filtered.correct;
+        charts.reaction.data.datasets[4].data = filtered.incorrect;
+        charts.reaction.update();
+
+        // correct chart
+        charts.correct.data.datasets[0].data = filtered.avg;
+        charts.correct.data.datasets[1].data = filtered.correct;
+        charts.correct.update();
+
+        // incorrect chart
+        charts.incorrect.data.datasets[0].data = filtered.avg;
+        charts.incorrect.data.datasets[1].data = filtered.incorrect;
+        charts.incorrect.update();
+
     }
 
     document.getElementById('difficultyFilter').addEventListener('change', (e) => {
         const selected = e.target.value;
         const filtered = filterByDifficulty(selected);
-
-        // Update reactionChart data
-        reactionChart.data.datasets[0].data = filtered.avg;
-        reactionChart.data.datasets[1].data = filtered.correct;
-        reactionChart.data.datasets[2].data = filtered.incorrect;
-        reactionChart.update();
-
-        // Update scoreChart data
-        scoreChart.data.datasets[0].data = filtered.scores;
-        scoreChart.update();
+        updateAllCharts(filtered);
     })
 
 </script>

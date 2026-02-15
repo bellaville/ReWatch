@@ -1,4 +1,5 @@
 from app.models import PatientAssessment, Patient
+import statistics
 
 def get_patient_assessment_data(patient_id):
     """
@@ -12,10 +13,28 @@ def get_patient_assessment_data(patient_id):
     chart_avg_reactions = []
     correct_reactions = []
     incorrect_reactions = []
+    chart_reaction_std = []
 
     for assessment in results:
         date_label = assessment.date_taken.strftime("%Y-%m-%d")
-        # average reactoin time (one per assessment)
+
+        # collect all reaction times for this assessment
+        reaction_times = [rt["time"] for rt in assessment.reaction_records]
+
+        # compute std dev
+        if len(reaction_times) > 1:
+            std_dev = statistics.stdev(reaction_times)
+        else:
+            std_dev = 0
+
+        # std dev per assessment
+        chart_reaction_std.append({
+            "x": date_label,
+            "y": std_dev,
+            "difficulty": assessment.difficulty
+        })
+
+        # average reaction time (one per assessment)
         chart_avg_reactions.append({
             "x": date_label,
             "y": assessment.avg_reaction_time,
@@ -23,7 +42,7 @@ def get_patient_assessment_data(patient_id):
         })
         chart_scores.append({
             "x": date_label,
-            "y": assessment.score,
+            "y": (assessment.score/assessment.total_rounds)*100,
             "difficulty": assessment.difficulty
         })
 
@@ -41,7 +60,7 @@ def get_patient_assessment_data(patient_id):
             else:
                 incorrect_reactions.append(point)
 
-    return results, chart_scores, chart_avg_reactions, correct_reactions, incorrect_reactions
+    return results, chart_scores, chart_avg_reactions, correct_reactions, incorrect_reactions, chart_reaction_std
 
 def get_patient_information(patient_id):
     patient_age = Patient.query.filter_by(id=patient_id).first().age
