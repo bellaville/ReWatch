@@ -1,5 +1,6 @@
 package ca.carleton.rewatch.presentation
 
+import android.inputmethodservice.Keyboard
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -49,7 +51,8 @@ fun JoinExperimentView(
             modifier = Modifier.fillMaxWidth()
                 .padding(12.dp),
             keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Done
+                imeAction = ImeAction.Done,
+                keyboardType = KeyboardType.Number
             ),
             keyboardActions = KeyboardActions(
                 onDone = {
