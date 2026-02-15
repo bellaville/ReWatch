@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for, flash
+import time
+from flask import Blueprint, jsonify, render_template, request, session, redirect, url_for, flash
 from flask_login import login_required, current_user
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -12,6 +13,11 @@ main = Blueprint('main', __name__)
 @main.route('/')
 def index():
     return render_template('home.html')
+
+@main.route('/join/<experimentID>', methods=['GET'])
+def joinExp(experimentID: str):
+    time.sleep(4)
+    return jsonify({'experimentID': experimentID, 'stage': 'WAITING'}), 200
 
 @main.route('/profile', methods=['GET', 'POST'])
 @login_required

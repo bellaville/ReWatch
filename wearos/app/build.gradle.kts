@@ -38,6 +38,7 @@ android {
     useLibrary("wear-sdk")
     buildFeatures {
         compose = true
+        dataBinding = true
     }
 }
 
@@ -52,6 +53,13 @@ dependencies {
     implementation(libs.wear.tooling.preview)
     implementation(libs.activity.compose)
     implementation(libs.core.splashscreen)
+    implementation(libs.material3)
+    implementation(libs.retrofit)
+    implementation("com.squareup.retrofit2:converter-gson:2.3.0")
+    implementation("androidx.wear.compose:compose-navigation:1.5.6")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+    implementation("androidx.fragment:fragment-ktx:1.6.0")
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
