@@ -229,9 +229,12 @@
                     callbacks: {
                         label: function(context) {
                             const dataset = context.dataset;
-                            // not showing boxplot data in tooltip to avoid congestion
-                            if (dataset.type === 'boxplot') return null; 
-                            return context.dataset.label + ': ' + context.formattedValue;
+                            const dataPoint = dataset.data[context.dataIndex];
+                            // reducing boxplot data in tooltip to avoid congestion
+                            if (dataset.type === 'boxplot') {
+                                return `min: ${dataPoint.min.toFixed(2)}, median: ${dataPoint.median.toFixed(2)}, max: ${dataPoint.max.toFixed(2)}`;
+                            }
+                            return `${dataset.label}: ${context.formattedValue}`;
                         }
                     }
                 },
