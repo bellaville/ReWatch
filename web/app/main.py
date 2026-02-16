@@ -14,12 +14,14 @@ main = Blueprint('main', __name__)
 def index():
     return render_template('home.html')
 
+state = 0
+
 @main.route('/join/<experimentID>', methods=['GET'])
 def joinExp(experimentID: str):
     time.sleep(1)
+    global state
+    state = 0
     return jsonify({'experimentID': experimentID, 'stage': 'WAITING'}), 200
-
-state = 0
 
 @main.route('/join/<experimentID>/status', methods=['GET'])
 def joinExpStatus(experimentID: str):
