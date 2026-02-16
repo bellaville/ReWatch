@@ -8,6 +8,8 @@ package ca.carleton.rewatch.presentation
 sealed class Screen(val route: String) {
     object JoinExperiment : Screen("joinExp")
     object Loading : Screen("loading")
-    object AwaitingStart: Screen("awaiting/{experimentID}")
-    object Calibration: Screen("calibrating/{experimentID}")
+    object AwaitingStart : Screen("awaiting/{experimentID}")
+    object Calibration : Screen("calibrating/{experimentID}")
+    object RTTest : Screen("reaction/{experimentID}")
+    object Complete : Screen("complete")
 }

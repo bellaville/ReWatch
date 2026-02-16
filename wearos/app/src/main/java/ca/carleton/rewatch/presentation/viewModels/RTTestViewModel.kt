@@ -2,6 +2,7 @@ package ca.carleton.rewatch.presentation.viewModels
 
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
@@ -15,9 +16,10 @@ import ca.carleton.rewatch.service.Requestor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class CalibrationViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
+class RTTestViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
 
-    var collectionText by mutableStateOf("Calibrating Watch")
+    var collectionText by mutableStateOf("Awaiting Test Start")
+    var circleColour by mutableIntStateOf(0)
 
     /**
      * Builds and sends poll request to ReWatch web server
@@ -59,21 +61,14 @@ class CalibrationViewModel(private val savedStateHandle: SavedStateHandle) : Vie
                 }
 
                 // Check if current stage, if not navigate to next stage
-                if (joinedExperiment?.stage == AssessmentStage.CALIBRATION.stage) {
-                    Log.d("EXPPOLL2", "Awaiting Change to Status")
-                } else if (joinedExperiment?.stage == AssessmentStage.CALIBRATION_COMPLETE.stage) {
-                    Log.d("EXPPOLL2", "Calibration Complete Message")
-                    collectionText = "Calibration Complete\nPlease Return"
-                } else if (joinedExperiment?.stage == AssessmentStage.RT_TEST.stage) {
+                if (joinedExperiment.stage == AssessmentStage.RT_TEST.stage) {
+                    Log.d("EXPPOLL3", "Status Unchanged")
+                } else if (joinedExperiment.stage == AssessmentStage.COMPLETE.stage) {
                     isAwaiting = false
-                    Log.d("EXPPOLL2", "Status Changed to RT")
-                    navController.navigate(Screen.RTTest.route.replace(
-                        oldValue = "{experimentID}",
-                        newValue = experimentID
-                    ))
+                    Log.d("EXPPOLL3", "Status Changed to " + joinedExperiment.stage)
+                    navController.navigate(Screen.Complete.route)
                 } else {
-                    isAwaiting = false
-                    Log.d("EXPPOLL2", "Status Changed to " + joinedExperiment?.stage)
+                    Log.d("EXPPOLL3", "Something went wrong")
                     navController.navigate(Screen.JoinExperiment.route)
                 }
                 delay(1000)

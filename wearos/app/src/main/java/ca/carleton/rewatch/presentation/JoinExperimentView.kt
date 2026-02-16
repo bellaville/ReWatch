@@ -46,9 +46,9 @@ fun JoinExperimentView(
         OutlinedTextField(
             value = viewModel.experimentID,
             onValueChange = { viewModel.onExperimentChanged(it) },
-            label = { Text("Experiment ID") },
+            label = { Text("Assessment ID") },
             modifier = Modifier.fillMaxWidth()
-                .padding(12.dp),
+                .padding(horizontal = 20.dp),
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Done,
                 keyboardType = KeyboardType.Number

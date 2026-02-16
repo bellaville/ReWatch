@@ -28,7 +28,11 @@ def joinExpStatus(experimentID: str):
     if state > 5:
         stage = "GAIT"
     if state > 15:
-        stage = "NEXTSTEP"
+        stage = "GAIT_COMPLETE"
+    if state > 20:
+        stage = "RT_TEST"
+    if state > 30:
+        stage = "COMPLETE"
     state += 1
     return jsonify({'experimentID': experimentID, 'stage': stage}), 200
 
