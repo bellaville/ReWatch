@@ -121,7 +121,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot"></script>
 <script>
     // Need to convert Flask lists to JS arrays
     const scorePoints = {{ chart_scores|tojson }};
@@ -138,20 +137,50 @@
         std: reactionStd
     };
 
-    // Store whisker values for each assessment date
-    const boxData = avgReactions.map((point, i) => {
-        const mean = point.y;
-        const std = reactionStd[i].y;
-
+    // Prep min, median, and max points for whiskers
+    function buildWhiskers(avg, std) {
         return {
-            x: point.x, // same date label
-            min: mean - std, // bottom whisker
-            q1: mean - std, // (making fake box since we don't have q1 or q3 - we only need the whiskers)
-            median: mean, // center line
-            q3: mean + std, // faking box again
-            max: mean + std // top whisker
+            min: avg.map((p, i) => ({ x: p.x, y: +(p.y - std[i].y).toFixed(2)})),
+            median: avg.map((p, i) => ({ x: p.x, y: +(p.y).toFixed(2)})),
+            max: avg.map((p, i) => ({ x: p.x, y: +(p.y + std[i].y).toFixed(2)}))
         }
-    })
+    }
+
+    // Build vertical whisker stem
+    function buildStem(whiskers){
+        // Iterate over min points array (using min as a base so median and max
+        // are relative to it)
+        return whiskers.min.map((p, i) => ({
+            x:p.x,
+            yMin: p.y,
+            yMedian: whiskers.median[i].y,
+            yMax: whiskers.max[i].y
+        
+        }))
+    }
+
+    // Build initial whiskers and stem
+    let whiskers = buildWhiskers(avgReactions, reactionStd);
+    let stemData = buildStem(whiskers);
+
+    // Add a plugin to draw vertical whisker stem on top of chart
+    const verticalStemPlugin = {
+    id: 'verticalStem',
+    afterDatasetsDraw(chart, args, pluginOptions) {
+        const {ctx, scales: {x, y}} = chart;
+        ctx.save();
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 3;
+        stemData.forEach(d => {
+            const xPos = x.getPixelForValue(d.x);
+            ctx.beginPath();
+            ctx.moveTo(xPos, y.getPixelForValue(d.yMin));
+            ctx.lineTo(xPos, y.getPixelForValue(d.yMax));
+            ctx.stroke();
+        })
+        ctx.restore();
+        }
+    }
 
     // Memory chart
     const scoreChart = new Chart(document.getElementById('scoreChart'), {
@@ -187,15 +216,38 @@
 
     // Reaction Time chart
     const reactionChart = new Chart(document.getElementById('reactionChart'), {
+        type: 'scatter',
         data: {
             datasets: [
                 {
-                    type: 'boxplot',
-                    label: 'Mean +/- Std. Dev.',
-                    data: boxData,
-                    borderColor: 'gray',
-                    backgroundColor: 'transparent', 
-                    borderWidth: 1
+                    label: 'Mean - Std. Dev. (Min)',
+                    data: buildWhiskers(avgReactions, reactionStd).min,
+                    pointStyle: 'line',
+                    backgroundColor: 'gray', 
+                    borderColor: 'black', 
+                    borderWidth: 3,
+                    radius: 8,
+                    showLine: false
+                },
+                {
+                    label: 'Median',
+                    data: buildWhiskers(avgReactions, reactionStd).median,
+                    pointStyle: 'line',
+                    backgroundColor: 'gray', 
+                    borderColor: 'black', 
+                    borderWidth: 3,
+                    radius: 8,
+                    showLine: false
+                },
+                {
+                    label: 'Mean + Std. Dev. (Max)',
+                    data: buildWhiskers(avgReactions, reactionStd).max,
+                    pointStyle: 'line',
+                    backgroundColor: 'gray', 
+                    borderColor: 'black', 
+                    borderWidth: 3,
+                    radius: 8,
+                    showLine: false
                 },
                 {
                     type: 'line',
@@ -225,19 +277,6 @@
         options: {
             responsive: true,
             plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const dataset = context.dataset;
-                            const dataPoint = dataset.data[context.dataIndex];
-                            // reducing boxplot data in tooltip to avoid congestion
-                            if (dataset.type === 'boxplot') {
-                                return `min: ${dataPoint.min.toFixed(2)}, median: ${dataPoint.median.toFixed(2)}, max: ${dataPoint.max.toFixed(2)}`;
-                            }
-                            return `${dataset.label}: ${context.formattedValue}`;
-                        }
-                    }
-                },
                 legend: { 
                     display: true,
                     positions: 'right',
@@ -262,7 +301,8 @@
                     }
                 }
             }
-        }
+        },
+        plugins: [verticalStemPlugin]
     });
 
     // Correct responses chart
@@ -377,29 +417,20 @@
 
     function updateAllCharts(filtered){
         // Store whisker values for each assessment date
-        const boxData = avgReactions.map((point, i) => {
-            const mean = point.y;
-            const std = reactionStd[i].y;
-
-            return {
-                x: point.x, // same date label
-                min: mean - std, // bottom whisker
-                q1: mean - std, // (making fake box since we don't have q1 or q3 - we only need the whiskers)
-                median: mean, // center line
-                q3: mean + std, // faking box again
-                max: mean + std // top whisker
-            }
-        })
+        whiskers = buildWhiskers(filtered.avg, filtered.std);
+        stemData = buildStem(whiskers);
 
         // score chart
         charts.score.data.datasets[0].data = filtered.scores;
         charts.score.update();
 
         // reactionChart chart
-        charts.reaction.data.datasets[0].data = boxData;
-        charts.reaction.data.datasets[1].data = filtered.avg;
-        charts.reaction.data.datasets[2].data = filtered.correct;
-        charts.reaction.data.datasets[3].data = filtered.incorrect;
+        charts.reaction.data.datasets[0].data = whiskers.min;
+        charts.reaction.data.datasets[1].data = whiskers.median;
+        charts.reaction.data.datasets[2].data = whiskers.max;
+        charts.reaction.data.datasets[3].data = filtered.avg;
+        charts.reaction.data.datasets[4].data = filtered.correct;
+        charts.reaction.data.datasets[5].data = filtered.incorrect;
         charts.reaction.update();
 
         // correct chart
