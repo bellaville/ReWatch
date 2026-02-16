@@ -24,8 +24,9 @@ def create_assessment(test_client: FlaskClient):
     new_assessment = PatientAssessment(
         patient_id=1,
         score=0,
-        avg_reaction_time=1.0,
-        total_rounds=3
+        avg_reaction_time=1200,
+        total_rounds=3,
+        difficulty="easy"
     )
 
     db.session.add(new_assessment)

@@ -74,23 +74,24 @@ def patient_details():
         # Find the Role object for 'Patient'
         patient_role = Role.query.filter_by(name='Patient').first()
 
+        physician_profile = current_user.physician_profile
         if patient_role:
             # Get all users that have this role
-            users = patient_role.users.all()
+            patients = physician_profile.patients
         else:
-            users = []
+            patients = []
 
         patient_id = request.args.get('patient_id', type=int)
 
         if patient_id:
-            results, chart_labels, chart_scores, chart_reaction_times = get_patient_assessment_data(patient_id)
+            results, chart_scores, chart_avg_reactions, correct_reactions, incorrect_reactions = get_patient_assessment_data(patient_id)
             patient_user = User.query.join(Patient).filter(Patient.id == patient_id).first()
             patient_name = patient_user.name if patient_user else "Unknown"
             age, height, gender, weight = get_patient_information(patient_id)
 
-            return render_template('specific_patient.html', name=patient_name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_reaction_times=chart_reaction_times, age=age, gender=gender, height=height, weight=weight)
+            return render_template('specific_patient.html', name=patient_name, results=results, chart_scores=chart_scores, chart_avg_reactions=chart_avg_reactions, correct_reactions=correct_reactions, incorrect_reactions=incorrect_reactions, age=age, gender=gender, height=height, weight=weight)
         
-        return render_template('patient_details.html', users=users)
+        return render_template('patient_details.html', patients=patients)
     
     # If patient, redirect to specific patient page
     if current_user.patient_profile:
@@ -99,9 +100,9 @@ def patient_details():
         age, height, gender, weight = get_patient_information(patient_id)
 
         # Show completed tests if any
-        results, chart_labels, chart_scores, chart_reaction_times = get_patient_assessment_data(patient_id)
+        results, chart_scores, chart_avg_reactions, correct_reactions, incorrect_reactions = get_patient_assessment_data(patient_id)
 
-        return render_template('specific_patient.html', name=current_user.name, results=results, chart_labels=chart_labels, chart_scores=chart_scores, chart_reaction_times=chart_reaction_times, age=age, gender=gender, height=height, weight=weight)
+        return render_template('specific_patient.html', name=current_user.name, results=results, chart_scores=chart_scores, chart_avg_reactions=chart_avg_reactions,correct_reactions=correct_reactions, incorrect_reactions=incorrect_reactions)
 
 @main.route('/assessments', methods=['GET', 'POST'])
 @login_required
