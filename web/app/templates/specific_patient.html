@@ -121,6 +121,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@sgratzl/chartjs-chart-boxplot"></script>
 <script>
     // Need to convert Flask lists to JS arrays
     const scorePoints = {{ chart_scores|tojson }};
@@ -137,21 +138,20 @@
         std: reactionStd
     };
 
-    function buildStdBounds(avg, std) {
+    // Store whisker values for each assessment date
+    const boxData = avgReactions.map((point, i) => {
+        const mean = point.y;
+        const std = reactionStd[i].y;
+
         return {
-            upper: avg.map((avgPoint, i) => ({
-                x: avgPoint.x,
-                y: avgPoint.y + std[i].y, // avg + std
-                difficulty: avgPoint.difficulty
-            })),
-            lower: avg.map((avgPoint, i) => ({
-                x: avgPoint.x,
-                y: avgPoint.y - std[i].y, // avg - std
-                difficulty: avgPoint.difficulty
-            }))
+            x: point.x, // same date label
+            min: mean - std, // bottom whisker
+            q1: mean - std, // (making fake box since we don't have q1 or q3 - we only need the whiskers)
+            median: mean, // center line
+            q3: mean + std, // faking box again
+            max: mean + std // top whisker
         }
-    }
-    let {upper: upperBound, lower: lowerBound} = buildStdBounds(avgReactions, reactionStd);
+    })
 
     // Memory chart
     const scoreChart = new Chart(document.getElementById('scoreChart'), {
@@ -190,30 +190,19 @@
         data: {
             datasets: [
                 {
+                    type: 'boxplot',
+                    label: 'Mean +/- Std. Dev.',
+                    data: boxData,
+                    borderColor: 'gray',
+                    backgroundColor: 'transparent', 
+                    borderWidth: 1
+                },
+                {
                     type: 'line',
                     label: 'Average Reaction Time (ms)',
                     data: avgReactions,
                     borderColor: 'rgb(54, 162, 235)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     tension: 0.3
-                },
-                { // + std dev bound
-                    type: 'line',
-                    label: '+1 Standard Deviation',
-                    data: upperBound,
-                    borderColor: 'rgba(54, 162, 235, 0)',
-                    //backgroundColor: 'rgba(54, 162, 235, 0.15)',
-                    fill: '-1',
-                    pointRadius: 0
-                },
-                { // - std dev bound
-                    type: 'line',
-                    label: '-1 Standard Deviation',
-                    data: lowerBound,
-                    borderColor: 'rgba(54, 162, 235, 0)',
-                    //backgroundColor: 'rgba(54, 162, 235, 0.15)',
-                    fill: false,
-                    pointRadius: 0
                 },
                 {
                     type: 'scatter',
@@ -236,6 +225,16 @@
         options: {
             responsive: true,
             plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const dataset = context.dataset;
+                            // not showing boxplot data in tooltip to avoid congestion
+                            if (dataset.type === 'boxplot') return null; 
+                            return context.dataset.label + ': ' + context.formattedValue;
+                        }
+                    }
+                },
                 legend: { 
                     display: true,
                     positions: 'right',
@@ -360,33 +359,44 @@
 
     function filterByDifficulty(difficulty){
         // if difficulty = both, then return everything without filtering
-        if (difficulty === 'Both'){
-            return rawData;
-        }
+        if (difficulty === 'Both') return rawData;
 
         // otherwise, filter each dataset by difficulty
-        return { // find the datapoint with the filtered difficulty
-            scores: rawData.scores.filter(p=> p.difficulty === difficulty),
-            avg: rawData.avg.filter(p=> p.difficulty === difficulty),
-            correct: rawData.correct.filter(p=> p.difficulty === difficulty),
-            incorrect: rawData.incorrect.filter(p=> p.difficulty === difficulty),
-            std: rawData.std.filter(p=> p.difficulty === difficulty),
+        const filtered = {};
+
+        // find the datapoint with the filtered difficulty
+        for (const key in rawData) {
+            filtered[key] = rawData[key].filter(p => p.difficulty === difficulty);
         }
+        return filtered;
+          
     }
 
     function updateAllCharts(filtered){
-        const bounds = buildStdBounds(filtered.avg, filtered.std);
+        // Store whisker values for each assessment date
+        const boxData = avgReactions.map((point, i) => {
+            const mean = point.y;
+            const std = reactionStd[i].y;
+
+            return {
+                x: point.x, // same date label
+                min: mean - std, // bottom whisker
+                q1: mean - std, // (making fake box since we don't have q1 or q3 - we only need the whiskers)
+                median: mean, // center line
+                q3: mean + std, // faking box again
+                max: mean + std // top whisker
+            }
+        })
 
         // score chart
         charts.score.data.datasets[0].data = filtered.scores;
         charts.score.update();
 
         // reactionChart chart
-        charts.reaction.data.datasets[0].data = filtered.avg;
-        charts.reaction.data.datasets[1].data = bounds.upper;
-        charts.reaction.data.datasets[2].data = bounds.lower;
-        charts.reaction.data.datasets[3].data = filtered.correct;
-        charts.reaction.data.datasets[4].data = filtered.incorrect;
+        charts.reaction.data.datasets[0].data = boxData;
+        charts.reaction.data.datasets[1].data = filtered.avg;
+        charts.reaction.data.datasets[2].data = filtered.correct;
+        charts.reaction.data.datasets[3].data = filtered.incorrect;
         charts.reaction.update();
 
         // correct chart
@@ -402,8 +412,7 @@
     }
 
     document.getElementById('difficultyFilter').addEventListener('change', (e) => {
-        const selected = e.target.value;
-        const filtered = filterByDifficulty(selected);
+        const filtered = filterByDifficulty(e.target.value);
         updateAllCharts(filtered);
     })
 
