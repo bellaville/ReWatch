@@ -3,7 +3,7 @@
 {% block content %}
 <div class="text-center">
     <h1 class="mb-4">Welcome to ReWatch!</h1>
-    <div class="d-flex justify-content-left">
+    <div class="d-flex justify-content-center">
         <div class="list-group" style="max-width: 500px;">
             <a href="{{ url_for('main.patient_details') }}"
                class="list-group-item list-group-item-action">
@@ -13,6 +13,11 @@
             <a href="{{ url_for('main.assessments') }}"
                class="list-group-item list-group-item-action">
                 Assessments
+            </a>
+
+            <a href="{{ url_for('main.toggle_watch_status') }}"
+               class="list-group-item list-group-item-action">
+                Connect Galaxy Watch
             </a>
         </div>
     </div>
