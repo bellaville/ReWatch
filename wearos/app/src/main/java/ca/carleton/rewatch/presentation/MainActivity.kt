@@ -6,11 +6,12 @@ import android.os.Bundle
 import android.widget.TextView
 import android.widget.ToggleButton
 import androidx.activity.ComponentActivity
-import ca.carleton.rewatch.R
 import android.hardware.SensorManager
 import android.hardware.SensorEventListener
 import android.util.Log
+import androidx.activity.compose.setContent
 import ca.carleton.rewatch.dataclasses.SensorReading
+import ca.carleton.rewatch.presentation.navigation.NavigationStack
 
 /**
  * Main Activity that gathers accelerometer data.
@@ -28,22 +29,12 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        status = findViewById(R.id.statusText)
-        accelX = findViewById(R.id.accel_x)
-        accelY = findViewById(R.id.accel_y)
-        accelZ = findViewById(R.id.accel_z)
-        toggle = findViewById(R.id.toggle_button)
-        toggle.isEnabled = true
-        toggle.setOnClickListener {
-            toggleClick()
+        setTheme(android.R.style.Theme_DeviceDefault)
+
+        setContent {
+            NavigationStack()
         }
-
-        sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
-        val sensor : Sensor? = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
-        sensorManager.registerListener(listener, sensor, SensorManager.SENSOR_DELAY_NORMAL)
-        status.text = "Status: Sensor loaded"
     }
 
     private val listener = object : SensorEventListener {
