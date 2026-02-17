@@ -125,8 +125,6 @@
     // Need to convert Flask lists to JS arrays
     const chartData = {{ chart_data|tojson }}
 
-    const rawData = chartData;
-
     // Prep min, median, and max points for error bars
     function buildErrorBars(avg, std) {
         return {
