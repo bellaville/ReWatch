@@ -65,12 +65,12 @@ def patient_details():
         patient_id = request.args.get('patient_id', type=int)
 
         if patient_id:
-            results, chart_scores, chart_avg_reactions, correct_reactions, incorrect_reactions, chart_reaction_std, chart_correct_avg, chart_correct_std, chart_incorrect_avg, chart_incorrect_std = get_patient_assessment_data(patient_id)
+            results, chart_data = get_patient_assessment_data(patient_id)
             patient_user = User.query.join(Patient).filter(Patient.id == patient_id).first()
             patient_name = patient_user.name if patient_user else "Unknown"
             age, height, gender, weight = get_patient_information(patient_id)
 
-            return render_template('specific_patient.html', name=patient_name, results=results, chart_scores=chart_scores, chart_avg_reactions=chart_avg_reactions, correct_reactions=correct_reactions, incorrect_reactions=incorrect_reactions,chart_reaction_std=chart_reaction_std, chart_correct_avg=chart_correct_avg, chart_correct_std=chart_correct_std, chart_incorrect_avg=chart_incorrect_avg, chart_incorrect_std=chart_incorrect_std, age=age, gender=gender, height=height, weight=weight)
+            return render_template('specific_patient.html', name=patient_name, results=results, chart_data=chart_data, age=age, gender=gender, height=height, weight=weight)
         
         return render_template('patient_details.html', patients=patients)
     
@@ -81,9 +81,9 @@ def patient_details():
         age, height, gender, weight = get_patient_information(patient_id)
 
         # Show completed tests if any
-        results, chart_scores, chart_avg_reactions, correct_reactions, incorrect_reactions, chart_reaction_std, chart_correct_avg, chart_correct_std, chart_incorrect_avg, chart_incorrect_std = get_patient_assessment_data(patient_id)
+        results, chart_data = get_patient_assessment_data(patient_id)
 
-        return render_template('specific_patient.html', name=current_user.name, results=results, chart_scores=chart_scores, chart_avg_reactions=chart_avg_reactions,correct_reactions=correct_reactions, incorrect_reactions=incorrect_reactions, chart_reaction_std=chart_reaction_std, chart_correct_avg=chart_correct_avg, chart_correct_std=chart_correct_std, chart_incorrect_avg=chart_incorrect_avg, chart_incorrect_std=chart_incorrect_std)
+        return render_template('specific_patient.html', name=current_user.name, results=results, chart_data=chart_data)
 
 @main.route('/assessments', methods=['GET', 'POST'])
 @login_required

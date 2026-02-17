@@ -123,27 +123,9 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // Need to convert Flask lists to JS arrays
-    const scorePoints = {{ chart_scores|tojson }};
-    const avgReactions = {{ chart_avg_reactions|tojson }};
-    const correctReactions = {{ correct_reactions|tojson }};
-    const incorrectReactions = {{ incorrect_reactions|tojson }};
-    const reactionStd = {{ chart_reaction_std|tojson }};
-    const correctStd = {{ chart_correct_std|tojson }};
-    const incorrectStd = {{ chart_incorrect_std|tojson }};
-    const correctAvg = {{ chart_correct_avg|tojson }};
-    const incorrectAvg = {{ chart_incorrect_avg|tojson }};
+    const chartData = {{ chart_data|tojson }}
 
-    const rawData = {
-        scores: scorePoints,
-        avg: avgReactions,
-        correct: correctReactions,
-        incorrect: incorrectReactions,
-        std: reactionStd,
-        correctStd: correctStd,
-        incorrectStd: incorrectStd,
-        correctAvg: correctAvg,
-        incorrectAvg: incorrectAvg
-    };
+    const rawData = chartData;
 
     // Prep min, median, and max points for error bars
     function buildErrorBars(avg, std) {
@@ -193,9 +175,9 @@
         };
     }
     // Build initial errorBars and stems
-    let reactionErrorBars = buildErrorBars(avgReactions, reactionStd);
-    let correctErrorBars = buildErrorBars(correctAvg, correctStd);
-    let incorrectErrorBars = buildErrorBars(incorrectAvg, incorrectStd);
+    let reactionErrorBars = buildErrorBars(chartData.reactions.average, chartData.reactions.std);
+    let correctErrorBars = buildErrorBars(chartData.reactions.correct_avg, chartData.reactions.correct_std);
+    let incorrectErrorBars = buildErrorBars(chartData.reactions.incorrect_avg, chartData.reactions.incorrect_std);
 
     let reactionStem = buildStem(reactionErrorBars);
     let correctStem = buildStem(correctErrorBars);
@@ -207,7 +189,7 @@
         data: {
             datasets: [{
                 label: 'Memory Score(s)',
-                data: scorePoints,
+                data: chartData.scores,
                 borderColor: 'rgb(54, 162, 235)',
                 backgroundColor: 'rgba(54, 162, 235, 0.2)',
                 tension: 0.3
@@ -271,14 +253,14 @@
                 {
                     type: 'line',
                     label: 'Average Reaction Time (ms)',
-                    data: avgReactions,
+                    data: chartData.reactions.average,
                     borderColor: 'rgb(54, 162, 235)',
                     tension: 0.3
                 },
                 {
                     type: 'scatter',
                     label: 'Correct Response, Reaction Time (ms)',
-                    data: correctReactions,
+                    data: chartData.reactions.correct_points,
                     backgroundColor: 'rgba(75, 192, 75, 0.7)',
                     borderColor: 'rgba(75, 192, 75, 1)',
                     tension: 0.3
@@ -286,7 +268,7 @@
                 {
                     type: 'scatter',
                     label: 'Incorrect Response, Reaction Time (ms)',
-                    data: incorrectReactions,
+                    data: chartData.reactions.incorrect_points,
                     backgroundColor: 'rgba(255, 99, 132, 0.7)',
                     borderColor: 'rgba(255, 99, 132, 1)',
                     tension: 0.3
@@ -363,7 +345,7 @@
                 {
                     type: 'line',
                     label: 'Average Reaction Time (ms)',
-                    data: avgReactions,
+                    data: chartData.reactions.average,
                     borderColor: 'rgb(54, 162, 235)',
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     tension: 0.3
@@ -371,7 +353,7 @@
                 {
                     type: 'scatter',
                     label: 'Reaction Time (ms)',
-                    data: correctReactions,
+                    data: chartData.reactions.correct_points,
                     backgroundColor: 'rgba(75, 192, 75, 0.7)',
                     borderColor: 'rgba(75, 192, 75, 1)',
                     tension: 0.3
@@ -440,7 +422,7 @@
                 {
                     type: 'line',
                     label: 'Average Reaction Time (ms)',
-                    data: avgReactions,
+                    data: chartData.reactions.average,
                     borderColor: 'rgb(54, 162, 235)',
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
                     tension: 0.3
@@ -448,7 +430,7 @@
                 {
                     type: 'scatter',
                     label: 'Reaction Time (ms)',
-                    data: incorrectReactions,
+                    data: chartData.reactions.incorrect_points,
                     backgroundColor: 'rgba(255, 99, 132, 0.7)',
                     borderColor: 'rgba(255, 99, 132, 1)',
                     tension: 0.3
@@ -488,24 +470,28 @@
 
     function filterByDifficulty(difficulty){
         // if difficulty = both, then return everything without filtering
-        if (difficulty === 'Both') return rawData;
+        if (difficulty === 'Both') return chartData;
 
         // otherwise, filter each dataset by difficulty
-        const filtered = {};
+        const filteredScores = chartData.scores.filter(p => p.difficulty === difficulty);
 
         // find the datapoint with the filtered difficulty
-        for (const key in rawData) {
-            filtered[key] = rawData[key].filter(p => p.difficulty === difficulty);
+        const filteredReactions = {}
+        Object.keys(chartData.reactions).forEach(key => {
+            filteredReactions[key] = chartData.reactions[key].filter(p => p.difficulty === difficulty);
+        })
+
+        return {
+            scores: filteredScores,
+            reactions: filteredReactions
         }
-        return filtered;
-          
     }
 
     function updateAllCharts(filtered){
         // Store error bar values for each assessment date
-        let reactionErrorBars = buildErrorBars(filtered.avg, filtered.std);
-        let correctErrorBars = buildErrorBars(filtered.correctAvg, filtered.correctStd);
-        let incorrectErrorBars = buildErrorBars(filtered.incorrectAvg, filtered.incorrectStd);
+        let reactionErrorBars = buildErrorBars(filtered.reactions.average, filtered.reactions.std);
+        let correctErrorBars = buildErrorBars(filtered.reactions.correct_avg, filtered.reactions.correct_std);
+        let incorrectErrorBars = buildErrorBars(filtered.reactions.incorrect_avg, filtered.reactions.incorrect_std);
 
         let reactionStem = buildStem(reactionErrorBars);
         let correctStem = buildStem(correctErrorBars);
@@ -519,9 +505,9 @@
         charts.reaction.data.datasets[0].data = reactionErrorBars.min;
         charts.reaction.data.datasets[1].data = reactionErrorBars.median;
         charts.reaction.data.datasets[2].data = reactionErrorBars.max;
-        charts.reaction.data.datasets[3].data = filtered.avg;
-        charts.reaction.data.datasets[4].data = filtered.correct;
-        charts.reaction.data.datasets[5].data = filtered.incorrect;
+        charts.reaction.data.datasets[3].data = filtered.reactions.average;
+        charts.reaction.data.datasets[4].data = filtered.reactions.correct_points;
+        charts.reaction.data.datasets[5].data = filtered.reactions.incorrect_points;
         charts.reaction.config.plugins = [createVerticalStemPlugin(reactionStem)];
         charts.reaction.update();
 
@@ -529,8 +515,8 @@
         charts.correct.data.datasets[0].data = correctErrorBars.min;
         charts.correct.data.datasets[1].data = correctErrorBars.median;
         charts.correct.data.datasets[2].data = correctErrorBars.max;
-        charts.correct.data.datasets[3].data = filtered.avg;
-        charts.correct.data.datasets[4].data = filtered.correct;
+        charts.correct.data.datasets[3].data = filtered.reactions.correct_avg;
+        charts.correct.data.datasets[4].data = filtered.reactions.correct_points;
         charts.correct.config.plugins = [createVerticalStemPlugin(correctStem)];
         charts.correct.update();
 
@@ -538,8 +524,8 @@
         charts.incorrect.data.datasets[0].data = incorrectErrorBars.min;
         charts.incorrect.data.datasets[1].data = incorrectErrorBars.median;
         charts.incorrect.data.datasets[2].data = incorrectErrorBars.max;
-        charts.incorrect.data.datasets[3].data = filtered.avg;
-        charts.incorrect.data.datasets[4].data = filtered.incorrect;
+        charts.incorrect.data.datasets[3].data = filtered.reactions.inorrect_avg;
+        charts.incorrect.data.datasets[4].data = filtered.reactions.incorrect_points;
         charts.incorrect.config.plugins = [createVerticalStemPlugin(incorrectStem)];
         charts.incorrect.update();
 
