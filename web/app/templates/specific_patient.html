@@ -282,7 +282,9 @@
                     positions: 'right',
                     labels: {
                         boxWidth: 20,
-                        padding: 15
+                        padding: 15,
+                        // Below found at: https://stackoverflow.com/questions/52452440/remove-label-in-chart-js
+                        filter: (l) => (!(["Mean - Std. Dev. (Min)", "Mean + Std. Dev. (Max)", "Median"].includes(l.text)))
                     }
                  }
             },
