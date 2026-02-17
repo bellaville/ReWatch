@@ -113,6 +113,7 @@ def seed_patient_assessments():
 
             assessment = PatientAssessment(
                 patient_id=patient.id,
+                performed_with_physician=random.choice([True, False]),
                 score=score,
                 total_rounds=num_rounds,
                 avg_reaction_time=avg_reaction_time,

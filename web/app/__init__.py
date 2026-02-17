@@ -49,6 +49,9 @@ def create_app(test_config=False):
     from .memory_test import memory_test as memory_test_blueprint
     app.register_blueprint(memory_test_blueprint, url_prefix='/assessments/memory_test')
 
+    from .gait_test import gait_test as gait_test_blueprint
+    app.register_blueprint(gait_test_blueprint, url_prefix='/assessments/gait_test')
+
     # handle 403 error
     @app.errorhandler(403)
     def forbidden(e):

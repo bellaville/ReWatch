@@ -36,6 +36,7 @@
                             <th>Score</th>
                             <th>Avg Reaction Time (ms)</th>
                             <th>Difficulty</th>
+                            <th>Performed with Physician</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -47,6 +48,7 @@
                                     <td>{{ r.score }}/{{ r.total_rounds }}</td>
                                     <td>{{ "%.2f"|format(r.avg_reaction_time) }}</td>
                                     <td>{{ r.difficulty }}</td>
+                                    <td>{{ r.performed_with_physician }}</td>
                                 </tr>
                             {% endfor %}
                         {% else %}

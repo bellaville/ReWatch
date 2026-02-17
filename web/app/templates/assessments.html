@@ -25,6 +25,7 @@
                 <th>Test Type</th>
                 <th>Score</th>
                 <th>Reaction Time (ms)</th>
+                <th>Performed with Physician</th>
             </tr>
         </thead>
         <tbody>
@@ -35,6 +36,7 @@
                         <td>Short-Term Memory Test</td>
                         <td>{{ r.score }}/{{ r.total_rounds }}</td>
                         <td>{{ "%.2f"|format(r.avg_reaction_time) }}</td>
+                        <td>{{ r.performed_with_physician }}</td>
                     </tr>
                 {% endfor %}
             {% else %}
@@ -46,9 +48,18 @@
     </table>
 
     <hr>
-    <h4>Perform New Assessment</h4>
+    <h4>Perform New Memory Assessment</h4>
     <a href="{{ url_for('memory_test.memory_test_customization') }}" class="btn btn-primary btn-lg mt-3">
         Short-Term Memory Test
     </a>
+    {% if watch_connected %}
+        <hr>
+        <h4>Perform Gait + Memory Assessment</h4>
+        <a href="{{ url_for('gait_test.start') }}" class="btn btn-primary btn-lg mt-3">
+        Gait + Memory Test
+        </a>
+    {% endif %}
+
+
 </div>
 {% endblock %}

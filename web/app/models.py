@@ -69,6 +69,7 @@ class PatientAssessment(db.Model):
     __tablename__ = 'patientassessment'
     id = db.Column(db.Integer, primary_key=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id')) # link to Patient
+    performed_with_physician = db.Column(db.Boolean)
     score = db.Column(db.Integer)
     avg_reaction_time = db.Column(db.Float)
     total_rounds = db.Column(db.Integer)

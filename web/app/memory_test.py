@@ -83,9 +83,11 @@ def start_memory_test():
     # if user is physician, use the selected patient from session
     if current_user.has_role('Physician'):
         patient_id = session.get('selected_patient_id')
+        session['performed_with_physician'] = True
     else:
         # patient is performing their own test, use their own id from db/login
         patient_id = current_user.patient_profile.id
+        session['performed_with_physician'] = False
 
     session['test_patient_id'] = patient_id 
 
@@ -257,8 +259,11 @@ def memory_result():
         else:
             return redirect(url_for('main.index'))
 
+    performed_with_physician = session.get('performed_with_physician', False)
+
     result = PatientAssessment(
             patient_id=patient_id,
+            performed_with_physician=performed_with_physician,
             score=score,
             total_rounds=total_rounds,
             avg_reaction_time=avg_reaction,
