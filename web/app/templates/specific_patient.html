@@ -154,7 +154,8 @@
         }
     }
 
-    // Build vertical stem for error bars
+    // Build vertical stem for error bars by combining the matching min, median,
+    // and max values at each x into one object
     function buildStem(errorBars){
         // Iterate over min points array (using min as a base so median and max
         // are relative to it)
