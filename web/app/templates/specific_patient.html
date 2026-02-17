@@ -128,17 +128,25 @@
     const correctReactions = {{ correct_reactions|tojson }};
     const incorrectReactions = {{ incorrect_reactions|tojson }};
     const reactionStd = {{ chart_reaction_std|tojson }};
+    const correctStd = {{ chart_correct_std|tojson }};
+    const incorrectStd = {{ chart_incorrect_std|tojson }};
+    const correctAvg = {{ chart_correct_avg|tojson }};
+    const incorrectAvg = {{ chart_incorrect_avg|tojson }};
 
     const rawData = {
         scores: scorePoints,
         avg: avgReactions,
         correct: correctReactions,
         incorrect: incorrectReactions,
-        std: reactionStd
+        std: reactionStd,
+        correctStd: correctStd,
+        incorrectStd: incorrectStd,
+        correctAvg: correctAvg,
+        incorrectAvg: incorrectAvg
     };
 
-    // Prep min, median, and max points for whiskers
-    function buildWhiskers(avg, std) {
+    // Prep min, median, and max points for error bars
+    function buildErrorBars(avg, std) {
         return {
             min: avg.map((p, i) => ({ x: p.x, y: +(p.y - std[i].y).toFixed(2)})),
             median: avg.map((p, i) => ({ x: p.x, y: +(p.y).toFixed(2)})),
@@ -146,41 +154,51 @@
         }
     }
 
-    // Build vertical whisker stem
-    function buildStem(whiskers){
+    // Build vertical stem for error bars
+    function buildStem(errorBars){
         // Iterate over min points array (using min as a base so median and max
         // are relative to it)
-        return whiskers.min.map((p, i) => ({
+        return errorBars.min.map((p, i) => ({
             x:p.x,
             yMin: p.y,
-            yMedian: whiskers.median[i].y,
-            yMax: whiskers.max[i].y
+            yMedian: errorBars.median[i].y,
+            yMax: errorBars.max[i].y
         
         }))
     }
 
-    // Build initial whiskers and stem
-    let whiskers = buildWhiskers(avgReactions, reactionStd);
-    let stemData = buildStem(whiskers);
+    // Add a custom plugin to draw vertical stem on top of chart
+    function createVerticalStemPlugin(stemArray) {
+        return {
+            id: 'verticalStem',
+            afterDatasetsDraw(chart, args, pluginOptions) {
+                const { ctx, scales: { x, y } } = chart;
+                ctx.save();
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 3;
+                stemArray.forEach(d => {
 
-    // Add a plugin to draw vertical whisker stem on top of chart
-    const verticalStemPlugin = {
-    id: 'verticalStem',
-    afterDatasetsDraw(chart, args, pluginOptions) {
-        const {ctx, scales: {x, y}} = chart;
-        ctx.save();
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 3;
-        stemData.forEach(d => {
-            const xPos = x.getPixelForValue(d.x);
-            ctx.beginPath();
-            ctx.moveTo(xPos, y.getPixelForValue(d.yMin));
-            ctx.lineTo(xPos, y.getPixelForValue(d.yMax));
-            ctx.stroke();
-        })
-        ctx.restore();
-        }
+                    // fail safe: only draw if x value exists in the current chart labels
+                    if (!x.getLabels().includes(d.x)) return;
+
+                    const xPos = x.getPixelForValue(d.x);
+                    ctx.beginPath();
+                    ctx.moveTo(xPos, y.getPixelForValue(d.yMin));
+                    ctx.lineTo(xPos, y.getPixelForValue(d.yMax));
+                    ctx.stroke();
+                });
+                ctx.restore();
+            }
+        };
     }
+    // Build initial errorBars and stems
+    let reactionErrorBars = buildErrorBars(avgReactions, reactionStd);
+    let correctErrorBars = buildErrorBars(correctAvg, correctStd);
+    let incorrectErrorBars = buildErrorBars(incorrectAvg, incorrectStd);
+
+    let reactionStem = buildStem(reactionErrorBars);
+    let correctStem = buildStem(correctErrorBars);
+    let incorrectStem = buildStem(incorrectErrorBars);
 
     // Memory chart
     const scoreChart = new Chart(document.getElementById('scoreChart'), {
@@ -221,32 +239,32 @@
             datasets: [
                 {
                     label: 'Mean - Std. Dev. (Min)',
-                    data: buildWhiskers(avgReactions, reactionStd).min,
+                    data: reactionErrorBars.min,
                     pointStyle: 'line',
-                    backgroundColor: 'gray', 
+                    backgroundColor: 'black', 
                     borderColor: 'black', 
-                    borderWidth: 3,
-                    radius: 8,
+                    borderWidth: 2,
+                    radius: 6,
                     showLine: false
                 },
                 {
                     label: 'Median',
-                    data: buildWhiskers(avgReactions, reactionStd).median,
+                    data: reactionErrorBars.median,
                     pointStyle: 'line',
-                    backgroundColor: 'gray', 
+                    backgroundColor: 'black', 
                     borderColor: 'black', 
-                    borderWidth: 3,
-                    radius: 8,
+                    borderWidth: 2,
+                    radius: 6,
                     showLine: false
                 },
                 {
                     label: 'Mean + Std. Dev. (Max)',
-                    data: buildWhiskers(avgReactions, reactionStd).max,
+                    data: reactionErrorBars.max,
                     pointStyle: 'line',
-                    backgroundColor: 'gray', 
+                    backgroundColor: 'black', 
                     borderColor: 'black', 
-                    borderWidth: 3,
-                    radius: 8,
+                    borderWidth: 2,
+                    radius: 6,
                     showLine: false
                 },
                 {
@@ -279,7 +297,6 @@
             plugins: {
                 legend: { 
                     display: true,
-                    positions: 'right',
                     labels: {
                         boxWidth: 20,
                         padding: 15,
@@ -304,13 +321,44 @@
                 }
             }
         },
-        plugins: [verticalStemPlugin]
+        plugins: [createVerticalStemPlugin(reactionStem)]
     });
 
     // Correct responses chart
     const correctReactionChart = new Chart(document.getElementById('correctReactionChart'), {
+        type: 'scatter',
         data: {
-            datasets:[
+            datasets: [
+                {
+                    label: 'Mean - Std. Dev. (Min)',
+                    data: correctErrorBars.min,
+                    pointStyle: 'line',
+                    backgroundColor: 'black', 
+                    borderColor: 'black', 
+                    borderWidth: 2,
+                    radius: 6,
+                    showLine: false
+                },
+                {
+                    label: 'Median',
+                    data: correctErrorBars.median,
+                    pointStyle: 'line',
+                    backgroundColor: 'black', 
+                    borderColor: 'black', 
+                    borderWidth: 2,
+                    radius: 6,
+                    showLine: false
+                },
+                {
+                    label: 'Mean + Std. Dev. (Max)',
+                    data: correctErrorBars.max,
+                    pointStyle: 'line',
+                    backgroundColor: 'black', 
+                    borderColor: 'black', 
+                    borderWidth: 2,
+                    radius: 6,
+                    showLine: false
+                },
                 {
                     type: 'line',
                     label: 'Average Reaction Time (ms)',
@@ -333,10 +381,11 @@
             plugins: {
                 legend: { 
                     display: true,
-                    positions: 'right',
                     labels: {
                         boxWidth: 20,
-                        padding: 15
+                        padding: 15,
+                        // Below found at: https://stackoverflow.com/questions/52452440/remove-label-in-chart-js
+                        filter: (l) => (!(["Mean - Std. Dev. (Min)", "Mean + Std. Dev. (Max)", "Median"].includes(l.text)))
                     }
                  }
             },
@@ -348,13 +397,45 @@
                     }
                 },
                 y: { title: { display: true, text: 'Reaction Time (ms)' }}}
-        }
+        },
+        plugins: [createVerticalStemPlugin(correctStem)]
     });
 
     // Incorrect responses chart
     const incorrectReactionChart = new Chart(document.getElementById('incorrectReactionChart'), {
+        type: 'scatter',
         data: {
-            datasets:[
+            datasets: [
+                {
+                    label: 'Mean - Std. Dev. (Min)',
+                    data: incorrectErrorBars.min,
+                    pointStyle: 'line',
+                    backgroundColor: 'black', 
+                    borderColor: 'black', 
+                    borderWidth: 2,
+                    radius: 6,
+                    showLine: false
+                },
+                {
+                    label: 'Median',
+                    data: incorrectErrorBars.median,
+                    pointStyle: 'line',
+                    backgroundColor: 'black', 
+                    borderColor: 'black', 
+                    borderWidth: 2,
+                    radius: 6,
+                    showLine: false
+                },
+                {
+                    label: 'Mean + Std. Dev. (Max)',
+                    data: incorrectErrorBars.max,
+                    pointStyle: 'line',
+                    backgroundColor: 'black', 
+                    borderColor: 'black', 
+                    borderWidth: 2,
+                    radius: 6,
+                    showLine: false
+                },
                 {
                     type: 'line',
                     label: 'Average Reaction Time (ms)',
@@ -377,10 +458,11 @@
             plugins: {
                 legend: { 
                     display: true,
-                    positions: 'right',
                     labels: {
                         boxWidth: 20,
-                        padding: 15
+                        padding: 15,
+                        // Below found at: https://stackoverflow.com/questions/52452440/remove-label-in-chart-js
+                        filter: (l) => (!(["Mean - Std. Dev. (Min)", "Mean + Std. Dev. (Max)", "Median"].includes(l.text)))
                     }
                  }
             },
@@ -392,7 +474,8 @@
                     }
                 },
                 y: { title: { display: true, text: 'Reaction Time (ms)' }}}
-        }
+        },
+        plugins: [createVerticalStemPlugin(incorrectStem)]
     });
 
     const charts = {
@@ -418,31 +501,45 @@
     }
 
     function updateAllCharts(filtered){
-        // Store whisker values for each assessment date
-        whiskers = buildWhiskers(filtered.avg, filtered.std);
-        stemData = buildStem(whiskers);
+        // Store error bar values for each assessment date
+        let reactionErrorBars = buildErrorBars(filtered.avg, filtered.std);
+        let correctErrorBars = buildErrorBars(filtered.correctAvg, filtered.correctStd);
+        let incorrectErrorBars = buildErrorBars(filtered.incorrectAvg, filtered.incorrectStd);
+
+        let reactionStem = buildStem(reactionErrorBars);
+        let correctStem = buildStem(correctErrorBars);
+        let incorrectStem = buildStem(incorrectErrorBars);
 
         // score chart
         charts.score.data.datasets[0].data = filtered.scores;
         charts.score.update();
 
         // reactionChart chart
-        charts.reaction.data.datasets[0].data = whiskers.min;
-        charts.reaction.data.datasets[1].data = whiskers.median;
-        charts.reaction.data.datasets[2].data = whiskers.max;
+        charts.reaction.data.datasets[0].data = reactionErrorBars.min;
+        charts.reaction.data.datasets[1].data = reactionErrorBars.median;
+        charts.reaction.data.datasets[2].data = reactionErrorBars.max;
         charts.reaction.data.datasets[3].data = filtered.avg;
         charts.reaction.data.datasets[4].data = filtered.correct;
         charts.reaction.data.datasets[5].data = filtered.incorrect;
+        charts.reaction.config.plugins = [createVerticalStemPlugin(reactionStem)];
         charts.reaction.update();
 
         // correct chart
-        charts.correct.data.datasets[0].data = filtered.avg;
-        charts.correct.data.datasets[1].data = filtered.correct;
+        charts.correct.data.datasets[0].data = correctErrorBars.min;
+        charts.correct.data.datasets[1].data = correctErrorBars.median;
+        charts.correct.data.datasets[2].data = correctErrorBars.max;
+        charts.correct.data.datasets[3].data = filtered.avg;
+        charts.correct.data.datasets[4].data = filtered.correct;
+        charts.correct.config.plugins = [createVerticalStemPlugin(correctStem)];
         charts.correct.update();
 
         // incorrect chart
-        charts.incorrect.data.datasets[0].data = filtered.avg;
-        charts.incorrect.data.datasets[1].data = filtered.incorrect;
+        charts.incorrect.data.datasets[0].data = incorrectErrorBars.min;
+        charts.incorrect.data.datasets[1].data = incorrectErrorBars.median;
+        charts.incorrect.data.datasets[2].data = incorrectErrorBars.max;
+        charts.incorrect.data.datasets[3].data = filtered.avg;
+        charts.incorrect.data.datasets[4].data = filtered.incorrect;
+        charts.incorrect.config.plugins = [createVerticalStemPlugin(incorrectStem)];
         charts.incorrect.update();
 
     }
