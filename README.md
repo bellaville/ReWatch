@@ -57,6 +57,16 @@ export REDIS_URL="redis://127.0.0.1:6379/0"
 docker compose -f docker-compose.dev.yaml up -d
 flask run
 ```
+For Linux
+```
+cd web
+sudo systemctl start docker
+export FLASK_APP=run.py
+export FLASK_ENV=development
+export REDIS_URL="redis://127.0.0.1:6379/0"
+docker compose -f docker-compose.dev.yaml up -d
+flask run --host 0.0.0.0
+```
 
 ## Web Libraries & Frameworks
 
