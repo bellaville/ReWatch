@@ -10,7 +10,7 @@ import retrofit2.converter.gson.GsonConverterFactory
  */
 object Requestor {
 
-    val baseUrl = "http://192.168.2.13:5000/"
+    val baseUrl = "http://192.168.2.32:5000/"
     private val _instance: RequestJoinExperiment = Retrofit.Builder().baseUrl(baseUrl).addConverterFactory(GsonConverterFactory.create()).build().create(
         RequestJoinExperiment::class.java
     )

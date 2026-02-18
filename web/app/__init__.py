@@ -9,7 +9,14 @@ def create_app(test_config=False):
     app = Flask(__name__)
     app.config["TESTING"] = test_config
 
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
+    #app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///db.sqlite"
+    basedir = os.path.abspath(os.path.dirname(__file__))
+    instance_path = os.path.join(basedir, 'instance')
+    
+    # Ensure the directory exists physically
+    if not os.path.exists(instance_path):
+        os.makedirs(instance_path)
+    app.config["SQLALCHEMY_DATABASE_URI"] = 'sqlite:///' + os.path.join(basedir, 'instance', 'db.sqlite')
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SECRET_KEY"] = "supersecretkey"
 
