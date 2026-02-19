@@ -7,6 +7,7 @@ import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import ca.carleton.rewatch.presentation.AwaitingStart
 import ca.carleton.rewatch.presentation.CalibrationView
 import ca.carleton.rewatch.presentation.ExperimentCompleteView
+import ca.carleton.rewatch.presentation.GaitTestView
 import ca.carleton.rewatch.presentation.JoinExperimentView
 import ca.carleton.rewatch.presentation.LoadingSpinner
 import ca.carleton.rewatch.presentation.RTTestView
@@ -40,6 +41,9 @@ fun NavigationStack() {
         }
         composable(Screen.Calibration.route) {
             CalibrationView(navController)
+        }
+        composable(Screen.GaitTest.route) {
+            GaitTestView(navController)
         }
         composable(Screen.RTTest.route) {
             RTTestView(navController)

@@ -10,6 +10,12 @@ android {
         version = release(36)
     }
 
+    buildFeatures {
+        compose = true
+        dataBinding = true
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "ca.carleton.rewatch"
         minSdk = 36
@@ -20,12 +26,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "API_ENDPOINT", "\"http://192.168.2.32:5000/\"") // Change this when debugging
+        }
+
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "API_ENDPOINT", "path/to/azure") //@TODO
         }
     }
     compileOptions {
@@ -36,10 +47,7 @@ android {
         jvmTarget = "11"
     }
     useLibrary("wear-sdk")
-    buildFeatures {
-        compose = true
-        dataBinding = true
-    }
+
 }
 
 dependencies {

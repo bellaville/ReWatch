@@ -16,9 +16,10 @@ import ca.carleton.rewatch.service.Requestor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class RTTestViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
+class GaitTestViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel()  {
 
-    var collectionText by mutableStateOf("Awaiting Reaction Time Test Start")
+
+    var collectionText by mutableStateOf("Awaiting Gait Test Start")
     var circleColour by mutableIntStateOf(0)
 
     /**

@@ -10,6 +10,7 @@ sealed class Screen(val route: String) {
     object Loading : Screen("loading")
     object AwaitingStart : Screen("awaiting/{experimentID}")
     object Calibration : Screen("calibrating/{experimentID}")
+    object GaitTest : Screen("gait/{experimentID}")
     object RTTest : Screen("reaction/{experimentID}")
     object Complete : Screen("complete")
 }
