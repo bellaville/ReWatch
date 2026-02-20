@@ -1,4 +1,4 @@
-package ca.carleton.rewatch.presentation
+package ca.carleton.rewatch.presentation.views
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.curvedText
+import ca.carleton.rewatch.presentation.Screen
 
 @Composable
 /**

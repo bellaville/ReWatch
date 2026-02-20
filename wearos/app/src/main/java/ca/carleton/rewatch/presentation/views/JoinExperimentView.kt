@@ -1,4 +1,4 @@
-package ca.carleton.rewatch.presentation
+package ca.carleton.rewatch.presentation.views
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth

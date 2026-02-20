@@ -1,4 +1,4 @@
-package ca.carleton.rewatch.presentation
+package ca.carleton.rewatch.presentation.views
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,27 +10,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.wear.compose.material.MaterialTheme
+import androidx.compose.material3.MaterialTheme
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material.TimeText
 import androidx.wear.compose.material.curvedText
 import ca.carleton.rewatch.presentation.components.PulsatingCircle
-import ca.carleton.rewatch.presentation.viewModels.RTTestViewModel
+import ca.carleton.rewatch.presentation.viewModels.CalibrationViewModel
 
 @Composable
 /**
- * Page for performing RT Test
+ * Page for waiting for experiment to start
  *
  * @param navController Controller for navigation of views
  */
-fun RTTestView(
+fun CalibrationView(
     navController: NavController,
-    viewModel: RTTestViewModel = viewModel()
+    viewModel: CalibrationViewModel = viewModel()
 ) {
 
     LaunchedEffect(Unit) {
@@ -49,17 +48,12 @@ fun RTTestView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Reaction Time",
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.title1
-            )
-            Text(
                 text = viewModel.collectionText,
                 textAlign = TextAlign.Center
             )
             PulsatingCircle() {
                 Surface(
-                    color = if (viewModel.circleColour == 0) Color.Red else Color.Green,
+                    color = MaterialTheme.colorScheme.primary,
                     shape = CircleShape,
                     modifier = Modifier.size(42.dp).padding(
                         vertical = 10.dp,

@@ -1,4 +1,4 @@
-package ca.carleton.rewatch.presentation
+package ca.carleton.rewatch.presentation.views
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,15 +23,16 @@ import ca.carleton.rewatch.presentation.components.PulsatingCircle
 import ca.carleton.rewatch.presentation.viewModels.RTTestViewModel
 
 @Composable
-        /**
-         * Page for performing Gait Test
-         *
-         * @param navController Controller for navigation of views
-         */
-fun GaitTestView(
+/**
+ * Page for performing RT Test
+ *
+ * @param navController Controller for navigation of views
+ */
+fun RTTestView(
     navController: NavController,
     viewModel: RTTestViewModel = viewModel()
 ) {
+
     LaunchedEffect(Unit) {
         viewModel.pollExperiment(navController)
     }
@@ -48,7 +49,7 @@ fun GaitTestView(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Gait",
+                text = "Reaction Time",
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.title1
             )
