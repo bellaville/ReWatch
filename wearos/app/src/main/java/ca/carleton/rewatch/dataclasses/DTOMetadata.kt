@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class DTOMetadata(
-    val step: String, // @TODO Change to an enum (AssessmentStage?)
+    val stage: AssessmentStage,
     val trial: Int? = null,
+    val memStep: Int? = null,
 )

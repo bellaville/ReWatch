@@ -1,23 +1,35 @@
 package ca.carleton.rewatch.presentation.viewModels
 
+import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import ca.carleton.rewatch.dataclasses.AssessmentStage
 import ca.carleton.rewatch.dataclasses.JoinedExperiment
+import ca.carleton.rewatch.presentation.AccelerometerManager
 import ca.carleton.rewatch.presentation.Screen
 import ca.carleton.rewatch.service.Requestor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class CalibrationViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
+class CalibrationViewModel(application: Application, private val savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
 
+    private val sensorManager = AccelerometerManager(application)
     var collectionText by mutableStateOf("Calibrating Watch")
+
+    fun startCalibration() {
+        sensorManager.start()
+    }
+
+    fun stopCalibration() {
+        sensorManager.stop()
+        // @TODO implement data transfer
+    }
 
     /**
      * Builds and sends poll request to ReWatch web server
@@ -62,9 +74,11 @@ class CalibrationViewModel(private val savedStateHandle: SavedStateHandle) : Vie
                 if (joinedExperiment?.stage == AssessmentStage.CALIBRATION.stage) {
                     Log.d("EXPPOLL2", "Awaiting Change to Status")
                 } else if (joinedExperiment?.stage == AssessmentStage.CALIBRATION_COMPLETE.stage) {
+                    stopCalibration()
                     Log.d("EXPPOLL2", "Calibration Complete Message")
                     collectionText = "Calibration Complete\nPlease Return"
                 } else if (joinedExperiment?.stage == AssessmentStage.RT_TEST.stage) {
+                    stopCalibration()
                     isAwaiting = false
                     Log.d("EXPPOLL2", "Status Changed to RT")
                     navController.navigate(Screen.RTTest.route.replace(
@@ -79,5 +93,10 @@ class CalibrationViewModel(private val savedStateHandle: SavedStateHandle) : Vie
                 delay(1000)
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        sensorManager.stop()
     }
 }

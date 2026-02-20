@@ -33,6 +33,7 @@ fun CalibrationView(
 ) {
 
     LaunchedEffect(Unit) {
+        viewModel.startCalibration()
         viewModel.pollExperiment(navController)
     }
 
