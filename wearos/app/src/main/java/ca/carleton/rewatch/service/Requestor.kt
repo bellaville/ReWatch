@@ -25,4 +25,5 @@ object Requestor {
 
     fun getSensorService(): SendAccelerometerData = _dataInstance
 
+
 }

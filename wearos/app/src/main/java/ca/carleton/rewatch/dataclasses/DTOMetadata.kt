@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class DTOMetadata(
-    val stage: AssessmentStage,
+    val stage: String,
     val trial: Int? = null,
     val memStep: Int? = null,
 )

@@ -10,7 +10,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import ca.carleton.rewatch.dataclasses.AssessmentStage
+import ca.carleton.rewatch.dataclasses.DTOMetadata
 import ca.carleton.rewatch.dataclasses.JoinedExperiment
+import ca.carleton.rewatch.dataclasses.SensorDTO
 import ca.carleton.rewatch.presentation.AccelerometerManager
 import ca.carleton.rewatch.presentation.Screen
 import ca.carleton.rewatch.service.Requestor
@@ -75,6 +77,7 @@ class CalibrationViewModel(application: Application, private val savedStateHandl
                     Log.d("EXPPOLL2", "Awaiting Change to Status")
                 } else if (joinedExperiment?.stage == AssessmentStage.CALIBRATION_COMPLETE.stage) {
                     stopCalibration()
+                    uploadCollectedData(experimentID, joinedExperiment.stage)
                     Log.d("EXPPOLL2", "Calibration Complete Message")
                     collectionText = "Calibration Complete\nPlease Return"
                 } else if (joinedExperiment?.stage == AssessmentStage.RT_TEST.stage) {
@@ -103,7 +106,8 @@ class CalibrationViewModel(application: Application, private val savedStateHandl
     fun uploadCollectedData(experimentId: String, state: String) {
         viewModelScope.launch {
             try {
-                val dataToUpload = sensorManager.recordedData // Get data from your manager
+                val metadata = DTOMetadata(state)
+                val dataToUpload = SensorDTO(metadata, sensorManager.recordedData)  // Get data from your manager
 
                 val response = Requestor.getSensorService().uploadSensorData(
                     experimentID = experimentId,
