@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 class RTTestViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
 
-    var collectionText by mutableStateOf("Awaiting Test Start")
+    var collectionText by mutableStateOf("Awaiting Reaction Time Test Start")
     var circleColour by mutableIntStateOf(0)
 
     /**
