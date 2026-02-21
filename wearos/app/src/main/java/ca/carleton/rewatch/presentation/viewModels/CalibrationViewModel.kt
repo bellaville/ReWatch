@@ -10,7 +10,9 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import ca.carleton.rewatch.dataclasses.AssessmentStage
+import ca.carleton.rewatch.dataclasses.DTOMetadata
 import ca.carleton.rewatch.dataclasses.JoinedExperiment
+import ca.carleton.rewatch.dataclasses.SensorDTO
 import ca.carleton.rewatch.presentation.AccelerometerManager
 import ca.carleton.rewatch.presentation.Screen
 import ca.carleton.rewatch.service.Requestor
@@ -26,9 +28,9 @@ class CalibrationViewModel(application: Application, private val savedStateHandl
         sensorManager.start()
     }
 
-    fun stopCalibration() {
+    fun stopCalibration(experimentID: String, joinedExperiment: JoinedExperiment) {
         sensorManager.stop()
-        // @TODO implement data transfer
+        uploadCollectedData(experimentID, joinedExperiment.stage)
     }
 
     /**
@@ -74,11 +76,11 @@ class CalibrationViewModel(application: Application, private val savedStateHandl
                 if (joinedExperiment?.stage == AssessmentStage.CALIBRATION.stage) {
                     Log.d("EXPPOLL2", "Awaiting Change to Status")
                 } else if (joinedExperiment?.stage == AssessmentStage.CALIBRATION_COMPLETE.stage) {
-                    stopCalibration()
+                    stopCalibration(experimentID, joinedExperiment)
                     Log.d("EXPPOLL2", "Calibration Complete Message")
                     collectionText = "Calibration Complete\nPlease Return"
                 } else if (joinedExperiment?.stage == AssessmentStage.RT_TEST.stage) {
-                    stopCalibration()
+                    stopCalibration(experimentID, joinedExperiment)
                     isAwaiting = false
                     Log.d("EXPPOLL2", "Status Changed to RT")
                     navController.navigate(Screen.RTTest.route.replace(
@@ -103,7 +105,8 @@ class CalibrationViewModel(application: Application, private val savedStateHandl
     fun uploadCollectedData(experimentId: String, state: String) {
         viewModelScope.launch {
             try {
-                val dataToUpload = sensorManager.recordedData // Get data from your manager
+                val metadata = DTOMetadata(state)
+                val dataToUpload = SensorDTO(metadata, sensorManager.recordedData)  // Get data from your manager
 
                 val response = Requestor.getSensorService().uploadSensorData(
                     experimentID = experimentId,

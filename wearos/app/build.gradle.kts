@@ -27,7 +27,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "API_ENDPOINT", "\"http://192.168.0.154:5000/\"") // Change this when debugging
+            buildConfigField("String", "API_ENDPOINT", "\"http://192.168.2.32:5000/\"") // Change this when debugging
         }
 
         release {
