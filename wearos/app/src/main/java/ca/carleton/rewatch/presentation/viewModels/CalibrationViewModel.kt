@@ -99,4 +99,26 @@ class CalibrationViewModel(application: Application, private val savedStateHandl
         super.onCleared()
         sensorManager.stop()
     }
+
+    fun uploadCollectedData(experimentId: String, state: String) {
+        viewModelScope.launch {
+            try {
+                val dataToUpload = sensorManager.recordedData // Get data from your manager
+
+                val response = Requestor.getSensorService().uploadSensorData(
+                    experimentID = experimentId,
+                    state = state,
+                    data = dataToUpload
+                )
+
+                if (response.isSuccessful) {
+                    Log.d("Upload", "Data successfully sent to server!")
+                } else {
+                    Log.e("Upload", "Server error: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e("Upload", "Network failure", e)
+            }
+        }
+    }
 }
