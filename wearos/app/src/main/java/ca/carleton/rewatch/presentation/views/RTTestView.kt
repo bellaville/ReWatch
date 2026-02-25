@@ -34,6 +34,7 @@ fun RTTestView(
 ) {
 
     LaunchedEffect(Unit) {
+        viewModel.startCollection()
         viewModel.pollExperiment(navController)
     }
 
