@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <script>
+        /**
+         * Check with the API every second whether the assessment
+         * has been joined by a watch. On join, display a button
+         * to start gait analysis.
+         */
+        var checkConnection = setInterval(() => {
+            fetch('/assessments/memory_test/connect', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    "join_code": "{{ join_code }}"
+                })
+            }).then(function(res) {
+                if (res.ok) {
+                    res.json().then(function (data) {
+                        if (data.status == true) {
+                            document.getElementById("start_gait").style.display = "block";
+                            clearInterval(checkConnection);
+                        }
+                    });
+                }
+            })
+        }, 1000)
+
+        
+        function start_gait() {
+            fetch('/assessments/memory_test/gait', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    "join_code": "{{ join_code }}"
+                })
+            }).then(function(res) {
+                if (res.ok) {
+                    res.json().then(function (data) {
+                        if (data.success == true) {
+                            document.getElementById("start_gait").style.display = "none";
+                            document.getElementById("end_gait").style.display = "block";
+                        }
+                    });
+                }
+            })
+        }
+
+        function end_gait() {
+            fetch('/assessments/memory_test/gait_complete', {
+                method: "POST",
+                redirect: 'follow',
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    "join_code": "{{ join_code }}"
+                })
+            }).then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                }
+            })
+        }
+    </script>
+    <h2>Connect Watch</h2>
+    <div class="mb-3">
+        <h4>Your unique ID:</h4>
+        <h4>{{ join_code }}</h4>
+        <button class="btn btn-primary" id="start_gait" style="display: none" onclick="start_gait()">Start Gait Analysis</button>
+        <button class="btn btn-primary" id="end_gait" style="display: none" onclick="end_gait()">End Gait Analysis</button>
+    </div>
+</div>
+{% endblock %}

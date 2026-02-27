@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, session, redirect, url_for, request, flash
+from flask import Blueprint, jsonify, render_template, session, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 import time, random
-from app.models import PatientAssessment
+from app.models import AssessmentStage, AssessmentStageData, PatientAssessment
 from app.db import db
 
 memory_test = Blueprint('memory_test', __name__)
@@ -71,7 +71,7 @@ def generate_positions(shapes, frame_size=500, max_attempts=100):
 ##############
 # START TEST #
 ##############
-@memory_test.route('/start')
+@memory_test.route('/start', methods=["GET"])
 @login_required
 def start_memory_test():
     """ Initializes a short term memory test session for the current user.
@@ -108,6 +108,102 @@ def start_memory_test():
     )
 
     return render_template('memory_test.html', show_test=False)
+
+
+@memory_test.route('/start', methods=["POST"])
+@login_required
+def confirm_start_memory_test():
+    """ 
+    Initializes a short term memory test session for the current user.
+
+    Establishes a Flask session to store temporary test metrics for a user,
+    allowing the memory test to track progress and user responses
+    throughout multiple rounds.
+    """
+    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == session["join_code"] and PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(AssessmentStage.GAIT_COMPLETE)).first()
+    
+    if not assessment:
+        return jsonify({"success": False, "error": "Could not find join_code"}), 400   
+    
+    assessment.increment_step()
+
+    return jsonify({"success": True }), 200
+
+#################
+# CONNECT WATCH #
+#################
+@memory_test.route('/connect', methods = ["GET"])
+@login_required
+def connect_watch_page():
+    return render_template('memory_connect_watch.html', join_code = session['join_code'])
+
+@memory_test.route('/connect', methods = ["POST"])
+@login_required
+def connect_watch_check():
+    if not request.json or not request.json.get("join_code"):
+        return jsonify({"status": False, "error": "Could not find join_code"}), 400
+    
+    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == request.json.get("join_code")).first()
+    return jsonify({"status": assessment.watch_connected}), 200
+    
+###################
+# WATCH ENDPOINTS #
+###################
+
+@memory_test.route('/connect/<join_code>', methods = ["POST"])
+def connect_add_watch(join_code: str):   
+    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == join_code).first()
+    assessment.watch_connected = True
+    db.session.commit()
+    return jsonify({"experimentID": assessment.join_code, "stage": assessment.get_current_step()}), 200
+
+@memory_test.route('/<join_code>/status', methods = ["GET"])
+def watch_get_status(join_code: str):   
+    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == join_code).first()
+    return jsonify({"experimentID": assessment.join_code, "stage": assessment.get_current_step()}), 200
+
+@memory_test.route('/<join_code>/<stage>/upload', methods = ["POST"])
+def watch_upload_data(join_code: str, stage: str):   
+    stage = AssessmentStage(stage)
+    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == join_code and PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(stage)).first()
+    json_body = request.json
+    assessment_data = AssessmentStageData.from_json(json_body, stage, assessment.id)
+    db.session.add(assessment_data)
+    db.session.commit()
+    return jsonify({"success": True}), 200
+
+#################
+# GAIT ANALYSIS #
+#################
+@memory_test.route('/gait', methods = ["POST"])
+@login_required
+def begin_gait():
+    if not request.json or not request.json.get("join_code"):
+        return jsonify({"status": False, "error": "Could not find join_code"}), 400
+    
+    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == request.json.get("join_code") and PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(AssessmentStage.WAITING)).first()
+    
+    if not assessment:
+        return jsonify({"success": False, "error": "Could not find assessment"}), 400
+    
+    assessment.increment_step()
+    
+    return jsonify({"success": True}), 200
+
+@memory_test.route('/gait_complete', methods = ["POST"])
+@login_required
+def end_gait():
+    if not request.json or not request.json.get("join_code"):
+        return jsonify({"status": False, "error": "Could not find join_code"}), 400
+    
+    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == request.json.get("join_code") and PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(AssessmentStage.GAIT)).first()
+    
+    if not assessment:
+        return jsonify({"success": False, "error": "Could not find assessment"}), 400
+    
+    assessment.increment_step()
+
+    return redirect(url_for('memory_test.start_memory_test'))
 
 ######################
 # MEMORIZATION PHASE #
@@ -278,13 +374,42 @@ def memory_result():
 def memory_test_customization():
     """Page for physician to configure short-term memory test settings
     """
+    
     if request.method == "POST":
+
+        # if user is physician, use the selected patient from session
+        if current_user.has_role('Physician'):
+            patient_id = session.get('selected_patient_id')
+        else:
+            # patient is performing their own test, use their own id from db/login
+            patient_id = current_user.patient_profile.id
+        
+        session['test_patient_id'] = patient_id
+        join_code = f"{random.randint(0, 999999):06d}"
+        session['join_code'] = join_code
+
+        assessment = PatientAssessment(
+            patient_id=patient_id,
+            score=0,
+            total_rounds=session['num_rounds'],
+            avg_reaction_time=0,
+            difficulty=session['difficulty'],
+            reaction_records=[],
+            is_running=True,
+            join_code=join_code,
+            watch_connected=False,
+            current_step = 0
+        )
+
+        db.session.add(assessment)
+        db.session.commit()
+
         # store physician's inputted customization in session
         session['num_shapes'] = int(request.form.get('num_shapes', 3))
         session['memorization_time'] = int(request.form.get('memorization_time', 5))
         session['difficulty'] = request.form.get('difficulty', 'Easy') # Easy or hard
         session['num_rounds'] = request.form.get('num_rounds', 5)
-        return redirect(url_for('memory_test.start_memory_test')) # go to flash instruction message
+        return redirect(url_for('memory_test.connect_watch_page')) # go to flash instruction message
     
     # show default customization values as a dictionary for easier unpacking in html (GET request)
     defaults = {

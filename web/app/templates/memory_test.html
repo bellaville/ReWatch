@@ -66,12 +66,22 @@
 
     if (yesBtn) {
         yesBtn.addEventListener('click', function() {
-            // hide instructions
-            alertBox.style.display = 'none';
-            // reveal memory test frame
-            testFrame.style.display = 'block';
-            // start memorization phase (5s pause)
-            window.location.href = "{{ url_for('memory_test.memory_memorize') }}";
+            // Send fetch to server to increment step
+            fetch('/assessments/memory_test/start', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            }).then(response => {
+                if (response.ok) {
+                    // hide instructions
+                    alertBox.style.display = 'none';
+                    // reveal memory test frame
+                    testFrame.style.display = 'block';
+                    // start memorization phase (5s pause)
+                    window.location.href = "{{ url_for('memory_test.memory_memorize') }}";
+                }
+            })
         });
     }
 

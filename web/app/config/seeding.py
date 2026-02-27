@@ -119,6 +119,10 @@ def seed_patient_assessments():
                 date_taken=datetime.now(timezone.utc) - timedelta(days=(num_assessments-i)*3),
                 difficulty=difficulty,
                 reaction_records=reaction_records,
+                is_running=False,
+                join_code=f"{random.randint(0, 999999):06d}",
+                watch_connected=False,
+                current_step = len(PatientAssessment.STEP_ORDER) - 1
             )
             db.session.add(assessment)
     

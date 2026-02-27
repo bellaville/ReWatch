@@ -64,6 +64,13 @@ class Patient(db.Model):
     gender = db.Column(db.String(80))
     weight = db.Column(db.Integer)
 
+class AssessmentStage(enum.Enum):
+    WAITING = "WAITING"
+    GAIT = "GAIT"
+    GAIT_COMPLETE = "GAIT_COMPLETE"
+    RT_TEST = "RT_TEST"
+    COMPLETE = "COMPLETE"
+
 # model for a patient's assessment
 class PatientAssessment(db.Model):
     __tablename__ = 'patientassessment'
@@ -76,8 +83,22 @@ class PatientAssessment(db.Model):
     difficulty = db.Column(db.String(20), nullable=False)
     reaction_records = db.Column(JSON) # store reaction times as a list
 
+    # Needed to access during running assessments
+    is_running = db.Column(db.Boolean)
+    join_code = db.Column(db.String(6), nullable=False)
+    watch_connected = db.Column(db.Boolean)
+    current_step = db.Column(db.Integer) # Index in STEP_ORDER
+    
     # set relationship with Patient so that we can access the associated Patient object from PatientAssessment
     patient = db.relationship('Patient', backref='assessments')
+
+    STEP_ORDER = [
+        AssessmentStage.WAITING, 
+        AssessmentStage.GAIT, 
+        AssessmentStage.GAIT_COMPLETE, 
+        AssessmentStage.RT_TEST, 
+        AssessmentStage.COMPLETE
+    ]
 
     @property
     def local_date_taken(self):
@@ -97,10 +118,14 @@ class PatientAssessment(db.Model):
 
         return utc_dt.astimezone(eastern)
 
+    def increment_step(self):
+        session = Session.object_session(self)
+        self.current_step = min(self.current_step + 1, len(PatientAssessment.STEP_ORDER))
+        session.commit()
 
-class AssessmentStage(enum.Enum):
-    GAIT = "gait"
-    REACTION = "reaction"
+    def get_current_step(self):
+        return PatientAssessment.STEP_ORDER[self.current_step].value
+
 
 class AssessmentStageData(db.Model):
     __tablename__ = 'assessmentstagedata'
@@ -110,7 +135,7 @@ class AssessmentStageData(db.Model):
     points = db.relationship('StageDataPoint', backref='stage_data', cascade="all, delete-orphan")
     
     @classmethod
-    def from_json(cls, json_data: dict[str, Any]) -> "AssessmentStageData":
+    def from_json(cls, json_data: dict[str, Any], stage: AssessmentStage, assessment_id: int) -> "AssessmentStageData":
         """
         Create an AssessmentStageData instance from JSON data.
         
@@ -120,14 +145,13 @@ class AssessmentStageData(db.Model):
         Returns:
             AssessmentStageData: The created AssessmentStageData instance.
         """
-        stage = AssessmentStage(json_data["stage"].lower())
         stage_data = cls(
-            assessment_id=json_data["assessmentID"],
+            assessment_id=assessment_id,
             stage=stage
         )
         
         for point in json_data["data"]:
-            ts = datetime.fromtimestamp(point["ts"] / 1000.0)
+            ts = datetime.fromtimestamp(point["timestamp"] / 1000.0)
             stage_data.points.append(StageDataPoint(
                 timestamp=ts,
                 x=point["x"],

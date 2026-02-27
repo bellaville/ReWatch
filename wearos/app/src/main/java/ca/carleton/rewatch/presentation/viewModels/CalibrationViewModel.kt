@@ -29,8 +29,10 @@ class CalibrationViewModel(application: Application, private val savedStateHandl
     }
 
     fun stopCalibration(experimentID: String, joinedExperiment: JoinedExperiment) {
-        sensorManager.stop()
-        uploadCollectedData(experimentID, joinedExperiment.stage)
+        if (sensorManager.isRunning()) {
+            sensorManager.stop()
+            uploadCollectedData(experimentID, joinedExperiment.stage)
+        }
     }
 
     /**
