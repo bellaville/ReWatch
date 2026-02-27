@@ -5,7 +5,7 @@
 <div class="container text-center mt-5">
     <h2>Round {{ round_num }}</h2>
     <h2>Memorize these shapes:</h2>
-    <div id="shapes-frame">
+    <div id="shapes-frame" style="display: none">
         {% for shape in shapes %}
             <div class="shape {{ shape }}" 
                 style="background-color: {{ shape_colours[loop.index0] }};
@@ -35,9 +35,101 @@
         }
     })
 
-    // redirect to comparison phase after customized seconds
-    setTimeout(function() {
-        window.location.href = "{{ url_for('memory_test.memory_test_view') }}";
-    }, {{ memorization_time * 1000 }}); 
+    function calculateAverageTimingDelay(watchTimingCalibration) {
+        const t1 = watchTimingCalibration.timing1;
+        const t4 = watchTimingCalibration.timing4;
+
+        const t2 = watchTimingCalibration.timing2 / 1e6;
+        const t3 = watchTimingCalibration.timing3 / 1e6;
+
+        return Math.round(((t2 - t1) + (t4 - t3)) / 2);
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function timingHandshake() {
+
+        var delays = Array(10)
+        for (var i = 0; i < 10; i++) {
+            var start = performance.now();
+            var watchTimingCalibration = await fetch(
+                "/assessments/memory_test/time/sync", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        join_code: "{{ join_code }}",
+                        device: "browser"
+                    })
+                }
+            )
+            var end = performance.now();
+            var watchTimingCalibration = await watchTimingCalibration.json();
+            watchTimingCalibration.timing1 = start;
+            watchTimingCalibration.timing4 = end;
+            console.log(watchTimingCalibration)
+            delays[i] = calculateAverageTimingDelay(watchTimingCalibration);
+            console.log(delays[i])
+        }
+
+        var avgDelay = delays.reduce((a, b) => a + b) / delays.length
+        var handshakes = Array(5)
+
+        for (var i = 0; i < 5; i++) {
+            var handshakeTiming = await fetch(
+                "/assessments/memory_test/time/request_future", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        join_code: "{{ join_code }}",
+                        delay: avgDelay
+                    })
+                }
+            )
+            while (handshakeTiming.status == 206) {
+                await sleep(1000);
+                handshakeTiming = await fetch(
+                    "/assessments/memory_test/time/request_future", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            join_code: "{{ join_code }}",
+                            delay: avgDelay
+                        })
+                    }
+                )
+            }
+
+            handshakes[i] = performance.now() + (await handshakeTiming.json()).delay;
+        }
+
+        handshakes.sort()
+        console.log(avgDelay);
+        console.log(handshakes[2] - performance.now());
+        return handshakes[2] - performance.now() - avgDelay;
+    }
+
+    async function do_sync() {
+        handshakedTime = await timingHandshake();
+        console.log(handshakedTime);
+        time_to_show = handshakedTime - {{ memorization_time * 1000 }};
+        // redirect to comparison phase after customized seconds
+        setTimeout(function() {
+            document.getElementById("shapes-frame").style.display = "block";
+        }, time_to_show); 
+        // redirect to comparison phase after customized seconds
+        setTimeout(function() {
+            window.location.href = "{{ url_for('memory_test.memory_test_view') }}";
+        }, handshakedTime - 300); 
+    }
+
+    do_sync()
 </script>
 {% endblock %}

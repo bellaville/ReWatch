@@ -17,6 +17,8 @@ import ca.carleton.rewatch.dataclasses.SensorDTO
 import ca.carleton.rewatch.presentation.AccelerometerManager
 import ca.carleton.rewatch.presentation.Screen
 import ca.carleton.rewatch.service.Requestor
+import ca.carleton.rewatch.service.timingHandshake
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -28,11 +30,37 @@ class RTTestViewModel(application: Application, private val savedStateHandle: Sa
 
     fun startCollection() {
         sensorManager.start()
+        circleColour = 1;
     }
 
-    fun stopCollection(experimentID: String, joinedExperiment: JoinedExperiment) {
-        sensorManager.stop()
-        uploadCollectedData(experimentID, joinedExperiment.stage)
+    fun stopCollection(experimentID: String, stage: String) {
+        if (sensorManager.isRunning()) {
+            sensorManager.stop()
+            uploadCollectedData(experimentID, stage)
+        }
+        circleColour = 0;
+    }
+
+    fun startTimeSync() {
+        viewModelScope.launch {
+            var experimentID = savedStateHandle["experimentID"] ?: ""
+            var retries = 0
+            while (true) {
+                try {
+                    var timing = timingHandshake(experimentID)
+                    Log.d("TIMING", timing.toString())
+                    delay(timing)
+                    startCollection();
+                    delay(5000)
+                    stopCollection(experimentID, AssessmentStage.RT_TEST.stage)
+                } catch (e: Exception) {
+                    retries += 1;
+                    if (retries >= 3) {
+                        return@launch
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -78,7 +106,7 @@ class RTTestViewModel(application: Application, private val savedStateHandle: Sa
                 if (joinedExperiment.stage == AssessmentStage.RT_TEST.stage) {
                     Log.d("EXPPOLL3", "Status Unchanged")
                 } else if (joinedExperiment.stage == AssessmentStage.COMPLETE.stage) {
-                    stopCollection(experimentID, joinedExperiment)
+                    stopCollection(experimentID, joinedExperiment.stage)
                     isAwaiting = false
                     Log.d("EXPPOLL3", "Status Changed to " + joinedExperiment.stage)
                     navController.navigate(Screen.Complete.route)

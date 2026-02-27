@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+import random
 from zoneinfo import ZoneInfo
 import enum
 from typing import Any
@@ -82,12 +83,20 @@ class PatientAssessment(db.Model):
     date_taken = db.Column(db.DateTime, default=db.func.current_timestamp()) # track when test was completed
     difficulty = db.Column(db.String(20), nullable=False)
     reaction_records = db.Column(JSON) # store reaction times as a list
+    memorization_time = db.Column(db.Integer)
 
     # Needed to access during running assessments
     is_running = db.Column(db.Boolean)
     join_code = db.Column(db.String(6), nullable=False)
     watch_connected = db.Column(db.Boolean)
     current_step = db.Column(db.Integer) # Index in STEP_ORDER
+
+    # For time synchronization
+    SYNC_CALLS = 10
+    ADDITIONAL_DELAY = 6
+    watch_synchroized = db.Column(db.Integer, default=False)
+    browser_synchroized = db.Column(db.Integer, default=False)
+    test_start = db.Column(db.DateTime, default=datetime.now())
     
     # set relationship with Patient so that we can access the associated Patient object from PatientAssessment
     patient = db.relationship('Patient', backref='assessments')
@@ -125,6 +134,31 @@ class PatientAssessment(db.Model):
 
     def get_current_step(self):
         return PatientAssessment.STEP_ORDER[self.current_step].value
+        
+    def increment_synchronization(self, device: str) -> bool:
+        session = Session.object_session(self)
+        if device == "watch":
+            self.watch_synchroized += 1 
+        if device == "browser":
+            self.browser_synchroized += 1 
+        session.commit()
+
+    def can_create_test_time(self):
+        return (self.browser_synchroized >= PatientAssessment.SYNC_CALLS and self.watch_synchroized >= PatientAssessment.SYNC_CALLS) \
+            or self.test_start > datetime.now()
+
+    def get_test_start(self):
+        if self.test_start > datetime.now():
+            timeval = (self.test_start - datetime.now())
+            return round(timeval.total_seconds() * 1000 +  timeval.microseconds / 1000)
+        session = Session.object_session(self)
+        future_test_time = round(1000 * (PatientAssessment.ADDITIONAL_DELAY + self.memorization_time)) + random.randint(0, 5000)
+        self.test_start = datetime.now() + timedelta(milliseconds=future_test_time)
+        self.browser_synchroized = 0
+        self.watch_synchroized = 0
+        session.commit()
+        timeval = (self.test_start - datetime.now())
+        return round(timeval.total_seconds() * 1000 +  timeval.microseconds / 1000)
 
 
 class AssessmentStageData(db.Model):

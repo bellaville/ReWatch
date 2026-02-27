@@ -168,6 +168,12 @@ def watch_upload_data(join_code: str, stage: str):
     assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == join_code and PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(stage)).first()
     json_body = request.json
     assessment_data = AssessmentStageData.from_json(json_body, stage, assessment.id)
+    
+    # If its at complete, finalize and set running to false
+    if (assessment.get_current_step() == AssessmentStage.COMPLETE.value):
+        assessment.is_running = False
+        db.session.add(assessment)
+
     db.session.add(assessment_data)
     db.session.commit()
     return jsonify({"success": True}), 200
@@ -204,6 +210,25 @@ def end_gait():
     assessment.increment_step()
 
     return redirect(url_for('memory_test.start_memory_test'))
+
+###################
+# TIME SYNC PHASE #
+###################
+@memory_test.route('/time/sync', methods=["POST"])
+def receive_sync_request():
+    receive_time = round(time.time_ns())
+    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == request.json.get("join_code") and PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(AssessmentStage.RT_TEST)).first()
+    assessment.increment_synchronization(request.json['device'])
+    return jsonify({"timing2": receive_time, "timing3": round(time.time_ns())}), 200
+
+@memory_test.route('/time/request_future', methods=["POST"])
+def give_synched_timing():
+    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == request.json.get("join_code") and PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(AssessmentStage.RT_TEST)).first()
+    if assessment.can_create_test_time():
+        print(assessment.get_test_start())
+        return jsonify({"delay": assessment.get_test_start()}), 200
+    else:
+        return jsonify({"error": "Cannot start test yet"}), 206
 
 ######################
 # MEMORIZATION PHASE #
@@ -248,7 +273,7 @@ def memory_memorize():
     session['shape_positions'] = shape_positions
     session['memorization_time'] = memorization_time
 
-    return render_template('memory_memorize.html', shapes=current_shapes, round_num=session['round']+1, shape_positions=shape_positions, shape_colours=current_colours, memorization_time=session['memorization_time'] )
+    return render_template('memory_memorize.html', shapes=current_shapes, round_num=session['round']+1, shape_positions=shape_positions, shape_colours=current_colours, memorization_time=session['memorization_time'], join_code=session["join_code"])
 
 ##################
 # RESPONSE PHASE #
@@ -339,7 +364,6 @@ def memory_test_view():
 @login_required
 def memory_result():
     reaction_records = session.get('reaction_records', [])
-    difficulty = session.get('difficulty', 'Easy')
     avg_reaction = sum(r["time"] for r in reaction_records) / max(len(reaction_records), 1)
     score = session.get('score', 0)
     total_rounds = session.get('num_rounds', 5)
@@ -353,16 +377,13 @@ def memory_result():
         else:
             return redirect(url_for('main.index'))
 
-    result = PatientAssessment(
-            patient_id=patient_id,
-            score=score,
-            total_rounds=total_rounds,
-            avg_reaction_time=avg_reaction,
-            difficulty=difficulty,
-            reaction_records=reaction_records,
-    )
-    db.session.add(result)
-    db.session.commit()
+    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == request.json.get("join_code") and PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(AssessmentStage.RT_TEST)).first()
+
+    assessment.score = score
+    assessment.avg_reaction_time = avg_reaction
+    assessment.reaction_records = reaction_records
+    
+    assessment.increment_step()
 
     return render_template('memory_result.html', score=score, avg_reaction=avg_reaction, total_rounds=int(total_rounds))
 
@@ -388,6 +409,13 @@ def memory_test_customization():
         join_code = f"{random.randint(0, 999999):06d}"
         session['join_code'] = join_code
 
+        # store physician's inputted customization in session
+        session['num_shapes'] = int(request.form.get('num_shapes', 3))
+        session['memorization_time'] = int(request.form.get('memorization_time', 5))
+        session['difficulty'] = request.form.get('difficulty', 'Easy') # Easy or hard
+        session['num_rounds'] = request.form.get('num_rounds', 5)
+        
+        # Start assessment tracking in DB
         assessment = PatientAssessment(
             patient_id=patient_id,
             score=0,
@@ -398,17 +426,13 @@ def memory_test_customization():
             is_running=True,
             join_code=join_code,
             watch_connected=False,
-            current_step = 0
+            current_step = 0,
+            memorization_time=session['memorization_time']
         )
 
         db.session.add(assessment)
         db.session.commit()
-
-        # store physician's inputted customization in session
-        session['num_shapes'] = int(request.form.get('num_shapes', 3))
-        session['memorization_time'] = int(request.form.get('memorization_time', 5))
-        session['difficulty'] = request.form.get('difficulty', 'Easy') # Easy or hard
-        session['num_rounds'] = request.form.get('num_rounds', 5)
+        
         return redirect(url_for('memory_test.connect_watch_page')) # go to flash instruction message
     
     # show default customization values as a dictionary for easier unpacking in html (GET request)
