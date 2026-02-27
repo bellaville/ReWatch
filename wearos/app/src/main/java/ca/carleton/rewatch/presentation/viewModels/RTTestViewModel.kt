@@ -1,25 +1,39 @@
 package ca.carleton.rewatch.presentation.viewModels
 
+import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import ca.carleton.rewatch.dataclasses.AssessmentStage
+import ca.carleton.rewatch.dataclasses.DTOMetadata
 import ca.carleton.rewatch.dataclasses.JoinedExperiment
+import ca.carleton.rewatch.dataclasses.SensorDTO
+import ca.carleton.rewatch.presentation.AccelerometerManager
 import ca.carleton.rewatch.presentation.Screen
 import ca.carleton.rewatch.service.Requestor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class RTTestViewModel(private val savedStateHandle: SavedStateHandle) : ViewModel() {
+class RTTestViewModel(application: Application, private val savedStateHandle: SavedStateHandle) : AndroidViewModel(application) {
 
-    var collectionText by mutableStateOf("Awaiting Test Start")
+    private val sensorManager = AccelerometerManager(application)
+    var collectionText by mutableStateOf("Awaiting Reaction Time Test Start")
     var circleColour by mutableIntStateOf(0)
+
+    fun startCollection() {
+        sensorManager.start()
+    }
+
+    fun stopCollection(experimentID: String, joinedExperiment: JoinedExperiment) {
+        sensorManager.stop()
+        uploadCollectedData(experimentID, joinedExperiment.stage)
+    }
 
     /**
      * Builds and sends poll request to ReWatch web server
@@ -64,6 +78,7 @@ class RTTestViewModel(private val savedStateHandle: SavedStateHandle) : ViewMode
                 if (joinedExperiment.stage == AssessmentStage.RT_TEST.stage) {
                     Log.d("EXPPOLL3", "Status Unchanged")
                 } else if (joinedExperiment.stage == AssessmentStage.COMPLETE.stage) {
+                    stopCollection(experimentID, joinedExperiment)
                     isAwaiting = false
                     Log.d("EXPPOLL3", "Status Changed to " + joinedExperiment.stage)
                     navController.navigate(Screen.Complete.route)
@@ -72,6 +87,35 @@ class RTTestViewModel(private val savedStateHandle: SavedStateHandle) : ViewMode
                     navController.navigate(Screen.JoinExperiment.route)
                 }
                 delay(1000)
+            }
+        }
+    }
+
+
+    override fun onCleared() {
+        super.onCleared()
+        sensorManager.stop()
+    }
+
+    fun uploadCollectedData(experimentId: String, state: String) {
+        viewModelScope.launch {
+            try {
+                val metadata = DTOMetadata(state)
+                val dataToUpload = SensorDTO(metadata, sensorManager.recordedData)  // Get data from your manager
+
+                val response = Requestor.getSensorService().uploadSensorData(
+                    experimentID = experimentId,
+                    state = state,
+                    data = dataToUpload
+                )
+
+                if (response.isSuccessful) {
+                    Log.d("Upload", "Data successfully sent to server!")
+                } else {
+                    Log.e("Upload", "Server error: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                Log.e("Upload", "Network failure", e)
             }
         }
     }
