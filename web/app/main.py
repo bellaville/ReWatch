@@ -2,7 +2,6 @@ import time
 from flask import Blueprint, jsonify, render_template, request, session, redirect, url_for, flash
 from flask_login import login_required, current_user
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from app.decorators import roles_required
 from app.models import Role, PatientAssessment, Patient, User
 from app.utilities.utils import get_patient_assessment_data, get_patient_information
