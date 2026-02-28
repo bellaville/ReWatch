@@ -190,15 +190,38 @@ class ReactionTimeGenerator:
 #########################
 class WatchStub:
     """
-    Sends the same HTTP POST requests that the real smartwatch sends
+    How the watch will work:
+        1. Watch calls GET /join/<experimentID> to register
+        2. Watch polls GET /join/<experimentID>/status repeatedly
+        3. Flask's global state counter increments each poll and
+        returns a stage name based on how many times it's been polled:
+            polls 0-5: WAITING
+            polls 6-15: GAIT
+            polls 16-20: GAIT_COMPLETE
+            polls 21-30: RT_TEST
+            polls 31+: COMPLETE
+        4. When the watch sees "GAIT" it starts recording and eventually POSTs
+        data to /api/sensor-data
+        5. Same for RT_TEST
+
+    This stub polls the status endpoint and responds to stage changes
     """
+    # polls needed before next stage appears
+    POLLS_TO_ADVANCE = {
+        "WAITING": 6,
+        "GAIT": 10,
+        "GAIT_COMPLETE": 5,
+        "RT_TEST": 10
+    }
+
     def __init__(
             self,
             base_url: str,
             experiment_id: str,
-            upload_path: str = "/api/sensor-data", # UPDATE
+            upload_path: str = "/api/sensor-data", 
             seed: Optional[int] = None,
             timeout_s: int = 10,
+            poll_interval_s: float = 0.1
     ):
         # remove any trailing slash from the url
         self.base_url = base_url.rstrip("/")
@@ -207,6 +230,7 @@ class WatchStub:
         # full URL to POST
         self.upload_url = f"{self.base_url}{upload_path}"
         self.timeout = timeout_s 
+        self.poll_interval = poll_interval_s
 
         # Session lets us reuse the same connection and headers across multiple requests
         self._session = requests.Session()
@@ -231,20 +255,46 @@ class WatchStub:
             resp = self._session.post(self.upload_url, json=payload, timeout=self.timeout)
             resp.raise_for_status()
             log.debug("WatchStub POST -> %d", resp.status_code)
-        except requests.exceptions.Connection:
+        except requests.exceptions.ConnectionError:
             raise ConnectionError(
                 f"WatchStub could not connect to {self.upload_url}\n"
             )
             
 
-    def _signal_stage(self, stage: str) -> requests.Response:
+    def _join(self) -> dict:
         """
-        Send a stage-change signal with no sensor data
-        (Tells Fask the experiment moved to a new phase)
+        Step 1: call GET /join/<experimentID> to register with Flask.
+        This resets Flask's global state counter back to 0
         """
-        log.info("WatchStub: signalling stage= %s", stage)
-        # send a payload with no readings, just the stage label
-        return self._post(make_sensor_dto(stage=stage, readings=[]))
+        url = f"{self.base_url}/join/{self.experiment_id}"
+        resp = self._session.get(url, timeout=self.timeout)
+        resp.raise_for_status()
+        log.info("WatchStub: joined experiment %s", self.experiment_id)
+        return resp.json()
+
+    def _poll_until_stage(self, target_stage: str, max_polls: int = 100) -> str:
+        """
+        Step 2: poll GET /join/<experimentID>/status until Flask returns the target stage.
+        This mimics how the real watch waits for instructions
+        """
+        url = f"{self.base_url}/join/{self.experiment_id}/status"
+
+        for poll_number in range(max_polls):
+            resp = self._session.get(url, timeout=self.timeout)
+            resp.raise_for_status()
+            current_stage = resp.json().get("stage")
+
+            log.debug("WatchStub: poll %d -> stage = %s", poll_number, current_stage)
+
+            if current_stage == target_stage:
+                log.info("WatchStub: stage %s reached after %d polls", target_stage, poll_number + 1)
+                return current_stage
+            
+            time.sleep(self.poll_interval) # wait before polling again
+
+        raise TimeoutError(
+            f"WatchStub: stage '{target_stage}' never appeared after {max_polls} polls"
+        )
     
 
     #################
@@ -252,8 +302,9 @@ class WatchStub:
     #################
     def send_gait_data(self, duration_seconds: Optional[float] = None) -> requests.Response:
         """
-        Phase 1: generate walking data and POST it to Flask
-
+        Generate walking data and POST it to /api/sensor-data with stage="GAIT"
+        Called when Flask's status endpoint returns "GAIT"
+        
         Simulates: when the patient finishes the walking calibration, uploading
         the whole batch of accelerometer readings
         """
@@ -262,12 +313,6 @@ class WatchStub:
         readings = self._gait_gen.generate(duration_seconds=duration) # generate the fake walking data
         return self._post(make_sensor_dto(stage="GAIT", readings=readings))
     
-    def send_gait_complete(self) -> requests.Response:
-        """
-        Phase 2: tell Flask the gait recording is finished
-        """
-        return self._signal_stage("GAIT_COMPLETE")
-    
     def send_rt_test_data(
             self,
             n_mem_steps: int = 10,
@@ -275,10 +320,10 @@ class WatchStub:
             inter_stimulus_interval_s: float = 6.0
             ) -> List[Tuple[requests.Response, float]]:
         """
-        Phase 3: simluate the reaction time memory test
+        Simulate the reaction time memory test.
 
-        Sends one POST per stimulus (one arm-movement event per memory step)
-        Returns a lsit of (response, reaction_time_ms) so tests can check the values
+        Sends one POST per memory step, called when Flask returns "RT_TEST"
+        Returns a list of (response, reaction_time_ms) so tests can check the values for each step
         """
         results = []
         now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
@@ -296,24 +341,19 @@ class WatchStub:
 
         return results
     
-    def send_complete(self) -> requests.Response:
-        """
-        Phase 4: tell Flask the whole experiment is complete
-        """
-        return self._signal_stage("COMPLETE")
-    
     def run_full_experiment(
             self,
             gait_duration_s: Optional[float] = None,
             n_mem_steps: int = 10,
-            delay_between_phases_s: float = 0.0
     ) -> dict:
         """
-        Run all four phases back to back:
-        GAIT -> GAIT_COMPLETE -> RT_TEST -> COMPLETE
-
-        delay_between_phases_s: setting this to >0 when doing a live demo so
-        it looks like the real device (i.e. 1.0 = 1 second pause between phases)
+        Run a complete simulated experiment by polling Flask for stage changes:
+            1. JOIN -> register with Flask, reset state counter
+            2. Poll -> wait for GAIT stage
+            3. POST -> send gait accelerometer data
+            4. Poll -> wait for RT_TEST stage
+            5. POST -> send reaction time data for each memory step
+            6. Poll -> wait for COMPLETE stage
 
         Returns a summary dict as follows:
             {
@@ -324,16 +364,23 @@ class WatchStub:
         """
         log.info("WatchStub: starting full experiment (experiment_id=%s)", self.experiment_id)
 
-        gait_resp = self.send_gait_data(duration_seconds=gait_duration_s) # phase 1
-        if delay_between_phases_s: time.sleep(delay_between_phases_s) # optional pause between phases
+        # step 1: join the experiment (reset Flask's state counter)
+        self._join()
 
-        self.send_gait_complete()
-        if delay_between_phases_s: time.sleep(delay_between_phases_s)
+        # step 2: poll until Flask says GAIT
+        self._poll_until_stage("GAIT")
 
+        # step 3: send gait data
+        gait_resp = self.send_gait_data(duration_seconds=gait_duration_s)
+
+        # step 4: poll until Flask says RT_TEST
+        self._poll_until_stage("RT_TEST")
+
+        # step 5: send reaction time data
         rt_results = self.send_rt_test_data(n_mem_steps=n_mem_steps)
-        if delay_between_phases_s: time.sleep(delay_between_phases_s)
 
-        self.send_complete()
+        # step 6: poll until Flask says COMPLETE
+        self._poll_until_stage("COMPLETE")
 
         all_ok = gait_resp.ok and all(r.ok for r, _ in rt_results) # true only if every single HTTP response was 2xx
         log.info("WatchStub: done. All response OK: %s", all_ok)
@@ -355,7 +402,6 @@ if __name__ == "__main__":
     parser.add_argument("--upload-path", default="/api/sensor-data")
     parser.add_argument("--gait-duration", type=float, default=30.0)
     parser.add_argument("--n-mem-steps", type=int, default=10)
-    parser.add_argument("--delay", type= float, default=0.5)
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args()
@@ -370,10 +416,7 @@ if __name__ == "__main__":
     )
     stub.gait_duration = args.gait_duration
 
-    result = stub.run_full_experiment(
-        n_mem_steps=args.n_mem_steps,
-        delay_between_phases_s = args.delay
-    )
+    result = stub.run_full_experiment(n_mem_steps=args.n_mem_steps)
 
     print("\n--- WatchStub Summary ---")
     print(f" Gait readings sent: {result['gait_readings_sent']}")

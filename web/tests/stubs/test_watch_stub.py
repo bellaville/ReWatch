@@ -41,6 +41,7 @@ class TestMakeSensorReading:
         assert isinstance(reading["x"], float)
         assert isinstance(reading["y"], float)
         assert isinstance(reading["z"], float)
+        assert isinstance(reading["ts"], int)
 
 
 class TestMakeSensorDto:
