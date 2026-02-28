@@ -220,129 +220,129 @@ class WatchStub:
 
         self.gait_duration = float(os.getenv("WATCH_STUB_GAIT_DURATION", "30"))
 
-        ###################
-        # PRIVATE HELPERS #
-        ###################
-        def _post(self, payload: dict) -> requests.Response:
-            """
-            Send one payload to Flask and return the response
-            """
-            try:
-                resp = self._session.post(self.upload_url, json=payload, timeout=self.timeout)
-                resp.raise_for_status()
-                log.debug("WatchStub POST -> %d", resp.status_code)
-            except requests.exceptions.Connection:
-                raise ConnectionError(
-                    f"WatchStub could not connect to {self.upload_url}\n"
-                )
+    ###################
+    # PRIVATE HELPERS #
+    ###################
+    def _post(self, payload: dict) -> requests.Response:
+        """
+        Send one payload to Flask and return the response
+        """
+        try:
+            resp = self._session.post(self.upload_url, json=payload, timeout=self.timeout)
+            resp.raise_for_status()
+            log.debug("WatchStub POST -> %d", resp.status_code)
+        except requests.exceptions.Connection:
+            raise ConnectionError(
+                f"WatchStub could not connect to {self.upload_url}\n"
+            )
             
 
-        def _signal_stage(self, stage: str) -> requests.Response:
-            """
-            Send a stage-change signal with no sensor data
-            (Tells Fask the experiment moved to a new phase)
-            """
-            log.info("WatchStub: signalling stage= %s", stage)
-            # send a payload with no readings, just the stage label
-            return self._post(make_sensor_dto(stage=stage, readings=[]))
-        
+    def _signal_stage(self, stage: str) -> requests.Response:
+        """
+        Send a stage-change signal with no sensor data
+        (Tells Fask the experiment moved to a new phase)
+        """
+        log.info("WatchStub: signalling stage= %s", stage)
+        # send a payload with no readings, just the stage label
+        return self._post(make_sensor_dto(stage=stage, readings=[]))
+    
 
-        #################
-        # PHASE METHODS #
-        #################
-        def send_gait_data(self, duration_seconds: Optional[float] = None) -> requests.Response:
-            """
-            Phase 1: generate walking data and POST it to Flask
+    #################
+    # PHASE METHODS #
+    #################
+    def send_gait_data(self, duration_seconds: Optional[float] = None) -> requests.Response:
+        """
+        Phase 1: generate walking data and POST it to Flask
 
-            Simulates: when the patient finishes the walking calibration, uploading
-            the whole batch of accelerometer readings
-            """
-            duration = duration_seconds or self.gait_duration
-            log.info("WatchStub: sending %0.fs of GAIT data", duration)
-            readings = self._gait_gen.generate(duration_seconds=duration) # generate the fake walking data
-            return self._post(make_sensor_dto(stage="GAIT", readings=readings))
-        
-        def send_gait_complete(self) -> requests.Response:
-            """
-            Phase 2: tell Flask the gait recording is finished
-            """
-            return self._signal_stage("GAIT_COMPLETE")
-        
-        def send_rt_test_data(
-                self,
-                n_mem_steps: int = 10,
-                # 6 seconds between stimuli (must be longer than max RT, 4.2s so stimuli don't overlap)
-                inter_stimulus_interval_s: float = 6.0
-                ) -> List[Tuple[requests.Response, float]]:
-            """
-            Phase 3: simluate the reaction time memory test
+        Simulates: when the patient finishes the walking calibration, uploading
+        the whole batch of accelerometer readings
+        """
+        duration = duration_seconds or self.gait_duration
+        log.info("WatchStub: sending %0.fs of GAIT data", duration)
+        readings = self._gait_gen.generate(duration_seconds=duration) # generate the fake walking data
+        return self._post(make_sensor_dto(stage="GAIT", readings=readings))
+    
+    def send_gait_complete(self) -> requests.Response:
+        """
+        Phase 2: tell Flask the gait recording is finished
+        """
+        return self._signal_stage("GAIT_COMPLETE")
+    
+    def send_rt_test_data(
+            self,
+            n_mem_steps: int = 10,
+            # 6 seconds between stimuli (must be longer than max RT, 4.2s so stimuli don't overlap)
+            inter_stimulus_interval_s: float = 6.0
+            ) -> List[Tuple[requests.Response, float]]:
+        """
+        Phase 3: simluate the reaction time memory test
 
-            Sends one POST per stimulus (one arm-movement event per memory step)
-            Returns a lsit of (response, reaction_time_ms) so tests can check the values
-            """
-            results = []
-            now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+        Sends one POST per stimulus (one arm-movement event per memory step)
+        Returns a lsit of (response, reaction_time_ms) so tests can check the values
+        """
+        results = []
+        now_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
 
-            for step in range(n_mem_steps):
-                # space stimuli 6 seconds apart so they don't overlap
-                stimulus_ms = now_ms + int(step * inter_stimulus_interval_s * 1000)
-                payload, rt_ms = self._rt_gen.generate_trial(
-                    trial = 0,
-                    mem_step = step,
-                    stimulus_time_ms = stimulus_ms,
-                )
-                log.info("WatchStub: RT_TEST memStep=%d RT=%.1f ms", step, rt_ms)
-                results.append((self._post(payload), rt_ms))
+        for step in range(n_mem_steps):
+            # space stimuli 6 seconds apart so they don't overlap
+            stimulus_ms = now_ms + int(step * inter_stimulus_interval_s * 1000)
+            payload, rt_ms = self._rt_gen.generate_trial(
+                trial = 0,
+                mem_step = step,
+                stimulus_time_ms = stimulus_ms,
+            )
+            log.info("WatchStub: RT_TEST memStep=%d RT=%.1f ms", step, rt_ms)
+            results.append((self._post(payload), rt_ms))
 
-            return results
-        
-        def send_complete(self) -> requests.Response:
-            """
-            Phase 4: tell Flask the whole experiment is complete
-            """
-            return self._signal_stage("COMPLETE")
-        
-        def run_full_experiment(
-                self,
-                gait_duration_s: Optional[float] = None,
-                n_mem_steps: int = 10,
-                delay_between_phases_s: float = 0.0
-        ) -> dict:
-            """
-            Run all four phases back to back:
-            GAIT -> GAIT_COMPLETE -> RT_TEST -> COMPLETE
+        return results
+    
+    def send_complete(self) -> requests.Response:
+        """
+        Phase 4: tell Flask the whole experiment is complete
+        """
+        return self._signal_stage("COMPLETE")
+    
+    def run_full_experiment(
+            self,
+            gait_duration_s: Optional[float] = None,
+            n_mem_steps: int = 10,
+            delay_between_phases_s: float = 0.0
+    ) -> dict:
+        """
+        Run all four phases back to back:
+        GAIT -> GAIT_COMPLETE -> RT_TEST -> COMPLETE
 
-            delay_between_phases_s: setting this to >0 when doing a live demo so
-            it looks like the real device (i.e. 1.0 = 1 second pause between phases)
+        delay_between_phases_s: setting this to >0 when doing a live demo so
+        it looks like the real device (i.e. 1.0 = 1 second pause between phases)
 
-            Returns a summary dict as follows:
-                {
-                "gait_readings_sent": 1500,
-                "rt_results": [(response, rt_ms), ...],
-                "all_ok": True,
-                }
-            """
-            log.info("WatchStub: starting full experiment (experiment_id=%s)", self.experiment_id)
-
-            gait_resp = self.send_gait_data(duration_seconds=gait_duration_s) # phase 1
-            if delay_between_phases_s: time.sleep(delay_between_phases_s) # optional pause between phases
-
-            self.send_gait_complete()
-            if delay_between_phases_s: time.sleep(delay_between_phases_s)
-
-            rt_results = self.send_rt_test_data(n_mem_steps=n_mem_steps)
-            if delay_between_phases_s: time.sleep(delay_between_phases_s)
-
-            self.send_complete()
-
-            all_ok = gait_resp.ok and all(r.ok for r, _ in rt_results) # true only if every single HTTP response was 2xx
-            log.info("WatchStub: done. All response OK: %s", all_ok)
-
-            return {
-                "gait_readings_sent": int((gait_duration_s or self.gait_duration * GaitSignalGenerator.SAMPLE_RATE_HZ)), # total readings = duration * sample rate
-                "rt_results": rt_results,
-                "all_ok": all_ok,
+        Returns a summary dict as follows:
+            {
+            "gait_readings_sent": 1500,
+            "rt_results": [(response, rt_ms), ...],
+            "all_ok": True,
             }
+        """
+        log.info("WatchStub: starting full experiment (experiment_id=%s)", self.experiment_id)
+
+        gait_resp = self.send_gait_data(duration_seconds=gait_duration_s) # phase 1
+        if delay_between_phases_s: time.sleep(delay_between_phases_s) # optional pause between phases
+
+        self.send_gait_complete()
+        if delay_between_phases_s: time.sleep(delay_between_phases_s)
+
+        rt_results = self.send_rt_test_data(n_mem_steps=n_mem_steps)
+        if delay_between_phases_s: time.sleep(delay_between_phases_s)
+
+        self.send_complete()
+
+        all_ok = gait_resp.ok and all(r.ok for r, _ in rt_results) # true only if every single HTTP response was 2xx
+        log.info("WatchStub: done. All response OK: %s", all_ok)
+
+        return {
+            "gait_readings_sent": int((gait_duration_s or self.gait_duration) * GaitSignalGenerator.SAMPLE_RATE_HZ), # total readings = duration * sample rate
+            "rt_results": rt_results,
+            "all_ok": all_ok,
+        }
         
 #####################
 # RUN FROM TERMINAL #
@@ -353,7 +353,7 @@ if __name__ == "__main__":
     parser.add_argument("--base-url", default="http://localhost:5000")
     parser.add_argument("--experiment-id", required=True)
     parser.add_argument("--upload-path", default="/api/sensor-data")
-    parser.add_argument("--gait-duration", type=float, defulat=30.0)
+    parser.add_argument("--gait-duration", type=float, default=30.0)
     parser.add_argument("--n-mem-steps", type=int, default=10)
     parser.add_argument("--delay", type= float, default=0.5)
     parser.add_argument("--seed", type=int, default=None)
@@ -368,7 +368,7 @@ if __name__ == "__main__":
         upload_path = args.upload_path,
         seed=args.seed
     )
-    stub.gait_duration = args.gait_duratiion
+    stub.gait_duration = args.gait_duration
 
     result = stub.run_full_experiment(
         n_mem_steps=args.n_mem_steps,
@@ -376,7 +376,7 @@ if __name__ == "__main__":
     )
 
     print("\n--- WatchStub Summary ---")
-    print(f" Gait readings sent: {result['gait_readings-sent']}")
+    print(f" Gait readings sent: {result['gait_readings_sent']}")
     print(f" RT steps sent: {len(result['rt_results'])}")
     print(f" All responses OK: {result['all_ok']}")
     if result["rt_results"]:
