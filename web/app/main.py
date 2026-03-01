@@ -38,7 +38,7 @@ def joinExpStatus(experimentID: str):
     return jsonify({'experimentID': experimentID, 'stage': stage}), 200
 
 @main.route('/api/sensor-data', methods=['POST'])
-def receive_sensor_data();
+def receive_sensor_data():
     data = request.get_json()
     stage = data["metadata"]["stage"]
     readings = data["data"]
