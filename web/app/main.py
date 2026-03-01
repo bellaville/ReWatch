@@ -37,6 +37,14 @@ def joinExpStatus(experimentID: str):
     state += 1
     return jsonify({'experimentID': experimentID, 'stage': stage}), 200
 
+@main.route('/api/sensor-data', methods=['POST'])
+def receive_sensor_data();
+    data = request.get_json()
+    stage = data["metadata"]["stage"]
+    readings = data["data"]
+    # TODO: store readings in database
+    return jsonify({"status": "ok"}), 200
+
 @main.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
