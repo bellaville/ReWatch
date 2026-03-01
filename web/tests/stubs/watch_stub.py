@@ -260,7 +260,6 @@ class WatchStub:
                 f"WatchStub could not connect to {self.upload_url}\n"
             )
             
-
     def _join(self) -> dict:
         """
         Step 1: call GET /join/<experimentID> to register with Flask.

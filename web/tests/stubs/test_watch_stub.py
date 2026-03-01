@@ -181,7 +181,10 @@ class TestGaitSignalGenerator:
         """
         readings_a = GaitSignalGenerator(seed=100).generate(duration_seconds=5.0)
         readings_b = GaitSignalGenerator(seed=100).generate(duration_seconds=5.0)
-        assert readings_a == readings_b
+        # strip timestamps before comparing — only x, y, z come from the seeded RNG
+        xyz_a = [{"x": r["x"], "y": r["y"], "z": r["z"]} for r in readings_a]
+        xyz_b = [{"x": r["x"], "y": r["y"], "z": r["z"]} for r in readings_b]
+        assert xyz_a == xyz_b
 
     def test_same_seed_produces_different_data(self):
         """
