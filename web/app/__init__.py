@@ -52,6 +52,9 @@ def create_app(test_config=False):
     from .gait_test import gait_test as gait_test_blueprint
     app.register_blueprint(gait_test_blueprint, url_prefix='/assessments/gait_test')
 
+    from experiment_api import experiment_bp
+    app.register_blueprint(experiment_bp)
+
     # handle 403 error
     @app.errorhandler(403)
     def forbidden(e):
