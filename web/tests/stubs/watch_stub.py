@@ -255,6 +255,7 @@ class WatchStub:
             resp = self._session.post(self.upload_url, json=payload, timeout=self.timeout)
             resp.raise_for_status()
             log.debug("WatchStub POST -> %d", resp.status_code)
+            return resp
         except requests.exceptions.ConnectionError:
             raise ConnectionError(
                 f"WatchStub could not connect to {self.upload_url}\n"

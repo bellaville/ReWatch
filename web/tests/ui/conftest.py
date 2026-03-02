@@ -67,7 +67,7 @@ def watch_stub(live_server_url):
     stub = WatchStub(
         base_url=live_server_url,
         experiment_id="12345",
-        upload_path="/api/sensor",
+        upload_path="/api/sensor-data",
         seed=123
     )
     stub.gait_duration = 5.0 # overriding so that tests run faster
