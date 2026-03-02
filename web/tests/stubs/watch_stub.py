@@ -206,13 +206,6 @@ class WatchStub:
 
     This stub polls the status endpoint and responds to stage changes
     """
-    # polls needed before next stage appears
-    POLLS_TO_ADVANCE = {
-        "WAITING": 6,
-        "GAIT": 10,
-        "GAIT_COMPLETE": 5,
-        "RT_TEST": 10
-    }
 
     def __init__(
             self,
@@ -236,7 +229,6 @@ class WatchStub:
         self._session = requests.Session()
         self._session.headers.update({
             "Content-Type": "application/json",
-            "X-Experiment-ID": experiment_id, # UPDATE
         })
 
         self._gait_gen = GaitSignalGenerator(seed=seed)
