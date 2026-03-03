@@ -29,7 +29,7 @@ def live_server_url():
     scope="module" -> server starts once per test file, shared across
     all tests in that file
     """
-    host = "127.0.1"
+    host = "127.0.0.1"
     port = 5001
 
     flask_app = create_app(test_config=True)
