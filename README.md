@@ -43,6 +43,25 @@ python -m pytest
 ```
 
 # Overall Setup of the WebApp
+1. Download project file
+2. Open Terminal (for Mac) or Command Prompt (for Windows)
+3. Navigate to project directory
+4. Execute the following commands based on your operating system:
+
+For Windows
+```
+python -m venv .venv
+.venv\Scripts\activate.bat
+cd web
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install pytest
+set FLASK_ENV=development
+set REDIS_URL=redis://127.0.0.1:6379/0
+docker compose -f docker-compose.dev.yaml up -d --build
+python run.py
+
+```
 For Mac
 ```
 python3.11 -m venv venv
