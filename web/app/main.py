@@ -24,15 +24,16 @@ def joinExp(experimentID: str):
 
 @main.route('/join/<experimentID>/status', methods=['GET'])
 def joinExpStatus(experimentID: str):
-    stage = "WAITING"
     global state
-    if state > 5:
+    if state <= 5:
+        stage = "WAITING"
+    elif state <= 15:
         stage = "GAIT"
-    if state > 15:
+    elif state <= 20:
         stage = "GAIT_COMPLETE"
-    if state > 20:
+    elif state <= 30:
         stage = "RT_TEST"
-    if state > 30:
+    else:
         stage = "COMPLETE"
     state += 1
     return jsonify({'experimentID': experimentID, 'stage': stage}), 200
