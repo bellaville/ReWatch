@@ -98,16 +98,7 @@ def start_memory_test():
     memorization_time = session.get('memorization_time', 5)
     num_rounds = session.get('num_rounds', 5)
 
-    # flash instructions
-    flash(
-         "<strong>THIS IS NOT A MEDICAL DIAGNOSIS!</strong><br><br>"
-        f"You will see a set of shapes to memorize for {memorization_time} seconds. "
-        "After that, a new set will appear. Decide if the shapes are the same or different. "
-        f"Try to respond as quickly as possible as your reaction time will be recorded. There will be {num_rounds} rounds. Are you ready to start?",
-        "memory_test"
-    )
-
-    return render_template('memory_test.html', show_test=False)
+    return render_template('memory_display_warning.html', memorization_time=memorization_time, num_rounds=num_rounds)
 
 
 @memory_test.route('/start', methods=["POST"])
@@ -218,6 +209,8 @@ def end_gait():
 def receive_sync_request():
     receive_time = round(time.time_ns())
     assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == request.json.get("join_code") and PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(AssessmentStage.RT_TEST)).first()
+    if not assessment:
+        return jsonify({"error": "Assessment could not be found"}), 404
     assessment.increment_synchronization(request.json['device'])
     return jsonify({"timing2": receive_time, "timing3": round(time.time_ns())}), 200
 
@@ -235,7 +228,7 @@ def give_synched_timing():
 ######################
 @memory_test.route('/memorize')
 @login_required
-def memory_memorize():
+def memory_run_test():
     """ Memorization phase: user has a configured number of seconds to
     memorize the displayed set of shapes
     """
@@ -247,38 +240,56 @@ def memory_memorize():
     num_shapes = session.get('num_shapes', 3)
     difficulty = session.get('difficulty', 'Easy')
     memorization_time = session.get('memorization_time', 5)
-
-    # generate shape set and assign colors
-    current_shapes = random.sample(SHAPES, num_shapes)
-
-    current_colours = []
-    for shape in current_shapes:
-        if difficulty == 'Easy':
-            # each shape always has the same distinct colour
-            current_colours.append(DEFAULT_COLOURS.get(shape, 'gray'))
-        else:
-            # randomize colours for harder difficulty
-            current_colours.append(random.choice(COLOUR_LIST))
-
-    # generate random positions for the shapes in the test frame
-    shape_positions = generate_positions(current_shapes, frame_size=500)
-
-    # stores the original memorized set (fixed for comparison phase)
-    session['previous_shapes'] = current_shapes
-    session['previous_colours'] = current_colours
-    # stores the set that will be shown in the response phase (which may be modified in comparison phase)
-    session['current_shapes'] = current_shapes
-    session['current_colours'] = current_colours
-
-    session['shape_positions'] = shape_positions
     session['memorization_time'] = memorization_time
 
-    return render_template('memory_memorize.html', shapes=current_shapes, round_num=session['round']+1, shape_positions=shape_positions, shape_colours=current_colours, memorization_time=session['memorization_time'], join_code=session["join_code"])
+    # generate shape set and assign colors
+    memorized_shapes = random.sample(SHAPES, num_shapes)
+
+    memorized_colours = []
+    for shape in memorized_shapes:
+        if difficulty == 'Easy':
+            # each shape always has the same distinct colour
+            memorized_colours.append(DEFAULT_COLOURS.get(shape, 'gray'))
+        else:
+            # randomize colours for harder difficulty
+            memorized_colours.append(random.choice(COLOUR_LIST))
+
+    # generate random positions for the shapes in the test frame
+    memorized_positions = generate_positions(memorized_shapes, frame_size=500)
+
+    # stores the original memorized set (fixed for comparison phase)
+    session['memorized_shapes'] = memorized_shapes
+    session['memorized_colours'] = memorized_colours
+    session['memorized_positions'] = memorized_positions
+    
+    # Generate test set
+    if random.random() < 0.5:
+        test_shapes = memorized_shapes
+        test_colours = memorized_colours
+    else:
+        test_shapes = random.sample(SHAPES, num_shapes)
+        # assign colours
+        test_colours = [
+            DEFAULT_COLOURS.get(shape, 'gray') if difficulty == 'Easy' else random.choice(COLOUR_LIST)
+            for shape in test_shapes
+        ]
+
+    # generate positions
+    test_positions = generate_positions(test_colours, frame_size=500)
+
+    # save for template and reaction timing
+    session['test_shapes'] = memorized_shapes
+    session['test_colours'] = test_colours
+    session['test_positions'] = test_positions
+
+    return render_template('memory_run_test.html', test_shapes=test_shapes, test_colours=test_colours, test_positions=test_positions, 
+                           memorized_shapes=memorized_shapes, memorized_colours=memorized_colours, memorized_positions=memorized_positions, 
+                           round_num=session['round']+1, memorization_time=session['memorization_time'], join_code=session["join_code"])
 
 ##################
 # RESPONSE PHASE #
 ##################
-@memory_test.route('/response', methods=['GET', 'POST'])
+@memory_test.route('/response', methods=['POST'])
 @login_required
 def memory_test_view():
     """ Comparison phase where user responds """
@@ -289,73 +300,38 @@ def memory_test_view():
     num_shapes = session.get('num_shapes', 3)
     difficulty = session.get('difficulty', 'Easy')
 
-    if request.method == 'POST':
-        # handle user's answer
-        choice = request.form.get('choice')
-        reaction_time = request.form.get('reaction_time', type=float)
+    # handle user's answer
+    choice = request.form.get('choice')
+    reaction_time = request.form.get('reaction_time', type=float)
 
-        prev_shapes= session['previous_shapes']
-        prev_colours = session['previous_colours']
-        curr_shapes = session['current_shapes']
-        curr_colours = session['current_colours']
+    prev_shapes= session['memorized_shapes']
+    prev_colours = session['memorized_colours']
+    curr_shapes = session['test_shapes']
+    curr_colours = session['test_colours']
 
-        if difficulty == 'Easy':
-            correct = set(prev_shapes) == set(curr_shapes)
-        else:
-            # for hard mode, check if shape AND colour match
-            prev_map = dict(zip(prev_shapes, prev_colours))
-            curr_map = dict(zip(curr_shapes, curr_colours))
-            correct = prev_map == curr_map
-        
-        user_correct = (
-            (choice == 'Same' and correct) or (choice == 'Different' and not correct)
-        )
-        if user_correct:
-            session['score'] += 1
-
-        if reaction_time is not None:
-            session['reaction_records'].append({
-                "time": reaction_time,
-                "correct": user_correct,
-                "num_shapes": num_shapes,
-            })
-
-        session['round'] += 1
-        return redirect(url_for('memory_test.memory_memorize'))  # start next memorization round
-
-    # GET request: show comparison phase
-    prev_shapes = session['previous_shapes']
-    prev_colours = session['previous_colours']
-
-    # 50% chance to show same or new set
-    if random.random() < 0.5:
-        current_shapes = prev_shapes.copy()
-        current_colours = prev_colours.copy()
+    if difficulty == 'Easy':
+        correct = set(prev_shapes) == set(curr_shapes)
     else:
-        current_shapes = random.sample(SHAPES, num_shapes)
-        # assign colours
-        current_colours = [
-            DEFAULT_COLOURS.get(shape, 'gray') if difficulty == 'Easy' else random.choice(COLOUR_LIST)
-            for shape in current_shapes
-        ]
-
-    # generate positions
-    shape_positions = generate_positions(current_shapes, frame_size=500)
-
-    # save for template and reaction timing
-    session['current_shapes'] = current_shapes
-    session['current_colours'] = current_colours
-    session['shape_positions'] = shape_positions
-
-    return render_template(
-        'memory_test.html',
-        shapes=current_shapes,
-        round_num=session['round'] + 1,
-        buttons_enabled=True,
-        show_test=True,
-        shape_positions=shape_positions,
-        shape_colours=current_colours
+        # for hard mode, check if shape AND colour match
+        prev_map = dict(zip(prev_shapes, prev_colours))
+        curr_map = dict(zip(curr_shapes, curr_colours))
+        correct = prev_map == curr_map
+    
+    user_correct = (
+        (choice == 'Same' and correct) or (choice == 'Different' and not correct)
     )
+    if user_correct:
+        session['score'] += 1
+
+    if reaction_time is not None:
+        session['reaction_records'].append({
+            "time": reaction_time,
+            "correct": user_correct,
+            "num_shapes": num_shapes,
+        })
+
+    session['round'] += 1
+    return redirect(url_for('memory_test.memory_run_test'))  # start next memorization round
 
 ################
 # RESULTS PAGE #

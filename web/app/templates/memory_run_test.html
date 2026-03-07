@@ -5,14 +5,30 @@
 <div class="container text-center mt-5">
     <h2>Round {{ round_num }}</h2>
     <h2>Memorize these shapes:</h2>
-    <div id="shapes-frame" style="display: none">
-        {% for shape in shapes %}
+    <div id="memory-shapes-frame" style="display: none">
+        {% for shape in memorized_shapes %}
             <div class="shape {{ shape }}" 
-                style="background-color: {{ shape_colours[loop.index0] }};
-                top: {{ shape_positions[loop.index0].top }}px;
-                left: {{ shape_positions[loop.index0].left }}px;">
+                style="background-color: {{ memorized_colours[loop.index0] }};
+                top: {{ memorized_positions[loop.index0].top }}px;
+                left: {{ memorized_positions[loop.index0].left }}px;">
             </div>
         {% endfor %}
+    </div>
+    <div id="test-frame" style="display: none">
+        <div id="test-shapes-frame">
+            {% for shape in test_shapes %}
+                <div class="shape {{ shape }}" 
+                    style="background-color: {{ test_colours[loop.index0] }};
+                    top: {{ test_positions[loop.index0].top }}px;
+                    left: {{ test_positions[loop.index0].left }}px;">
+                </div>
+            {% endfor %}
+        </div>
+        <form method="POST" action="{{ url_for('memory_test.memory_test_view') }}">
+            <input type="hidden" name="reaction_time" id="reaction_time">
+            <button type="submit" name="choice" value="Same" class="btn btn-success btn-lg">Same</button>
+            <button type="submit" name="choice" value="Different" class="btn btn-danger btn-lg">Different</button>
+        </form>
     </div>
 </div>
 
@@ -122,13 +138,37 @@
         time_to_show = handshakedTime - {{ memorization_time * 1000 }};
         // redirect to comparison phase after customized seconds
         setTimeout(function() {
-            document.getElementById("shapes-frame").style.display = "block";
+            document.getElementById("memory-shapes-frame").style.display = "block";
         }, time_to_show); 
         // redirect to comparison phase after customized seconds
         setTimeout(function() {
-            window.location.href = "{{ url_for('memory_test.memory_test_view') }}";
-        }, handshakedTime - 300); 
+            document.getElementById("memory-shapes-frame").style.display = "none";
+            document.getElementById("test-frame").style.display = "block";
+            requestAnimationFrame(startTimer);
+        }, handshakedTime); 
     }
+
+    // Capture more accurate reaction time using performance.now() and requestAnimationFrame
+    let startTime = null;
+
+    function startTimer(timestamp){
+        // timestamp will be provided by requestAnimationFrame
+        startTime = timestamp;
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+        const choiceButtons = document.querySelectorAll("button[name='choice']");
+
+        if (choiceButtons.length == 0) return;        
+        choiceButtons.forEach(button => { 
+            button.addEventListener("pointerdown", () => {
+                if (startTime !== null) {
+                    const reactionTime = performance.now() - startTime;
+                    document.getElementById("reaction_time").value = reactionTime.toFixed(2);
+                }
+            })
+        })
+    });
 
     do_sync()
 </script>
