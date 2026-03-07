@@ -355,6 +355,9 @@ def memory_result():
 
     assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == request.json.get("join_code") and PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(AssessmentStage.RT_TEST)).first()
 
+    if not assessment:
+        return jsonify({"error": "Could not find assessment"}), 404
+
     assessment.score = score
     assessment.avg_reaction_time = avg_reaction
     assessment.reaction_records = reaction_records
