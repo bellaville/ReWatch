@@ -14,4 +14,4 @@ services:
     depends_on:
       - redis
     volumes: # Mount SQLite database
-      - ./instance:/usr/src/app/instance
+      - ./app/instance:/usr/src/app/app/instance

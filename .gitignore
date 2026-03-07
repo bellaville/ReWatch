@@ -8,3 +8,7 @@
 
 # For vscode configs
 **/.vscode/**
+
+# For pytest
+**/coverage.xml
+**/.coverage
