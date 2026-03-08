@@ -94,8 +94,8 @@ class PatientAssessment(db.Model):
     # For time synchronization
     SYNC_CALLS = 10
     ADDITIONAL_DELAY = 6
-    watch_synchroized = db.Column(db.Integer, default=False)
-    browser_synchroized = db.Column(db.Integer, default=False)
+    watch_synchronized = db.Column(db.Integer, default=False)
+    browser_synchronized = db.Column(db.Integer, default=False)
     test_start = db.Column(db.DateTime, default=datetime.now())
     
     # set relationship with Patient so that we can access the associated Patient object from PatientAssessment
@@ -128,35 +128,61 @@ class PatientAssessment(db.Model):
         return utc_dt.astimezone(eastern)
 
     def increment_step(self):
+        """
+        Takes the current step of the assessment and increments it up
+        until the final step
+        """
         session = Session.object_session(self)
-        self.current_step = min(self.current_step + 1, len(PatientAssessment.STEP_ORDER))
+        self.current_step = min(self.current_step + 1, len(PatientAssessment.STEP_ORDER) - 1)
         session.commit()
 
     def get_current_step(self):
+        """
+        Returns string value of current assessment step
+        """
         return PatientAssessment.STEP_ORDER[self.current_step].value
         
-    def increment_synchronization(self, device: str) -> bool:
+    def increment_synchronization(self, device: str) -> None:
+        """
+        Increments the count of the synchronization attempts for a given device
+
+        Args:
+            device (str): String representation of either watch or browser device
+        """
         session = Session.object_session(self)
         if device == "watch":
-            self.watch_synchroized += 1 
+            self.watch_synchronized += 1 
         if device == "browser":
-            self.browser_synchroized += 1 
+            self.browser_synchronized += 1 
         session.commit()
 
-    def can_create_test_time(self):
-        return (self.browser_synchroized >= PatientAssessment.SYNC_CALLS and self.watch_synchroized >= PatientAssessment.SYNC_CALLS) \
+    def can_create_test_time(self) -> bool:
+        """
+        Checks whether a future time to plan RT test can be scheduled.
+        Depends on browser and watch having synchronized enough times
+        and there not being an existing test start time.
+        """
+        return (self.browser_synchronized >= PatientAssessment.SYNC_CALLS and self.watch_synchronized >= PatientAssessment.SYNC_CALLS) \
             or self.test_start > datetime.now()
 
     def get_test_start(self):
+        """
+        Sets and gets future RT test start time
+        """
+        # If exists, simply return
         if self.test_start > datetime.now():
             timeval = (self.test_start - datetime.now())
             return round(timeval.total_seconds() * 1000 +  timeval.microseconds / 1000)
+        
+        # Create future start time
         session = Session.object_session(self)
         future_test_time = round(1000 * (PatientAssessment.ADDITIONAL_DELAY + self.memorization_time)) + random.randint(0, 5000)
         self.test_start = datetime.now() + timedelta(milliseconds=future_test_time)
-        self.browser_synchroized = 0
-        self.watch_synchroized = 0
+        self.browser_synchronized = 0
+        self.watch_synchronized = 0
         session.commit()
+
+        # Submit time difference between now and test start
         timeval = (self.test_start - datetime.now())
         return round(timeval.total_seconds() * 1000 +  timeval.microseconds / 1000)
 
