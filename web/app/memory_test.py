@@ -336,7 +336,7 @@ def memory_test_view():
 ################
 # RESULTS PAGE #
 ################
-@memory_test.route('/result')
+@memory_test.route('/result', methods=["POST"])
 @login_required
 def memory_result():
     reaction_records = session.get('reaction_records', [])
@@ -353,7 +353,7 @@ def memory_result():
         else:
             return redirect(url_for('main.index'))
 
-    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True and PatientAssessment.join_code == request.json.get("join_code") and PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(AssessmentStage.RT_TEST)).first()
+    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True, PatientAssessment.join_code == request.json.get("join_code"), PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(AssessmentStage.RT_TEST)).first()
 
     if not assessment:
         return jsonify({"error": "Could not find assessment"}), 404
@@ -361,7 +361,7 @@ def memory_result():
     assessment.score = score
     assessment.avg_reaction_time = avg_reaction
     assessment.reaction_records = reaction_records
-    
+
     assessment.increment_step()
 
     return render_template('memory_result.html', score=score, avg_reaction=avg_reaction, total_rounds=int(total_rounds))
@@ -385,8 +385,6 @@ def memory_test_customization():
             patient_id = current_user.patient_profile.id
         
         session['test_patient_id'] = patient_id
-        join_code = f"{random.randint(0, 999999):06d}"
-        session['join_code'] = join_code
 
         # store physician's inputted customization in session
         session['num_shapes'] = int(request.form.get('num_shapes', 3))
@@ -403,11 +401,13 @@ def memory_test_customization():
             difficulty=session['difficulty'],
             reaction_records=[],
             is_running=True,
-            join_code=join_code,
             watch_connected=False,
             current_step = 0,
             memorization_time=session['memorization_time']
-        )
+        )        
+        
+        session['join_code'] = assessment.join_code
+
 
         db.session.add(assessment)
         db.session.commit()

@@ -74,6 +74,17 @@ class AssessmentStage(enum.Enum):
 
 # model for a patient's assessment
 class PatientAssessment(db.Model):
+
+    @staticmethod
+    def generate_unique_join_code() -> str:
+        """
+        Generates unique join code for the assessment
+        """
+        code = f"{random.randint(0, 999999):06d}"
+        while db.session.query(PatientAssessment).filter(PatientAssessment.join_code == code and PatientAssessment.is_running == True).first() is not None:
+            code = f"{random.randint(0, 999999):06d}"
+        return code
+
     __tablename__ = 'patientassessment'
     id = db.Column(db.Integer, primary_key=True)
     patient_id = db.Column(db.Integer, db.ForeignKey('patient.id')) # link to Patient
@@ -86,10 +97,10 @@ class PatientAssessment(db.Model):
     memorization_time = db.Column(db.Integer)
 
     # Needed to access during running assessments
-    is_running = db.Column(db.Boolean)
-    join_code = db.Column(db.String(6), nullable=False)
+    is_running = db.Column(db.Boolean, default=True)
+    join_code = db.Column(db.String(6), nullable=False, default=generate_unique_join_code)
     watch_connected = db.Column(db.Boolean)
-    current_step = db.Column(db.Integer) # Index in STEP_ORDER
+    current_step = db.Column(db.Integer, default = 0) # Index in STEP_ORDER
 
     # For time synchronization
     SYNC_CALLS = 10

@@ -1,8 +1,9 @@
+from flask import json
 import pytest
 
 from sqlalchemy import event
 
-from app.models import User, Patient, Physician, PatientAssessment, Role, create_profiles_for_new_users, Session
+from app.models import AssessmentStage, User, Patient, Physician, PatientAssessment, Role, create_profiles_for_new_users, Session
 from app.db import db
 from werkzeug.security import generate_password_hash
 from unittest.mock import patch
@@ -68,11 +69,25 @@ def init_memory_test_session(sess, patient_id=None):
     sess["show_test"] = False
     sess["num_shapes"] = 3
     sess["difficulty"] = "easy"
-    sess["num_rounds"] = 5
+    sess["num_rounds"] = 3
     sess["memorization_time"] = 5
     if patient_id:
         sess["test_patient_id"] = patient_id
-    sess["join_code"] = "100000"
+    
+    new_assessment = PatientAssessment(
+        score=0,
+        total_rounds=3,
+        difficulty="easy",
+        memorization_time=5,
+        is_running = True,
+        patient_id=patient_id
+    )
+    db.session.add(new_assessment)
+    db.session.commit()
+
+    sess["join_code"] = new_assessment.join_code
+
+    return new_assessment
 
 
 def test_start_memory_test_initializes_session(test_client):
@@ -131,7 +146,9 @@ def test_memory_test_post_scoring(test_client):
     with test_client.session_transaction() as sess:
         init_memory_test_session(sess, patient_id=patient.id)
         sess["memorized_shapes"] = ["circle", "square"]
+        sess["memorized_colours"] = []
         sess["test_shapes"] = ["circle", "square"]   # Same
+        sess["test_colours"] = []
 
     response = test_client.post(
         "assessments/memory_test/response",
@@ -185,7 +202,7 @@ def test_saving_patient_assessment(test_client):
 
     # Simulate test session
     with test_client.session_transaction() as sess:
-        init_memory_test_session(sess, patient_id=patient_profile.id)
+        assessment = init_memory_test_session(sess, patient_id=patient_profile.id)
         sess["score"] = 2
 
         sess["reaction_records"] = [
@@ -194,15 +211,20 @@ def test_saving_patient_assessment(test_client):
             {"time": 1234, "correct": False, "difficulty": "easy", "num_shapes": 3},
         ]
 
+    assessment.current_step = PatientAssessment.STEP_ORDER.index(AssessmentStage.RT_TEST)
+    db.session.commit()
+
     # Call the result route to save assessment
-    response = test_client.get("/assessments/memory_test/result")
+    response = test_client.post("/assessments/memory_test/result",
+                                data=json.dumps({"join_code": sess["join_code"]}),
+                                content_type='application/json')
     assert response.status_code == 200
 
     # Verify database
-    assessment = PatientAssessment.query.filter_by(patient_id=patient_profile.id).first()
+    assessment = db.session.query(PatientAssessment).filter(PatientAssessment.id == assessment.id).first()
     assert assessment is not None
     assert assessment.score == 2
-    assert assessment.total_rounds == 5
+    assert assessment.total_rounds == 3
     expected_avg = sum([999, 1010, 1234]) / 3
     assert pytest.approx(assessment.avg_reaction_time, 0.01) == expected_avg
 
@@ -218,18 +240,23 @@ def test_physician_can_save_assessment_for_patient(test_client):
     # Simulate physician session selecting patient
     with test_client.session_transaction() as sess:
         sess["_user_id"] = str(physician_user.id)
-        init_memory_test_session(sess, patient_id=patient_profile.id)
+        assessment = init_memory_test_session(sess, patient_id=patient_profile.id)
         sess["score"] = 4
         sess["reaction_times"] = [0.5, 0.7, 0.6, 0.8]
 
+    assessment.current_step = PatientAssessment.STEP_ORDER.index(AssessmentStage.RT_TEST)
+    db.session.commit()
+
     # Call result route
-    response = test_client.get("/assessments/memory_test/result")
+    response = test_client.post("/assessments/memory_test/result",
+                                data=json.dumps({"join_code": assessment.join_code}),
+                                content_type='application/json')
     assert response.status_code == 200
 
-    assessment = PatientAssessment.query.filter_by(patient_id=patient_profile.id).first()
+    assessment = PatientAssessment.query.filter_by(id=assessment.id).first()
     assert assessment is not None
     assert assessment.score == 4
-    assert assessment.total_rounds == 5
+    assert assessment.total_rounds == 3
 
 def test_memory_test_hard_mode_correct_match(test_client):
     """GIVEN a patient in hard difficulty mode
