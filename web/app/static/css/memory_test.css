@@ -1,5 +1,5 @@
 /* frame container for shapes */
-#shapes-frame {
+#memory-shapes-frame, #test-shapes-frame {
     position: relative;
     width: 500px;   /* match Python frame_size */
     height: 500px;

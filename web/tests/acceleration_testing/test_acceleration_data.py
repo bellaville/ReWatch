@@ -33,7 +33,8 @@ def create_assessment(test_client: FlaskClient):
         score=0,
         avg_reaction_time=1200,
         total_rounds=3,
-        difficulty="easy"
+        difficulty="easy",
+        join_code=""
     )
 
     db.session.add(new_assessment)
@@ -49,11 +50,11 @@ def post_example_data(test_client: FlaskClient):
     """
     example_json = {
         "ts": 12321233232,
-        "assessmentID": 1,
-        "stage": "gait",
+        "assessment_id": 1,
+        "stage": "GAIT",
         "data": [
             {
-                "ts": 12321233233,
+                "timestamp": 12321233233,
                 "x": 1,
                 "y": 1,
                 "z": 1
@@ -81,7 +82,7 @@ def test_getting_data(test_client: FlaskClient):
     assert isinstance(data, list)
     assert len(data) == 1
     assert data[0]["assessmentID"] == 1
-    assert data[0]["stage"] == "gait"
+    assert data[0]["stage"] == "GAIT"
     assert len(data[0]["data"]) == 1
     assert data[0]["data"][0]["x"] == 1
     assert data[0]["data"][0]["y"] == 1

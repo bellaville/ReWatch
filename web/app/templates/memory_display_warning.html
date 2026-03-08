@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- flash message confirmation for instructions -->
+
+<div class="alert alert-info alert-dismissible fade show" role="alert">
+    <strong>THIS IS NOT A MEDICAL DIAGNOSIS!</strong>
+    <br>
+    <br>
+        You will see a set of shapes to memorize for {{memorization_time}} seconds.
+        After that, a new set will appear. Decide if the shapes are the same or different.
+        Try to respond as quickly as possible as your reaction time will be recorded. There will be {{num_rounds}} rounds. Are you ready to start?
+    <hr>
+    <button id="confirm-no" class="btn btn-danger">No</button>
+    <button id="confirm-yes" class="btn btn-success">Yes</button>
+</div>
+
+<script>
+    const yesBtn = document.getElementById('confirm-yes');
+    const noBtn = document.getElementById('confirm-no');
+
+    if (yesBtn) {
+        yesBtn.addEventListener('click', function() {
+            // Send fetch to server to increment step
+            fetch('/assessments/memory_test/start', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = "{{ url_for('memory_test.memory_run_test') }}";
+                }
+            })
+        });
+    }
+
+    if (noBtn) {
+        noBtn.addEventListener('click', function() {
+            window.location.href = "{{ url_for('main.assessments') }}";
+        });
+    }
+</script>
+
+{% endblock %}
