@@ -405,12 +405,11 @@ def memory_test_customization():
             current_step = 0,
             memorization_time=session['memorization_time']
         )        
-        
-        session['join_code'] = assessment.join_code
-
 
         db.session.add(assessment)
         db.session.commit()
+        
+        session['join_code'] = assessment.join_code
         
         return redirect(url_for('memory_test.connect_watch_page')) # go to flash instruction message
     
