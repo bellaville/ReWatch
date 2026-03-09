@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import android.hardware.SensorManager
 import android.hardware.SensorEventListener
 import android.util.Log
+import android.view.WindowManager
 import androidx.activity.compose.setContent
 import ca.carleton.rewatch.dataclasses.SensorReading
 import ca.carleton.rewatch.presentation.navigation.NavigationStack
@@ -20,7 +21,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setTheme(android.R.style.Theme_DeviceDefault)
 
         setContent {
