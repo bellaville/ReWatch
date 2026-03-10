@@ -387,9 +387,12 @@ def memory_test_customization():
         'num_rounds': 5
     }
 
+    selected_id = None
+
     if current_user.has_role('Physician'):
         patients = [p.user for p in current_user.physician_profile.patients if p.user is not None and p.user.patient_profile is not None] 
-        selected_id = patients[0].patient_profile.id
+        if patients:
+            selected_id = patients[0].patient_profile.id
 
     else:
         patients = []
