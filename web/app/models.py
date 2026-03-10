@@ -87,14 +87,19 @@ class PatientAssessment(db.Model):
 
     __tablename__ = 'patientassessment'
     id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id')) # link to Patient
+
+    # Calculated at end
     score = db.Column(db.Integer)
     avg_reaction_time = db.Column(db.Float)
+    reaction_records = db.Column(JSON) # store reaction times as a list
+
+    # Stored at beginning
     total_rounds = db.Column(db.Integer)
+    num_shapes = db.Column(db.Integer)
     date_taken = db.Column(db.DateTime, default=db.func.current_timestamp()) # track when test was completed
     difficulty = db.Column(db.String(20), nullable=False)
-    reaction_records = db.Column(JSON) # store reaction times as a list
     memorization_time = db.Column(db.Integer)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id')) # link to Patient
 
     # Needed to access during running assessments
     is_running = db.Column(db.Boolean, default=True)
