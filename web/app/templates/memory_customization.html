@@ -30,23 +30,27 @@
             </div>
         </div>
 
-        {% if patients %}
+        {% if current_user.has_role('Physician') %}
         <div>
             <label for="patient_id">Select Patient:</label>
             <select name="patient_id" id="patient_id" class="form-select d-inline w-auto">
-                <option value="">--Choose patient--</option>
-                {% for p in patients %}
-                    {% if p.has_role("Patient") == True %}
-                    <option value="{{ p.patient_profile.id }}" {% if selected_id == p.patient_profile.id %}selected{% endif %}>{{ p.name }}</option>
-                    {% endif %}
-                {% endfor %}
+                {% if patients %}
+                    <option value="">--Choose patient--</option>
+                    {% for p in patients %}
+                        {% if p.has_role("Patient") == True %}
+                        <option value="{{ p.patient_profile.id }}" {% if selected_id == p.patient_profile.id %}selected{% endif %}>{{ p.name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <option value="" disabled selected>No patients available</option>
+                {% endif %}
             </select>
         </div>
         {% else %}
-        <option value="" disabled selected>No patients available</option>
+            <input type="hidden" name="patient_id" value="{{ selected_id }}">
         {% endif %}
 
-        <button type="submit" class="btn btn-primary" {% if not patients %}disabled{% endif %}>Start Test</button>
+        <button type="submit" class="btn btn-primary" {% if current_user.has_role('Physician') and not patients %}disabled{% endif %}>Start Test</button>
     </form>
 </div>
 {% endblock %}
