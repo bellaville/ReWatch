@@ -36,17 +36,17 @@
             <select name="patient_id" id="patient_id" class="form-select d-inline w-auto">
                 <option value="">--Choose patient--</option>
                 {% for p in patients %}
-                    {% if p.has_role("Physician") == True %}
-                    <option value="{{ p.physician_profile.id }}" {% if selected_id == p.physician_profile.id %}selected{% endif %}>{{ p.name }}</option>
-                    {% else %}
+                    {% if p.has_role("Patient") == True %}
                     <option value="{{ p.patient_profile.id }}" {% if selected_id == p.patient_profile.id %}selected{% endif %}>{{ p.name }}</option>
                     {% endif %}
                 {% endfor %}
             </select>
         </div>
+        {% else %}
+        <option value="" disabled selected>No patients available</option>
         {% endif %}
 
-        <button type="submit" class="btn btn-primary">Start Test</button>
+        <button type="submit" class="btn btn-primary" {% if not patients %}disabled{% endif %}>Start Test</button>
     </form>
 </div>
 {% endblock %}
