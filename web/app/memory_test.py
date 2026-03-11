@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, render_template, session, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 import time, random
-from app.models import AssessmentStage, AssessmentStageData, PatientAssessment
+from app.models import AssessmentStage, AssessmentStageData, PatientAssessment, Physician
 from app.db import db
 
 memory_test = Blueprint('memory_test', __name__)
@@ -135,6 +135,14 @@ def confirm_start_memory_test():
 @memory_test.route('/connect', methods = ["GET"])
 @login_required
 def connect_watch_page():
+    if not session.get("join_code"):
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
+
+    assessment = fetch_assessment(session["join_code"], AssessmentStage.RT_TEST)
+
+    if not assessment:
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
+
     return render_template('memory_connect_watch.html', join_code = session['join_code'])
 
 @memory_test.route('/connect', methods = ["POST"])
@@ -302,7 +310,10 @@ def memory_run_test():
 @memory_test.route('/response', methods=['POST'])
 @login_required
 def memory_test_view():
-    """ Comparison phase where user responds """
+    """
+    Route that recieves the user response and progresses the assessment with
+    either another test or by showing the results
+    """
 
     if not session.get("join_code"):
         return redirect(url_for('memory_test.confirm_memory_test_configuration'))
@@ -376,9 +387,12 @@ def memory_test_customization():
         'num_rounds': 5
     }
 
+    selected_id = None
+
     if current_user.has_role('Physician'):
         patients = [p.user for p in current_user.physician_profile.patients if p.user is not None and p.user.patient_profile is not None] 
-        selected_id = patients[0].patient_profile.id
+        if patients:
+            selected_id = patients[0].patient_profile.id
 
     else:
         patients = []
@@ -397,7 +411,9 @@ def confirm_memory_test_configuration():
 
     if current_user.has_role('Physician'):
         # if user is physician, use the selected patient from session
-        patient_id = request.form.get('patient_id')
+        patient_id = int(request.form['patient_id'])
+        if patient_id not in [p.id for p in db.session.get(Physician, current_user.physician_profile.id).patients]:
+            return memory_test_customization()
     else:
         # patient is performing their own test, use their own id from db/login
         patient_id = current_user.patient_profile.id
