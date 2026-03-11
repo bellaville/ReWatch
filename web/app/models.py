@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+import random
 from zoneinfo import ZoneInfo
 import enum
 from typing import Any
@@ -64,20 +65,65 @@ class Patient(db.Model):
     gender = db.Column(db.String(80))
     weight = db.Column(db.Integer)
 
+class AssessmentStage(enum.Enum):
+    WAITING = "WAITING"
+    GAIT = "GAIT"
+    GAIT_COMPLETE = "GAIT_COMPLETE"
+    RT_TEST = "RT_TEST"
+    COMPLETE = "COMPLETE"
+
 # model for a patient's assessment
 class PatientAssessment(db.Model):
+
+    @staticmethod
+    def generate_unique_join_code() -> str:
+        """
+        Generates unique join code for the assessment
+        """
+        code = f"{random.randint(0, 999999):06d}"
+        while db.session.query(PatientAssessment).filter(PatientAssessment.join_code == code and PatientAssessment.is_running == True).first() is not None:
+            code = f"{random.randint(0, 999999):06d}"
+        return code
+
     __tablename__ = 'patientassessment'
     id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id')) # link to Patient
+
+    # Calculated at end
     score = db.Column(db.Integer)
     avg_reaction_time = db.Column(db.Float)
-    total_rounds = db.Column(db.Integer)
-    date_taken = db.Column(db.DateTime, default=db.func.current_timestamp()) # track when test was completed
-    difficulty = db.Column(db.String(20), nullable=False)
     reaction_records = db.Column(JSON) # store reaction times as a list
 
+    # Stored at beginning
+    total_rounds = db.Column(db.Integer)
+    num_shapes = db.Column(db.Integer)
+    date_taken = db.Column(db.DateTime, default=db.func.current_timestamp()) # track when test was completed
+    difficulty = db.Column(db.String(20), nullable=False)
+    memorization_time = db.Column(db.Integer)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id')) # link to Patient
+
+    # Needed to access during running assessments
+    is_running = db.Column(db.Boolean, default=True)
+    join_code = db.Column(db.String(6), nullable=False, default=generate_unique_join_code)
+    watch_connected = db.Column(db.Boolean)
+    current_step = db.Column(db.Integer, default = 0) # Index in STEP_ORDER
+
+    # For time synchronization
+    SYNC_CALLS = 10
+    ADDITIONAL_DELAY = 6
+    watch_synchronized = db.Column(db.Integer, default=False)
+    browser_synchronized = db.Column(db.Integer, default=False)
+    test_start = db.Column(db.DateTime, default=datetime.now())
+    
     # set relationship with Patient so that we can access the associated Patient object from PatientAssessment
     patient = db.relationship('Patient', backref='assessments')
+
+    STEP_ORDER = [
+        AssessmentStage.WAITING, 
+        AssessmentStage.GAIT, 
+        AssessmentStage.GAIT_COMPLETE, 
+        AssessmentStage.RT_TEST, 
+        AssessmentStage.COMPLETE
+    ]
 
     @property
     def local_date_taken(self):
@@ -97,10 +143,65 @@ class PatientAssessment(db.Model):
 
         return utc_dt.astimezone(eastern)
 
+    def increment_step(self):
+        """
+        Takes the current step of the assessment and increments it up
+        until the final step
+        """
+        session = Session.object_session(self)
+        self.current_step = min(self.current_step + 1, len(PatientAssessment.STEP_ORDER) - 1)
+        session.commit()
 
-class AssessmentStage(enum.Enum):
-    GAIT = "gait"
-    REACTION = "reaction"
+    def get_current_step(self):
+        """
+        Returns string value of current assessment step
+        """
+        return PatientAssessment.STEP_ORDER[self.current_step].value
+        
+    def increment_synchronization(self, device: str) -> None:
+        """
+        Increments the count of the synchronization attempts for a given device
+
+        Args:
+            device (str): String representation of either watch or browser device
+        """
+        session = Session.object_session(self)
+        if device == "watch":
+            self.watch_synchronized += 1 
+        if device == "browser":
+            self.browser_synchronized += 1 
+        session.commit()
+
+    def can_create_test_time(self) -> bool:
+        """
+        Checks whether a future time to plan RT test can be scheduled.
+        Depends on browser and watch having synchronized enough times
+        and there not being an existing test start time.
+        """
+        return (self.browser_synchronized >= PatientAssessment.SYNC_CALLS and self.watch_synchronized >= PatientAssessment.SYNC_CALLS) \
+            or self.test_start > datetime.now()
+
+    def get_test_start(self):
+        """
+        Sets and gets future RT test start time
+        """
+        # If exists, simply return
+        if self.test_start > datetime.now():
+            timeval = (self.test_start - datetime.now())
+            return round(timeval.total_seconds() * 1000 +  timeval.microseconds / 1000)
+        
+        # Create future start time
+        session = Session.object_session(self)
+        future_test_time = round(1000 * (PatientAssessment.ADDITIONAL_DELAY + self.memorization_time)) + random.randint(0, 5000)
+        self.test_start = datetime.now() + timedelta(milliseconds=future_test_time)
+        self.browser_synchronized = 0
+        self.watch_synchronized = 0
+        session.commit()
+
+        # Submit time difference between now and test start
+        timeval = (self.test_start - datetime.now())
+        return round(timeval.total_seconds() * 1000 +  timeval.microseconds / 1000)
+
 
 class AssessmentStageData(db.Model):
     __tablename__ = 'assessmentstagedata'
@@ -110,7 +211,7 @@ class AssessmentStageData(db.Model):
     points = db.relationship('StageDataPoint', backref='stage_data', cascade="all, delete-orphan")
     
     @classmethod
-    def from_json(cls, json_data: dict[str, Any]) -> "AssessmentStageData":
+    def from_json(cls, json_data: dict[str, Any], stage: AssessmentStage, assessment_id: int) -> "AssessmentStageData":
         """
         Create an AssessmentStageData instance from JSON data.
         
@@ -120,14 +221,13 @@ class AssessmentStageData(db.Model):
         Returns:
             AssessmentStageData: The created AssessmentStageData instance.
         """
-        stage = AssessmentStage(json_data["stage"].lower())
         stage_data = cls(
-            assessment_id=json_data["assessmentID"],
+            assessment_id=assessment_id,
             stage=stage
         )
         
         for point in json_data["data"]:
-            ts = datetime.fromtimestamp(point["ts"] / 1000.0)
+            ts = datetime.fromtimestamp(point["timestamp"] / 1000.0)
             stage_data.points.append(StageDataPoint(
                 timestamp=ts,
                 x=point["x"],

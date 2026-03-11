@@ -1,25 +1,17 @@
-import pytest
-
-from sqlalchemy import event
+from flask.testing import FlaskClient
 
 from app.models import User, Patient, Physician, PatientAssessment, Role, create_profiles_for_new_users, Session
 from app.db import db
 from werkzeug.security import generate_password_hash
 from unittest.mock import patch
-
-@pytest.fixture(autouse=True)
-def disable_profiles_listener():
-    event.remove(Session, "after_flush", create_profiles_for_new_users)
-    yield
-    event.listen(Session, "after_flush", create_profiles_for_new_users)
+from uuid import uuid4
 
 def login(test_client, user):
     """Logs in a test user by manipulating the session."""
     with test_client.session_transaction() as sess:
         sess["_user_id"] = str(user.id)
 
-
-def create_patient_user(name, email, physician=None):
+def create_patient_user(name, email, physician: Physician | None = None):
     """Helper to create a patient user with a Patient profile.
        Optionally assigns to a physician.
     """
@@ -30,16 +22,18 @@ def create_patient_user(name, email, physician=None):
         password=generate_password_hash("password123")
     )
     user.roles.append(patient_role)
+
     db.session.add(user)
     db.session.commit()
 
-    patient_profile = Patient(user_id=user.id)
-    if physician:
-        patient_profile.physician_id = physician.id
-    db.session.add(patient_profile)
-    db.session.commit()
+    patient = db.session.query(Patient).filter(Patient.user_id == user.id).first()
 
-    return user, patient_profile
+    if physician is not None:
+        patient.physician_id = physician.id
+        physician.patients.append(patient)
+        db.session.commit()
+
+    return user, patient
 
 def create_physician_user(name, email):
     """Helper to create a physician user with Physician profile."""
@@ -52,440 +46,145 @@ def create_physician_user(name, email):
     user.roles.append(physician_role)
     db.session.add(user)
     db.session.commit()
+    
+    return user, db.session.query(Physician).filter(Physician.user_id == user.id).first()
 
-    physician_profile = Physician(user_id=user.id)
-    db.session.add(physician_profile)
-    db.session.commit()
-
-    return user, physician_profile
-
-
-def init_memory_test_session(sess, patient_id=None):
-    """Helper to initialize session variables for memory test."""
-    sess["round"] = 0
-    sess["score"] = 0
-    sess["reaction_records"] = []
-    sess["show_test"] = False
-    sess["num_shapes"] = 3
-    sess["difficulty"] = "easy"
-    sess["num_rounds"] = 5
-    sess["memorization_time"] = 5
-    if patient_id:
-        sess["test_patient_id"] = patient_id
-
-
-def test_start_memory_test_initializes_session(test_client):
-    """GIVEN logged-in user
-       WHEN start_memory_test is accessed
-       THEN session variables should initialize properly
+def test_inaccessible_routes_when_not_logged_in(test_client: FlaskClient):
     """
-    user, patient = create_patient_user("TestUser", "test@example.com")
+    GIVEN A logged out user
+    WHEN they attempt to visit testing endpoints
+    THEN we expect it to redirect elsewhere
+    """
+    GET_ROUTES = [
+        "/assessments/memory_test/customize",
+        "/assessments/memory_test/connect",
+        "/assessments/memory_test/start",
+        "/assessments/memory_test/memorize",
+        "/assessments/memory_test/result"
+    ]
+
+    for route in GET_ROUTES:
+        response = test_client.get(route)
+        assert response.status_code == 302 
+
+def test_inaccessible_routes_when_session_not_started(test_client: FlaskClient):
+    """
+    GIVEN A logged-in user not current in assessment
+    WHEN they attempt to visit testing endpoints
+    THEN we expect it to redirect to the /customize
+    """
+    uuid = str(uuid4())
+    user, _ = create_patient_user(uuid, f"{uuid}@example.com")
     login(test_client, user)
 
-    response = test_client.get("/assessments/memory_test/start")
-    assert response.status_code == 200
+    GET_ROUTES = [
+        "/assessments/memory_test/connect",
+        "/assessments/memory_test/start",
+        "/assessments/memory_test/memorize",
+        "/assessments/memory_test/result"
+    ]
 
-    with test_client.session_transaction() as sess:
-        assert sess["round"] == 0
-        assert sess["score"] == 0
-        assert sess["reaction_records"] == []
-        assert sess["show_test"] is False
-        assert sess["test_patient_id"] == patient.id
+    for route in GET_ROUTES:
+        response = test_client.get(route)
+        assert response.status_code == 302 
+        assert response.headers['Location'].endswith("/assessments/memory_test/customize")
 
-
-def test_memory_memorize_generates_shapes(test_client):
-    """GIVEN logged-in user with initialized session for memory test
-       WHEN the memorize phase is accessed
-       THEN session variables for current shapes, positions, colours, and memorization time are set correctly
+def test_patient_session_start(test_client: FlaskClient):
     """
-    user, patient = create_patient_user("TestUser2", "test2@example.com")
+    GIVEN A logged in patient user
+    WHEN they attempt to create an assessment
+    THEN we expect it to work successfully and begin tracking in the DB
+    """
+    uuid = str(uuid4())
+    user, patient = create_patient_user(uuid, f"{uuid}@example.com")
     login(test_client, user)
 
-    with test_client.session_transaction() as sess:
-        init_memory_test_session(sess, patient_id=patient.id)
-
-    response = test_client.get("/assessments/memory_test/memorize")
-    assert response.status_code == 200
-
-    with test_client.session_transaction() as sess:
-        assert "current_shapes" in sess
-        assert len(sess["current_shapes"]) == 3
-        assert "shape_positions" in sess
-        assert "current_colours" in sess
-        assert "memorization_time" in sess
-
-
-def test_memory_test_post_scoring(test_client):
-    """GIVEN logged-in user with a current memory test round
-       WHEN the user posts a response in the comparison phase
-       THEN reaction time is recorded, score is updated, and round is incremented
-    """
-    user, patient = create_patient_user("TestUser3", "test3@example.com")
-    login(test_client, user)
-
-    with test_client.session_transaction() as sess:
-        init_memory_test_session(sess, patient_id=patient.id)
-        sess["previous_shapes"] = ["circle", "square"]
-        sess["current_shapes"] = ["circle", "square"]   # Same
+    NUM_SHAPES = 245
+    MEM_TIME = 32
+    NUM_ROUNDS = 123
+    DIFFICULTY = "hard"
 
     response = test_client.post(
-        "assessments/memory_test/response",
-        data={
-            "choice": "Same",
-            "reaction_time": 1200.34 # ms for performance.now()
-        }
-    )
-
-    assert response.status_code == 302  # redirect to next memorize phase
-
-    with test_client.session_transaction() as sess:
-        assert len(sess["reaction_records"]) == 1
-        assert sess["reaction_records"][0]["time"] == 1200.34
-        assert sess["reaction_records"][0]["correct"] is True  # Correct answer
-        assert sess["round"] == 1
-
-
-def test_memory_test_get_generates_comparison_set(test_client):
-    """GIVEN logged-in user with a previous memory test round
-       WHEN the comparison phase is accessed via GET
-       THEN session variables for the current shapes, positions, colours, and start_time are correctly initialized
-    """
-    user = User(name="TestUser4", email="test4@example.com", password="pass")
-    db.session.add(user)
-    db.session.commit()
-    login(test_client, user)
-
-    with test_client.session_transaction() as sess:
-        sess["round"] = 0
-        sess["previous_shapes"] = ["triangle"]
-        sess["previous_colours"] = ["green"]
-        sess["num_shapes"] = 1
-        sess["difficulty"] = "easy"
-
-    response = test_client.get("/assessments/memory_test/response")
-    assert response.status_code == 200
-
-    with test_client.session_transaction() as sess:
-        assert "current_shapes" in sess
-        assert "shape_positions" in sess
-        assert "current_colours" in sess
-
-def test_saving_patient_assessment(test_client):
-    """GIVEN a patient user
-       WHEN they complete a memory test
-       THEN a new PatientAssessment is saved in the database with correct values
-    """
-    user, patient_profile = create_patient_user("Test Patient", "patient1@example.com")
-    login(test_client, user)
-
-    # Simulate test session
-    with test_client.session_transaction() as sess:
-        init_memory_test_session(sess, patient_id=patient_profile.id)
-        sess["score"] = 2
-
-        sess["reaction_records"] = [
-            {"time": 999, "correct": True, "difficulty": "easy", "num_shapes": 3},
-            {"time": 1010, "correct": True, "difficulty": "easy", "num_shapes": 3},
-            {"time": 1234, "correct": False, "difficulty": "easy", "num_shapes": 3},
-        ]
-
-    # Call the result route to save assessment
-    response = test_client.get("/assessments/memory_test/result")
-    assert response.status_code == 200
-
-    # Verify database
-    assessment = PatientAssessment.query.filter_by(patient_id=patient_profile.id).first()
-    assert assessment is not None
-    assert assessment.score == 2
-    assert assessment.total_rounds == 5
-    expected_avg = sum([999, 1010, 1234]) / 3
-    assert pytest.approx(assessment.avg_reaction_time, 0.01) == expected_avg
-
-def test_physician_can_save_assessment_for_patient(test_client):
-    """GIVEN a physician and a patient assigned to them
-       WHEN physician initiates memory test for patient
-       THEN the PatientAssessment is correctly linked to the patient
-    """
-    physician_user, physician_profile = create_physician_user("Dr. Strange", "drstrange@example.com")
-    patient_user, patient_profile = create_patient_user("Peter Parker", "peter@example.com", physician=physician_profile)
-    login(test_client, physician_user)
-
-    # Simulate physician session selecting patient
-    with test_client.session_transaction() as sess:
-        sess["_user_id"] = str(physician_user.id)
-        init_memory_test_session(sess, patient_id=patient_profile.id)
-        sess["score"] = 4
-        sess["reaction_times"] = [0.5, 0.7, 0.6, 0.8]
-
-    # Call result route
-    response = test_client.get("/assessments/memory_test/result")
-    assert response.status_code == 200
-
-    assessment = PatientAssessment.query.filter_by(patient_id=patient_profile.id).first()
-    assert assessment is not None
-    assert assessment.score == 4
-    assert assessment.total_rounds == 5
-
-def test_memory_test_hard_mode_correct_match(test_client):
-    """GIVEN a patient in hard difficulty mode
-       WHEN they respond with the same shapes and colours
-       THEN they should get a point
-    """
-    user, patient = create_patient_user("HardTest1", "hard1@example.com")
-    login(test_client, user)
-
-    with test_client.session_transaction() as sess:
-        init_memory_test_session(sess, patient_id=patient.id)
-        sess["difficulty"] = "hard"
-        sess["previous_shapes"] = ["circle", "square"]
-        sess["previous_colours"] = ["blue", "red"]
-        sess["current_shapes"] = ["circle", "square"]
-        sess["current_colours"] = ["blue", "red"]
-
-    response = test_client.post(
-        "/assessments/memory_test/response",
-        data={"choice": "Same"}
-    )
-
-    assert response.status_code == 302  # redirect
-    with test_client.session_transaction() as sess:
-        assert sess["score"] == 1
-        assert sess["round"] == 1
-
-
-def test_memory_test_hard_mode_wrong_colour(test_client):
-    """GIVEN a patient in hard mode
-       WHEN shapes match but colours differ
-       THEN score should NOT increase
-    """
-    user, patient = create_patient_user("HardTest2", "hard2@example.com")
-    login(test_client, user)
-
-    with test_client.session_transaction() as sess:
-        init_memory_test_session(sess, patient_id=patient.id)
-        sess["difficulty"] = "hard"
-        sess["previous_shapes"] = ["circle", "square"]
-        sess["previous_colours"] = ["blue", "red"]
-        sess["current_shapes"] = ["circle", "square"]
-        sess["current_colours"] = ["green", "red"]  # one colour differs
-
-    response = test_client.post(
-        "/assessments/memory_test/response",
-        data={"choice": "Same"}
+        "/assessments/memory_test/customize",
+        data={"num_shapes": NUM_SHAPES, "memorization_time": MEM_TIME, "num_rounds": NUM_ROUNDS, "difficulty": DIFFICULTY, "patient_id": patient.id}
     )
 
     assert response.status_code == 302
+    assert response.headers['Location'].endswith("/assessments/memory_test/connect")
+
     with test_client.session_transaction() as sess:
-        assert sess["score"] == 0
-        assert sess["round"] == 1
+        assert 'join_code' in sess
+        assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True, PatientAssessment.join_code == sess['join_code']).first()
+        assert assessment is not None
 
+    assert assessment.num_shapes == NUM_SHAPES
+    assert assessment.memorization_time == MEM_TIME
+    assert assessment.total_rounds == NUM_ROUNDS
+    assert assessment.difficulty == DIFFICULTY
+    assert assessment.patient_id == patient.id
+    assert assessment.is_running
+    assert assessment.current_step == 0
 
-def test_memory_test_hard_mode_wrong_shape(test_client):
-    """GIVEN a patient in hard mode
-       WHEN a shape differs (even if colours match)
-       THEN score should NOT increase
+def test_physician_session_start(test_client: FlaskClient):
     """
-    user, patient = create_patient_user("HardTest3", "hard3@example.com")
+    GIVEN A logged in physician user
+    WHEN they attempt to create an assessment
+    THEN we expect it to work successfully and begin tracking in the DB
+    """
+    uuid_phys = str(uuid4())
+    uuid_pat = str(uuid4())
+    user, physician = create_physician_user(uuid_phys, f"{uuid_phys}@example.com")
+    _, patient = create_patient_user(uuid_pat, f"{uuid_pat}@example.com", physician)
     login(test_client, user)
 
-    with test_client.session_transaction() as sess:
-        init_memory_test_session(sess, patient_id=patient.id)
-        sess["difficulty"] = "hard"
-        sess["previous_shapes"] = ["circle", "square"]
-        sess["previous_colours"] = ["blue", "red"]
-        sess["current_shapes"] = ["circle", "triangle"]  # shape differs
-        sess["current_colours"] = ["blue", "red"]
+    NUM_SHAPES = 543
+    MEM_TIME = 3223
+    NUM_ROUNDS = 123333
+    DIFFICULTY = "hard"
 
     response = test_client.post(
-        "/assessments/memory_test/response",
-        data={"choice": "Same"}
+        "/assessments/memory_test/customize",
+        data={"num_shapes": NUM_SHAPES, "memorization_time": MEM_TIME, "num_rounds": NUM_ROUNDS, "difficulty": DIFFICULTY, "patient_id": patient.id}
     )
 
     assert response.status_code == 302
+    assert response.headers['Location'].endswith("/assessments/memory_test/connect")
+
     with test_client.session_transaction() as sess:
-        assert sess["score"] == 0
-        assert sess["round"] == 1
+        assert 'join_code' in sess
+        assessment = db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True, PatientAssessment.join_code == sess['join_code']).first()
+        assert assessment is not None
 
+    assert assessment.num_shapes == NUM_SHAPES
+    assert assessment.memorization_time == MEM_TIME
+    assert assessment.total_rounds == NUM_ROUNDS
+    assert assessment.difficulty == DIFFICULTY
+    assert assessment.patient_id == patient.id
+    assert assessment.is_running
+    assert assessment.current_step == 0
 
-def test_memory_test_hard_mode_different_choice_correct(test_client):
-    """GIVEN a patient in hard mode
-       WHEN the user chooses 'Different' and shapes+colours differ
-       THEN score should increase
+def test_physician_session_start_on_non_patient(test_client: FlaskClient):
     """
-    user, patient = create_patient_user("HardTest4", "hard4@example.com")
+    GIVEN A logged in physician user
+    WHEN they attempt to create an assessment for a patient that isn't theirs
+    THEN we expect it to fail and send the user back to the customization page
+    """
+    uuid_phys = str(uuid4())
+    uuid_pat = str(uuid4())
+    user, _ = create_physician_user(uuid_phys, f"{uuid_phys}@example.com")
+    _, patient = create_patient_user(uuid_pat, f"{uuid_pat}@example.com")
     login(test_client, user)
 
-    with test_client.session_transaction() as sess:
-        init_memory_test_session(sess, patient_id=patient.id)
-        sess["difficulty"] = "hard"
-        sess["previous_shapes"] = ["circle", "square"]
-        sess["previous_colours"] = ["blue", "red"]
-        sess["current_shapes"] = ["triangle", "star"]
-        sess["current_colours"] = ["green", "yellow"]
+    NUM_SHAPES = 543
+    MEM_TIME = 3223
+    NUM_ROUNDS = 123333
+    DIFFICULTY = "hard"
 
     response = test_client.post(
-        "/assessments/memory_test/response",
-        data={"choice": "Different"}
+        "/assessments/memory_test/customize",
+        data={"num_shapes": NUM_SHAPES, "memorization_time": MEM_TIME, "num_rounds": NUM_ROUNDS, "difficulty": DIFFICULTY, "patient_id": patient.id}
     )
 
-    assert response.status_code == 302
-    with test_client.session_transaction() as sess:
-        assert sess["score"] == 1
-        assert sess["round"] == 1
-
-
-def test_memory_test_full_run_easy_mode(test_client):
-    """
-    GIVEN a patient in easy mode with pre-determined shapes
-    WHEN the user completes all rounds choosing 'Same' with identical shape sets
-    THEN the score, round count, and reaction times should increment correctly
-    """
-    user, patient = create_patient_user("EasyFullRun", "easyfullrun@example.com")
-    login(test_client, user)
-
-    with test_client.session_transaction() as sess:
-        init_memory_test_session(sess, patient_id=patient.id)
-        sess["difficulty"] = "easy"
-        sess["num_rounds"] = 2
-
-    # setting shapes to always be identifical between rounds
-    with patch("app.memory_test.random.random", return_value=0.0), \
-        patch("app.memory_test.random.sample") as mock_sample:
-        mock_sample.return_value = ["circle", "square", "triangle"]
-
-        for i in range(2):
-            # memorize phase
-            response = test_client.get("/assessments/memory_test/memorize")
-            assert response.status_code == 200
-
-            # comparison GET
-            response = test_client.get("/assessments/memory_test/response")
-            assert response.status_code == 200
-
-            response = test_client.post(
-                "/assessments/memory_test/response",
-                data={
-                    "choice": "Same",
-                    "reaction_time": 1000 + i * 100  # simulate different RTs for each round
-                }
-            )
-            assert response.status_code == 302
-            
-    with test_client.session_transaction() as sess:
-        assert sess["round"] == 2
-        assert sess["score"] == 2
-        assert len(sess["reaction_records"]) == 2
-        
-
-def test_memory_test_full_run_hard_mode(test_client):
-    """
-    GIVEN a patient in hard with pre-determined shapes and colours
-    WHEN the user completes all rounds choosing 'Same' with identical shape-colour sets
-    THEN the score, round count, and reaction times should increment correctly
-    """
-    user, patient = create_patient_user("HardFullRun", "hardfull@example.com")
-    login(test_client, user)
-
-    with test_client.session_transaction() as sess:
-        init_memory_test_session(sess, patient_id=patient.id)
-        sess["difficulty"] = "hard"
-        sess["num_rounds"] = 2
-
-    # pre-assign shapes and colours using patch
-    # random.random: force < 0.5 to always reuse memorized set
-    with patch("app.memory_test.random.random", return_value=0.0), \
-        patch("app.memory_test.random.sample") as mock_sample, \
-        patch("app.memory_test.random.choice") as mock_choice:
-        mock_sample.return_value = ["circle", "square", "triangle"]
-        mock_choice.return_value = "red" # just make all shapes red to keep it simple
-        # since we already covered testing for colour correctness in previous test cases
-
-        for i in range(2):
-            response = test_client.get("/assessments/memory_test/memorize")
-            assert response.status_code == 200
-
-            response = test_client.get("/assessments/memory_test/response")
-            assert response.status_code == 200
-
-            response = test_client.post(
-                "/assessments/memory_test/response",
-                data={
-                    "choice": "Same",
-                    "reaction_time": 1000 + i * 100  # simulate different RTs for each round
-                }
-            )
-            assert response.status_code == 302
-        
-    with test_client.session_transaction() as sess:
-        assert sess["round"] == 2
-        assert sess["score"] == 2
-        assert len(sess["reaction_records"]) == 2
-
-def test_reaction_time_is_stored_in_milliseconds(test_client):
-    """
-    GIVEN a user submitting a reaction time from performance.now()
-    WHEN the response is posted
-    THEN the reaction time is stored in milliseconds
-    """
-    user, patient = create_patient_user("RTTest", "rt@example.com")
-    login(test_client, user)
-
-    with test_client.session_transaction() as sess:
-        init_memory_test_session(sess, patient_id=patient.id)
-        sess["previous_shapes"] = ["circle"]
-        sess["previous_colours"] = ["blue"]
-        sess["current_shapes"] = ["circle"]
-        sess["current_colours"] = ["blue"]
-
-    response = test_client.post(
-        "/assessments/memory_test/response",
-        data={
-            "choice": "Same",
-            "reaction_time": 1234.75
-        }
-    )
-    assert response.status_code == 302
-    with test_client.session_transaction() as sess:
-        assert sess["reaction_records"][0]["time"] == 1234.75
-
-def test_multiple_reaction_times_append_correctly(test_client):
-    """
-    GIVEN multiple rounds with reaction times
-    WHEN the user submits responses
-    THEN reaction times are appended in order
-    """
-    user, patient = create_patient_user("MultiRT", "multirt@example.com")
-    login(test_client, user)
-
-    with test_client.session_transaction() as sess:
-        init_memory_test_session(sess, patient_id = patient.id)
-        sess["previous_shapes"] = ["circle"]
-        sess["previous_colours"] = ["blue"]
-        sess["current_shapes"] = ["circle"]
-        sess["current_colours"] = ["blue"]
-
-    test_client.post(
-        "/assessments/memory_test/response",
-        data={
-            "choice": "Same",
-            "reaction_time": 999.99
-        }
-    )
-
-    with test_client.session_transaction() as sess:
-        sess["previous_shapes"] = ["square"]
-        sess["previous_colours"] = ["red"]
-        sess["current_shapes"] = ["square"]
-        sess["current_colours"] = ["red"]
-
-    test_client.post(
-        "/assessments/memory_test/response",
-        data={
-            "choice": "Same",
-            "reaction_time": 2222.22
-        }
-    )   
-
-    with test_client.session_transaction() as sess:
-        times = [r["time"] for r in sess["reaction_records"]]
-        assert times == [999.99, 2222.22]
+    assert response.status_code == 200
+    assert b"Difficulty level" in response.data
+    assert b"No patients available" in response.data

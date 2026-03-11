@@ -48,4 +48,8 @@ class AccelerometerManager(context: Context): SensorEventListener {
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
+    fun isRunning(): Boolean {
+        return isRecording;
+    }
 }

@@ -11,7 +11,8 @@ def save_acceleration_test_data():
     Save acceleration test data sent from watch client as 
     AssessmentStageData entries in the database.
     """
-    assessment_data = AssessmentStageData.from_json(request.get_json())
+    body = request.get_json()
+    assessment_data = AssessmentStageData.from_json(body, body.get("stage"), body.get("assessment_id"))
     db.session.add(assessment_data)
     db.session.commit()
     
