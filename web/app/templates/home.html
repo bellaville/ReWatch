@@ -1,21 +1,87 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="text-center">
-    <h1 class="mb-4">Welcome to ReWatch on the Web!</h1>
+    <div class="text-center">
+        <h1 class="mb-4">Welcome to ReWatch</h1>
+        {% if not current_user.is_authenticated %}
+            <h2>Please <a class="link-primary" href="{{ url_for('auth.login') }}">Login</a> or <a class="link-primary"
+                                                                                                  href="{{ url_for('auth.signup') }}">Sign
+                Up</a> to get started</h2>
+        {% endif %}
 
-    <div class="d-flex justify-content-center">
-        <div class="list-group" style="max-width: 300px;">
-            <a href="{{ url_for('main.patient_details') }}"
-               class="list-group-item list-group-item-action">
-                Patient Details
-            </a>
+        {% if current_user.is_authenticated %}
 
-            <a href="{{ url_for('main.assessments') }}"
-               class="list-group-item list-group-item-action">
-                Assessments
-            </a>
-        </div>
+            <div class="container-fluid py-4">
+                <!-- Header Card -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow-sm border-0 mb-4">
+                            <div class="card-header bg-primary text-white"
+                                 style="background-color: #41b8d5 !important;">
+                                <h2 class="mb-0">
+                                    {{ name }}'s Dashboard
+                                </h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% if physician %}
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h3 class="mb-3">Patient Information:</h3>
+                            <div class="list-group w-100">
+                                <a href="{{ url_for('main.patient_details') }}"
+                                   class="list-group-item list-group-item-action">
+                                    Your Patients
+                                </a>
+                                <a href="{{ url_for('main.all_patients') }}"
+                                   class="list-group-item list-group-item-action">
+                                    All Patients
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h3 class="mb-3">Quick Stats</h3>
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <h1 class="display-4 text-primary mb-3">{{ count }}</h1>
+                                    <p class="mb-1">Patients Assigned to you</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                {% endif %}
+
+                {% if not physician %}
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h3 class="mb-3">Patient Information:</h3>
+                            <div class="list-group w-100">
+                                <a href="{{ url_for('main.patient_details') }}"
+                                   class="list-group-item list-group-item-action">
+                                    Past Assessment Data
+                                </a>
+                                <a href="{{ url_for('main.assessments') }}"
+                                   class="list-group-item list-group-item-action">
+                                    Perform New Assessment
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h3 class="mb-3">Quick Stats</h3>
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <h1 class="display-4 text-primary mb-3">{{ assessment_count }}</h1>
+                                    <p class="mb-1">Assessments Completed</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
     </div>
-</div>
 {% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1 class="mb-4">All Patients on ReWatch</h1>
+    <div class="mb-3">
+        <label class="form-label fw-bold">Physician Filter:</label>
+        <label for="physicianFilter"></label><select id="physicianFilter" class="form-select form-select-sm w-auto">
+        <option value="all">All Patients</option>
+        <option value="has-physician">With Physician</option>
+        <option value="no-physician">No Physician</option>
+    </select>
+    </div>
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Assigned Physician</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for patient in patients %}
+            <tr class="position-relative patient-row
+                {%- if patient.physician and patient.physician.user %}
+                    has-physician
+                {%- else %}
+                    no-physician
+                {%- endif %}">
+                <td>{{ patient.user.name }}</td>
+                <td>{{ patient.user.email }}</td>
+                <td>{{ patient.physician.user.name if patient.physician and patient.physician.user else 'No physician' }}</td>
+                <td>
+                    {% if not patient.physician %}
+                        <form method="POST" action="{{ url_for('main.all_patients', patient_id=patient.id) }}"
+                              class="d-inline" style="width: auto;">
+                            <button type="submit" class="btn btn-sm btn-outline-success"
+                                    onclick="return confirm('Assign {{ patient.user.name }} to yourself?')">
+                                Assign
+                            </button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="2" class="text-center">No users found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <h2>Go to <a class="link-primary" href="{{ url_for('main.patient_details') }}">Your Patient List</a></h2>
+
+    <!--script-->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterSelect = document.getElementById('physicianFilter');
+            const rows = document.querySelectorAll('.patient-row');
+
+            filterSelect.addEventListener('change', function () {
+                const filterValue = this.value;
+
+                rows.forEach(row => {
+                    row.style.display = 'none';
+
+                    if (filterValue === 'all') {
+                        row.style.display = '';
+                    } else if (filterValue === 'has-physician' && row.classList.contains('has-physician')) {
+                        row.style.display = '';
+                    } else if (filterValue === 'no-physician' && row.classList.contains('no-physician')) {
+                        row.style.display = '';
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}
