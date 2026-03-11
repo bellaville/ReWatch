@@ -2,26 +2,34 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/memory_test.css') }}">
 
+<div>
+    {% include 'memory_timeline.html' %}
+    <script>
+        set_completed_steps(2)
+    </script>
+</div>
 <div class="container text-center mt-5">
-    <h2>Round {{ round_num }}</h2>
-    <h2>Memorize these shapes:</h2>
+    <h2 class="text-2xl font-bold text-heading mb-6">
+        Round {{ round_num }}
+    </h2>
+    <h3 class="text-lg font-bold text-heading mb-6 text-gray-500">
+        Memorize These Shapes
+    </h3>
     <div id="memory-shapes-frame" style="display: none">
         {% for shape in memorized_shapes %}
-            <div class="shape {{ shape }}" 
-                style="background-color: {{ memorized_colours[loop.index0] }};
+        <div class="shape {{ shape }}" style="background-color: {{ memorized_colours[loop.index0] }};
                 top: {{ memorized_positions[loop.index0].top }}px;
                 left: {{ memorized_positions[loop.index0].left }}px;">
-            </div>
+        </div>
         {% endfor %}
     </div>
     <div id="test-frame" style="display: none">
         <div id="test-shapes-frame">
             {% for shape in test_shapes %}
-                <div class="shape {{ shape }}" 
-                    style="background-color: {{ test_colours[loop.index0] }};
+            <div class="shape {{ shape }}" style="background-color: {{ test_colours[loop.index0] }};
                     top: {{ test_positions[loop.index0].top }}px;
                     left: {{ test_positions[loop.index0].left }}px;">
-                </div>
+            </div>
             {% endfor %}
         </div>
         <form method="POST" action="{{ url_for('memory_test.memory_test_view') }}">
@@ -36,9 +44,9 @@
     // Handle leaving via back button
     // Replace current history entry with a custom state object, {page:1}
     // so the page exists in the stack
-    history.replaceState({page:1}, null, location.href);
+    history.replaceState({ page: 1 }, null, location.href);
     // Push a dummy state {page:2} on top so the back button triggers popstate
-    history.pushState({page:2}, null, location.href);
+    history.pushState({ page: 2 }, null, location.href);
 
     window.addEventListener('popstate', function (event) {
         const goBack = confirm("Warning: your progress will be lost if you go back. Do you wish to continue?");
@@ -47,7 +55,7 @@
             window.location.href = "{{ url_for('main.assessments') }}";
         } else {
             // User cancelled: push dummy state again to block back navigation
-            history.pushState({page:2}, null, location.href);
+            history.pushState({ page: 2 }, null, location.href);
         }
     })
 
@@ -72,15 +80,15 @@
             var start = performance.now();
             var watchTimingCalibration = await fetch(
                 "/assessments/memory_test/time/sync", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        join_code: "{{ join_code }}",
-                        device: "browser"
-                    })
-                }
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    join_code: "{{ join_code }}",
+                    device: "browser"
+                })
+            }
             )
             var end = performance.now();
             var watchTimingCalibration = await watchTimingCalibration.json();
@@ -97,6 +105,20 @@
         for (var i = 0; i < 5; i++) {
             var handshakeTiming = await fetch(
                 "/assessments/memory_test/time/request_future", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    join_code: "{{ join_code }}",
+                    delay: avgDelay
+                })
+            }
+            )
+            while (handshakeTiming.status == 206) {
+                await sleep(1000);
+                handshakeTiming = await fetch(
+                    "/assessments/memory_test/time/request_future", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -106,20 +128,6 @@
                         delay: avgDelay
                     })
                 }
-            )
-            while (handshakeTiming.status == 206) {
-                await sleep(1000);
-                handshakeTiming = await fetch(
-                    "/assessments/memory_test/time/request_future", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            join_code: "{{ join_code }}",
-                            delay: avgDelay
-                        })
-                    }
                 )
             }
 
@@ -137,11 +145,11 @@
         console.log(handshakedTime);
         time_to_show = handshakedTime - {{ memorization_time * 1000 }};
         // redirect to comparison phase after customized seconds
-        setTimeout(function() {
+        setTimeout(function () {
             document.getElementById("memory-shapes-frame").style.display = "block";
-        }, time_to_show); 
+        }, time_to_show);
         // redirect to comparison phase after customized seconds
-        setTimeout(function() {
+        setTimeout(function () {
             document.getElementById("memory-shapes-frame").style.display = "none";
             document.getElementById("test-frame").style.display = "block";
             requestAnimationFrame(startTimer);
@@ -151,7 +159,7 @@
     // Capture more accurate reaction time using performance.now() and requestAnimationFrame
     let startTime = null;
 
-    function startTimer(timestamp){
+    function startTimer(timestamp) {
         // timestamp will be provided by requestAnimationFrame
         startTime = timestamp;
     }
@@ -159,8 +167,8 @@
     window.addEventListener("DOMContentLoaded", () => {
         const choiceButtons = document.querySelectorAll("button[name='choice']");
 
-        if (choiceButtons.length == 0) return;        
-        choiceButtons.forEach(button => { 
+        if (choiceButtons.length == 0) return;
+        choiceButtons.forEach(button => {
             button.addEventListener("pointerdown", () => {
                 if (startTime !== null) {
                     const reactionTime = performance.now() - startTime;

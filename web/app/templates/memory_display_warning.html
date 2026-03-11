@@ -2,24 +2,59 @@
 {% block content %}
 <!-- flash message confirmation for instructions -->
 
-<div class="alert alert-info alert-dismissible fade show" role="alert">
-    <strong>THIS IS NOT A MEDICAL DIAGNOSIS!</strong>
-    <br>
-    <br>
-        You will see a set of shapes to memorize for {{memorization_time}} seconds.
-        After that, a new set will appear. Decide if the shapes are the same or different.
-        Try to respond as quickly as possible as your reaction time will be recorded. There will be {{num_rounds}} rounds. Are you ready to start?
-    <hr>
-    <button id="confirm-no" class="btn btn-danger">No</button>
-    <button id="confirm-yes" class="btn btn-success">Yes</button>
+<div>    
+    <div>
+        {% include 'memory_timeline.html' %}
+        <script>
+            set_completed_steps(2)
+        </script>
+    </div>
+    <div class="sm:mx-auto sm:max-w-xl mt-24">
+        <div
+            class="w-full rounded-xl border border-gray-200 shadow-md dark:border md:mt-0 sm:max-w-lg xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+            <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
+
+                <div class="flex items-center bg-orange-500 text-white text-sm font-bold px-4 py-3 mb-8" role="alert">
+                    <svg class="fill-current w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                        <path
+                            d="M12.432 0c1.34 0 2.01.912 2.01 1.957 0 1.305-1.164 2.512-2.679 2.512-1.269 0-2.009-.75-1.974-1.99C9.789 1.436 10.67 0 12.432 0zM8.309 20c-1.058 0-1.833-.652-1.093-3.524l1.214-5.092c.211-.814.246-1.141 0-1.141-.317 0-1.689.562-2.502 1.117l-.528-.88c2.572-2.186 5.531-3.467 6.801-3.467 1.057 0 1.233 1.273.705 3.23l-1.391 5.352c-.246.945-.141 1.271.106 1.271.317 0 1.357-.392 2.379-1.207l.6.814C12.098 19.02 9.365 20 8.309 20z" />
+                    </svg>
+                    <p>THIS IS NOT A MEDICAL DIAGNOSIS!</p>
+                </div>
+                <div>
+                    You will see a set of shapes to memorize for <span
+                        class="font-bold text-lg text-orange-500">{{memorization_time}}</span> seconds.
+                    After that, a new set will appear. Decide if the shapes are the same or different.
+                    Try to respond as quickly as possible as your reaction time will be recorded. There will be
+                    <span class="font-bold text-lg text-orange-500">{{num_rounds}}</span>
+                    rounds.
+                    Are you ready to start?
+                </div>
+                <button id="confirm-yes" disabled
+                    class="flex w-full disabled:bg-gray-500 justify-center rounded-md bg-orange-500 px-3 py-1.5 text-sm/6 font-semibold text-white hover:bg-orange-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 my-6">
+                    Confirm (Must Read All)
+                </button>
+                <button id="confirm-no"
+                    class="flex w-full justify-center rounded-md bg-red-600 px-3 py-1.5 text-sm/6 font-semibold text-white hover:bg-red-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 my-6">
+                    Decline
+                </button>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 <script>
     const yesBtn = document.getElementById('confirm-yes');
     const noBtn = document.getElementById('confirm-no');
 
+    setTimeout(() => {
+        yesBtn.disabled = false
+        yesBtn.textContent = "Confirm"
+    }, 5000)
+
     if (yesBtn) {
-        yesBtn.addEventListener('click', function() {
+        yesBtn.addEventListener('click', function () {
             // Send fetch to server to increment step
             fetch('/assessments/memory_test/start', {
                 method: "POST",
@@ -35,7 +70,7 @@
     }
 
     if (noBtn) {
-        noBtn.addEventListener('click', function() {
+        noBtn.addEventListener('click', function () {
             window.location.href = "{{ url_for('main.assessments') }}";
         });
     }
