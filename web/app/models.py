@@ -90,6 +90,7 @@ class PatientAssessment(db.Model):
 
     # Calculated at end
     score = db.Column(db.Integer)
+    memory_accuracy = db.Column(db.Float)
     avg_reaction_time = db.Column(db.Float)
     reaction_records = db.Column(JSON) # store reaction times as a list
 
