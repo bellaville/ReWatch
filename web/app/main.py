@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, render_template, request, session, redirec
 from flask_login import login_required, current_user
 from datetime import datetime
 from app.decorators import roles_required
-from app.models import Role, PatientAssessment, Patient, User
+from app.models import Role, PatientAssessment, Patient, User, Physician
 from app.utilities.utils import get_patient_assessment_data, get_patient_information
 from app.db import db
 
@@ -11,7 +11,22 @@ main = Blueprint('main', __name__)
 
 @main.route('/')
 def index():
-    return render_template('home.html')
+    physician = False
+    count = 0
+    if current_user.is_authenticated:
+        if current_user.has_role('Physician'):
+            physician = True
+            physician_profile = current_user.physician_profile
+            patient_count = len(physician_profile.patients)
+            return render_template('home.html', name=current_user.name, roles=current_user.roles, physician=physician, count=patient_count)
+        elif current_user.has_role('Patient'):
+            patient = current_user.patient_profile
+            assessment_count = len(patient.assessments)
+            return render_template('home.html', name=current_user.name, assessment_count=assessment_count)
+        else:
+            return render_template('home.html')
+    else:
+        return render_template('home.html')
 
 state = 0
 
@@ -24,15 +39,16 @@ def joinExp(experimentID: str):
 
 @main.route('/join/<experimentID>/status', methods=['GET'])
 def joinExpStatus(experimentID: str):
-    stage = "WAITING"
     global state
-    if state > 5:
+    if state <= 5:
+        stage = "WAITING"
+    elif state <= 15:
         stage = "GAIT"
-    if state > 15:
+    elif state <= 20:
         stage = "GAIT_COMPLETE"
-    if state > 20:
+    elif state <= 30:
         stage = "RT_TEST"
-    if state > 30:
+    else:
         stage = "COMPLETE"
     state += 1
     return jsonify({'experimentID': experimentID, 'stage': stage}), 200
@@ -115,7 +131,31 @@ def patient_details():
         # Show completed tests if any
         results, chart_data = get_patient_assessment_data(patient_id)
 
-        return render_template('specific_patient.html', name=current_user.name, results=results, chart_data=chart_data)
+        return render_template('specific_patient.html', name=current_user.name, results=results, chart_data=chart_data, age=age, height=height, gender=gender, weight=weight)
+
+@main.route('/all_patients', methods=['GET', 'POST'])
+@roles_required('Physician')
+def all_patients():
+    if current_user.has_role('Physician'):
+        if request.method == 'POST':
+            patient_id = request.args.get('patient_id', type=int)
+            patient = Patient.query.get(patient_id)
+            physician = current_user.physician_profile
+
+            if patient.physician_id:
+                flash('Patient already assigned', 'warning')
+            else:
+                patient.physician_id = physician.id
+                db.session.commit()
+
+            return redirect(url_for('main.all_patients'))
+        else:
+            patients = Patient.query.options(
+                db.joinedload(Patient.physician).joinedload(Physician.user)
+                ).all()
+            return render_template('all_patients.html', patients=patients)
+    else:
+        return render_template('403.html')
 
 @main.route('/assessments', methods=['GET', 'POST'])
 @login_required
@@ -156,3 +196,7 @@ def assessments():
                                          .order_by(PatientAssessment.date_taken.desc()).all()
 
     return render_template('assessments.html', results=results)
+
+@main.route('/about')
+def about():
+    return render_template('about.html')

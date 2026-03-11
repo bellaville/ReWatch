@@ -39,7 +39,13 @@ def seed_users():
          "role": physician_role},
         {"email": "clark@DC.com", "name": "Clark Kent", "password": "password123", "role": patient_role},
         {"email": "gwen@amazing.com", "name": "Gwen Stacy", "password": "password123", "role": patient_role},
-        {"email": "peter@amazing.com", "name": "Peter Parker", "password": "password123", "role": patient_role}
+        {"email": "peter@amazing.com", "name": "Peter Parker", "password": "password123", "role": patient_role},
+        {"email": "miles@amazing.com", "name": "Miles Morales", "password": "password123", "role": patient_role},
+        {"email": "Thor@avengers.com", "name": "Thor Thunder", "password": "password123", "role": patient_role},
+        {"email": "Hulk@avengers.com", "name": "Hulk Smash", "password": "password123", "role": patient_role},
+        {"email": "Tony@avengers.com", "name": "Tony Stark", "password": "password123", "role": patient_role},
+        {"email": "Nat@avengers.com", "name": "Natasha Romanoff", "password": "password123", "role": patient_role},
+        {"email": "Wanda@avengers.com", "name": "Wanda Maximoff", "password": "password123", "role": patient_role}
     ]
 
     for u in dummy_users:
@@ -61,12 +67,17 @@ def seed_users():
     db.session.commit()
     print("Dummy users seeded successfully (duplicates skipped).")
 
-    #assign patients to physicians
+    #assign (some) patients to physicians and add patient data for all patients
+    genders = ['Male', 'Female', 'Non-binary']
     patients = Patient.query.all()
     for p in patients:
-        if p.id%2 == 0:
+        p.age = random.randint(18, 85)
+        p.height = random.randint(150, 200)  # cm
+        p.gender = random.choice(genders)
+        p.weight = random.randint(45, 150)
+        if p.id%3 == 0:
             p.physician_id = Physician.query.join(User).filter(User.email=="dr.stephen@avengers.com").first().id
-        else:
+        elif p.id%3 == 1:
             p.physician_id = Physician.query.join(User).filter(User.email=="dr.batman@dc.com").first().id
 
 def seed_patient_assessments():

@@ -6,7 +6,10 @@ def avg_and_std(values):
         return 0,0
     
     avg = sum(values) / len(values)
-    std = statistics.stdev(values if len(values) > 1 else 0)
+    if len(values) > 1:
+        std = statistics.stdev(values)
+    else:
+        std = 0.0
     return avg, std
 
 def build_point(date_label, value, difficulty):

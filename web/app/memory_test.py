@@ -138,7 +138,7 @@ def connect_watch_page():
     if not session.get("join_code"):
         return redirect(url_for('memory_test.confirm_memory_test_configuration'))
 
-    assessment = fetch_assessment(session["join_code"], AssessmentStage.RT_TEST)
+    assessment = fetch_assessment(session["join_code"], AssessmentStage.WAITING)
 
     if not assessment:
         return redirect(url_for('memory_test.confirm_memory_test_configuration'))
