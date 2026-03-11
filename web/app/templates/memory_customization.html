@@ -1,56 +1,89 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container mt-5">
-    <h2>Customize Short-Term Memory Test</h2>
-    <form method="POST">
-        <div class="mb-3">
-            <label for="num_shapes" class="form-label">Number of shapes per set:</label>
-            <input type="number" class="form-control" id="num_shapes" name="num_shapes" min="1" max="7" value="{{ num_shapes }}" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="memorize_time" class="form-label">Memorization time (seconds):</label>
-            <input type="number" class="form-control" id="memorization_time" name="memorization_time" min="1" max="20" value="{{ memorization_time }}" required>
-        </div>
-
-        <div class="mb-3"></div>
-            <label for="num_rounds" class="form-label">Number of rounds:</label>
-            <input type="number" class="form-control" id="num_rounds" name="num_rounds" min="1" max="100" value="{{ num_rounds }}" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Difficulty level:</label><br>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="difficulty" id="easy" value="easy" {% if difficulty == 'easy' %}checked{% endif %}>
-                <label class="form-check-label" for="easy">Easy (distinct color per shape)</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="difficulty" id="hard" value="hard" {% if difficulty == 'hard' %}checked{% endif %}>
-                <label class="form-check-label" for="hard">Hard (random colors)</label>
-            </div>
-        </div>
-
-        {% if current_user.has_role('Physician') %}
-        <div>
-            <label for="patient_id">Select Patient:</label>
-            <select name="patient_id" id="patient_id" class="form-select d-inline w-auto">
-                {% if patients %}
-                    <option value="">--Choose patient--</option>
-                    {% for p in patients %}
+<div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+    <!-- SOURCE: https://tailwindcss.com/plus/ui-blocks/application-ui/forms/sign-in-forms -->
+    <div class="sm:mx-auto sm:w-full sm:max-w-lg">
+        <form method="POST">
+            <h2 class="text-base/7 font-semibold text-center">Customize Assessment</h2>
+            <p class="mt-1 text-sm/6 text-gray-400 text-center">The following will determine your assessment details.
+            </p>
+            <br>
+            <div class="sm:col-span-2">
+                <label for="patient_id" class="block text-sm/6 font-medium">Select Patient</label>
+                <div class="mt-2 grid grid-cols-1">
+                    <select id="patient_id" name="patient_id"
+                        class="col-start-1 row-start-1 w-full appearance-none rounded-md dark:bg-white/5 py-1.5 pr-8 pl-3 text-base outline-1 outline-gray-300 dark:outline-white/10 -outline-offset-1 dark:*:bg-gray-800 focus:outline-2 focus:-outline-offset-2 focus:outline-orange-500 sm:text-sm/6">
+                        {% if patients %}
+                        <option value="">--Choose patient--</option>
+                        {% for p in patients %}
                         {% if p.has_role("Patient") == True %}
-                        <option value="{{ p.patient_profile.id }}" {% if selected_id == p.patient_profile.id %}selected{% endif %}>{{ p.name }}</option>
+                        <option value="{{ p.patient_profile.id }}" {% if selected_id==p.patient_profile.id %}selected{%
+                            endif %}>{{
+                            p.name }}</option>
                         {% endif %}
-                    {% endfor %}
-                {% else %}
-                    <option value="" disabled selected>No patients available</option>
-                {% endif %}
-            </select>
-        </div>
-        {% else %}
-            <input type="hidden" name="patient_id" value="{{ selected_id }}">
-        {% endif %}
+                        {% endfor %}
+                        {% else %}
+                        <option value="" disabled selected>No patients available</option>
+                        {% endif %}
+                    </select>
+                    <svg viewBox="0 0 16 16" fill="currentColor" data-slot="icon" aria-hidden="true"
+                        class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-400 sm:size-4">
+                        <path
+                            d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z"
+                            clip-rule="evenodd" fill-rule="evenodd" />
+                    </svg>
+                </div>
+            </div>
 
-        <button type="submit" class="btn btn-primary" {% if current_user.has_role('Physician') and not patients %}disabled{% endif %}>Start Test</button>
-    </form>
+            <div class="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2">
+                <div class="col-span-1">
+                    <label for="first-name" class="block text-sm/6 font-medium">Number of Shapes</label>
+                    <div class="mt-2">
+                        <input id="num_shapes" type="number" name="num_shapes" value="{{num_shapes}}"
+                            class="block w-full rounded-md outline-1 dark:bg-white/5 px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 dark:outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-orange-500 sm:text-sm/6" />
+                    </div>
+                </div>
+
+                <div class="sm:col-span-1">
+                    <label for="first-name" class="block text-sm/6 font-medium">Memorization Time (Sec)</label>
+                    <div class="mt-2">
+                        <input id="memorization_time" type="number" name="memorization_time"
+                            value="{{memorization_time}}"
+                            class="block w-full rounded-md dark:bg-white/5 px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 dark:outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-orange-500 sm:text-sm/6" />
+                    </div>
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label for="first-name" class="block text-sm/6 font-medium">Number of Rounds</label>
+                    <div class="mt-2">
+                        <input id="num_rounds" type="number" name="num_rounds" value="{{num_rounds}}"
+                            class="block w-full rounded-md dark:bg-white/5 px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 dark:outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-orange-500 sm:text-sm/6" />
+                    </div>
+                </div>
+                <fieldset>
+                    <legend class="text-sm/6 font-semibold">Difficulty</legend>
+                    <div class="flex gap-10 mt-4">
+                        <div class="flex items-center gap-x-3">
+                            <input id="easy" type="radio" value="easy" name="difficulty" {% if difficulty=='easy' %}checked{% endif
+                                %}
+                                class="relative size-4 appearance-none rounded-full border border-white/10 dark:bg-white/5 before:absolute before:inset-1 before:rounded-full before:bg-white not-checked:before:hidden checked:border-orange-500 checked:bg-orange-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 disabled:border-white/5 disabled:bg-white/10 disabled:before:bg-white/20 forced-colors:appearance-auto forced-colors:before:hidden" />
+                            <label for="easy" class="block text-sm/6 font-medium">Easy</label>
+                        </div>
+                        <div class="flex items-center gap-x-3">
+                            <input id="hard" type="radio" value="hard" name="difficulty" {% if difficulty=='hard'
+                                %}checked{% endif %}
+                                class="relative size-4 appearance-none rounded-full border border-white/10 dark:bg-white/5 before:absolute before:inset-1 before:rounded-full before:bg-white not-checked:before:hidden checked:border-orange-500 checked:bg-orange-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 disabled:border-white/5 disabled:bg-white/10 disabled:before:bg-white/20 forced-colors:appearance-auto forced-colors:before:hidden" />
+                            <label for="hard" class="block text-sm/6 font-medium">Hard</label>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            <button type="submit"
+                class="flex w-full justify-center rounded-md bg-orange-500 px-3 py-1.5 text-sm/6 font-semibold text-white hover:bg-orange-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 my-6"
+                {% if current_user.has_role('Physician') and not patients %}disabled{% endif %}>Start Test
+            </button>
+        </form>
+    </div>
 </div>
+
 {% endblock %}
