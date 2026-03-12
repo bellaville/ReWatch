@@ -384,7 +384,7 @@ def memory_test_customization():
     defaults = {
         'num_shapes': 3,
         'memorization_time': 5,
-        'difficulty': "easy",
+        'difficulty': "Easy",
         'num_rounds': 5
     }
 

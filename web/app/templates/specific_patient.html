@@ -1,118 +1,147 @@
 {% extends "base.html" %}
 
 {% block content %}
-<style>
-    .assessments-container {
-        max-height: 160px;
-        overflow-y: auto;
-    }
-</style>
 
 <div class="container mt-5 text-center">
-    <div class="row align-items-stretch">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         <!-- Profile Card -->
-        <div class="col-md-4">
-            <div class="card shadow-sm mb-4">
-                <div class="card-body text-center">
-                    <h4 class="card-title mb-3">{{name}}</h4>
-                    <p class="mb-1"><strong>Age: </strong>{{ age }}</p>
-                    <p class="mb-1"><strong>Gender: </strong>{{ gender }}</p>
-                    <p class="mb-1"><strong>Height: </strong>{{ height }} cm</p>
-                    <p class="mb-1"><strong>Weight: </strong>{{ weight }} kg</p>
-                    <p class="mb-1"><strong>Diagnosis: </strong>TBD</p>
+        <div class="lg:col-span-4 flex">
+            <div class="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 h-full">
+                <div class="flex justify-end px-4 pt-4">
+                    <button id="dropdownButton" data-dropdown-toggle="dropdown" class="inline-block text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-1.5" type="button">
+                        <span class="sr-only">Open dropdown</span>
+                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 3">
+                            <path d="M2 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm6.041 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM14 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"/>
+                        </svg>
+                    </button>
+                    <!-- Dropdown menu -->
+                    <div id="dropdown" class="z-10 hidden text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700">
+                        <ul class="py-2" aria-labelledby="dropdownButton">
+                        <li>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Edit</a>
+                        </li>
+                        <li>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Export Data</a>
+                        </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center pb-10">
+                    <svg class="w-12 h-12 mb-4 text-body-subtle -left-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                    <h5 class="mb-1 text-xl font-medium text-gray-900 dark:text-white">{{ name }}</h5>
+                    <span class="text-sm text-gray-500 dark:text-gray-400"><strong>Age: </strong>{{ age }}</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400"><strong>Gender: </strong>{{ gender }}</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400"><strong>Weight: </strong>{{ weight }} kg</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400"><strong>Height: </strong>{{ height }} cm</span>
                 </div>
             </div>
         </div>
     
          <!-- Past Assessments Details -->
-        <div class="col-md-8 d-flex flex-column">
-            <h4 class="mb-3">Past Assessments</h4>
-            <div class="assessments-container border rounded">
-                <table class="table table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Test Type</th>
-                            <th>Score</th>
-                            <th>Avg Reaction Time (ms)</th>
-                            <th>Difficulty</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% if results %}
-                            {% for r in results | reverse %}
-                                <tr>
-                                    <td>{{ r.date_taken.strftime("%Y-%m-%d %H:%M") }}</td>
-                                    <td>Short-Term Memory Test</td>
-                                    <td>{{ r.score }}/{{ r.total_rounds }}</td>
-                                    <td>{{ "%.2f"|format(r.avg_reaction_time) }}</td>
-                                    <td>{{ r.difficulty }}</td>
-                                </tr>
-                            {% endfor %}
-                        {% else %}
+        <div class="lg:col-span-8 flex">
+            <div class="relative shadow-md sm:rounded-lg bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 h-full flex flex-col overflow-hidden w-full">
+                <div class="px-6 py-4 border-b">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                        Past Assessments
+                    </h2>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto max-h-full">
+                    <table class="w-full text-sm text-center rtl:text-right text-gray-500 dark:text-gray-400">
+                        <thead class="sticky top-0 text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                             <tr>
-                                <td colspan="4">No past assessments found.</td>
+                                <th scope="col" class="px-6 py-3">
+                                    Test Type
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Date
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Score
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Average Reaction Time (ms)
+                                </th>
+                                <th scope="col" class="px-6 py-3">
+                                    Difficulty
+                                </th>
                             </tr>
-                        {% endif %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            {% if results %}
+                                {% for r in results %}
+                                    <tr class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
+                                        <td class="px-6 py-4">Short-Term Memory Test</td>
+                                        <td class="px-6 py-4">{{ r.date_taken.strftime("%Y-%m-%d %H:%M") }}</td>
+                                        <td class="px-6 py-4">{{ r.score }}/{{ r.total_rounds }}</td>
+                                        <td class="px-6 py-4">{{ "%.2f"|format(r.avg_reaction_time) }}</td>
+                                        <td class="px-6 py-4">{{ r.difficulty }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4">No past assessments found.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
      <!-- Charts -->
-    <div class="container mt-5">
-        <div class="card shadow-sm">
-            <div class="card-body text-center mb-4">
-                <h3 class="card-title mb-3">Assessment Charts</h3>
-                <div class="d-inline-flex align-items-center gap-2 mb-4">
-                    <label for="difficultyFilter" class="form-label mb-0 small">
-                        Filter by Difficulty
-                    </label>
-                    <select id="difficultyFilter" class="form-select form-select-sm w-auto">
-                        <option value="Both">Both</option>
-                        <option value="Easy">Easy only</option>
-                        <option value="Hard">Hard only</option>
-                    </select>
+    <div class="lg:col-span-12 mt-8">
+        <div class="relative shadow-md sm:rounded-lg bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 flex flex-col overflow-hidden w-full">
+            
+            <div class="px-6 py-4 border-b">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Assessment Charts</h2>
+
+                <button id="difficultyButton" data-dropdown-toggle="difficultyDropdown" class="inline-flex items-center bg-primary-950 hover:bg-primary-900 text-white rounded-lg px-5 py-2.5 text-sm">
+                    <span id="difficultyButtonText">Filter by Difficulty</span>
+                    <svg class="w-2.5 h-2.5 ms-3" fill="none" viewBox="0 0 10 6" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+                    </svg>
+                </button>
+                
+                <div id="difficultyDropdown" class="hidden z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700">
+                    <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+                        <li><a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Both</a></li>
+                        <li><a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Easy</a></li>
+                        <li><a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Hard</a></li>
+                    </ul>
                 </div>
-                <div class="row">
+
+                <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Memory Score Chart-->
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="mb-2">Memory Scores Over Time</h5>
-                                <canvas id="scoreChart" style="max-height:400px;"></canvas>
-                            </div>
+                    <div class="card h-full shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
+                        <div class="card-body p-4 flex-1 flex flex-col">
+                            <h5 class="mb-2 text-gray-900 dark:text-white">Memory Scores Over Time</h5>
+                            <canvas id="scoreChart" class="flex-1" style="max-height:400px;"></canvas>
                         </div>
-                    </div>
+                      </div>
 
                     <!-- Reaction Time Chart-->
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="mb-2">Reaction Times Over Time</h5>
-                                <canvas id="reactionChart" style="max-height:400px;"></canvas>
-                            </div>
+                    <div class="card h-full shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
+                        <div class="card-body p-4 flex-1 flex flex-col">
+                            <h5 class="mb-2 text-gray-900 dark:text-white">Reaction Times Over Time</h5>
+                            <canvas id="reactionChart" class="flex-1" style="max-height:400px;"></canvas>
                         </div>
                     </div>
 
                     <!-- Correct Reaction Time Chart-->
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="mb-2">Correct Response Reaction Times</h5>
-                                <canvas id="correctReactionChart" style="max-height:400px;"></canvas>
-                            </div>
+                    <div class="card h-full shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
+                        <div class="card-body p-4 flex-1 flex flex-col">
+                            <h5 class="mb-2 text-gray-900 dark:text-white">Correct Response Reaction Times</h5>
+                            <canvas id="correctReactionChart" class="flex-1" style="max-height:400px;"></canvas>
                         </div>
                     </div>
 
                     <!-- Incorrect Reaction Time Chart-->
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="mb-2">Incorrect Response Reaction Times</h5>
-                                <canvas id="incorrectReactionChart" style="max-height:400px;"></canvas>
-                            </div>
+                    <div class="card h-full shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
+                        <div class="card-body p-4 flex-1 flex flex-col">
+                            <h5 class="mb-2 text-gray-900 dark:text-white">Incorrect Response Reaction Times</h5>
+                            <canvas id="incorrectReactionChart" class="flex-1" style="max-height:400px;"></canvas>
                         </div>
                     </div>
             </div>
@@ -124,6 +153,16 @@
 <script>
     // Need to convert Flask lists to JS arrays
     const chartData = {{ chart_data|tojson }}
+
+    function getColors() {
+        const darkMode = document.documentElement.classList.contains('dark');
+        return {
+            text: darkMode ? '#ffffff': '#1f2937', // white / gray-800
+            grid: darkMode ? '#374141' : '#d1d5db', // gray-700 / gray-300
+            stem: darkMode ? '#ffffff' : '#000000', // white / black
+            background: darkMode ? '#1f2937': '#ffffff' // gray-800 / white
+        }
+    }
 
     // Prep min, median, and max points for error bars
     function buildErrorBars(avg, std) {
@@ -149,13 +188,13 @@
     }
 
     // Add a custom plugin to draw vertical stem on top of chart
-    function createVerticalStemPlugin(stemArray) {
+    function createVerticalStemPlugin(stemArray, color) {
         return {
             id: 'verticalStem',
             afterDatasetsDraw(chart, args, pluginOptions) {
                 const { ctx, scales: { x, y } } = chart;
                 ctx.save();
-                ctx.strokeStyle = 'black';
+                ctx.strokeStyle = color;
                 ctx.lineWidth = 3;
                 stemArray.forEach(d => {
 
@@ -172,6 +211,25 @@
             }
         };
     }
+
+    function applyThemeToChart(chart, stemData){
+        const colors = getColors();
+
+        chart.options.plugins.legend.labels.color = colors.text;
+        chart.options.scales.x.title.color = colors.text;
+        chart.options.scales.y.title.color = colors.text;
+        chart.options.scales.x.ticks.color = colors.text;
+        chart.options.scales.y.ticks.color = colors.text;
+        chart.options.scales.x.grid.color = colors.grid;
+        chart.options.scales.y.grid.color = colors.grid;
+
+        // also update vertical stem plugin if present
+        if (stemData){
+            chart.config.plugins = [createVerticalStemPlugin(stemData, colors.stem)]
+        }
+        chart.update();
+    }
+
     // Build initial errorBars and stems
     let reactionErrorBars = buildErrorBars(chartData.reactions.average, chartData.reactions.std);
     let correctErrorBars = buildErrorBars(chartData.reactions.correct_avg, chartData.reactions.correct_std);
@@ -497,6 +555,7 @@
 
         // score chart
         charts.score.data.datasets[0].data = filtered.scores;
+        applyThemeToChart(charts.score)
         charts.score.update();
 
         // reactionChart chart
@@ -507,6 +566,7 @@
         charts.reaction.data.datasets[4].data = filtered.reactions.correct_points;
         charts.reaction.data.datasets[5].data = filtered.reactions.incorrect_points;
         charts.reaction.config.plugins = [createVerticalStemPlugin(reactionStem)];
+        applyThemeToChart(charts.reaction, reactionStem);
         charts.reaction.update();
 
         // correct chart
@@ -516,23 +576,41 @@
         charts.correct.data.datasets[3].data = filtered.reactions.correct_avg;
         charts.correct.data.datasets[4].data = filtered.reactions.correct_points;
         charts.correct.config.plugins = [createVerticalStemPlugin(correctStem)];
+        applyThemeToChart(charts.correct, correctStem);
         charts.correct.update();
 
         // incorrect chart
         charts.incorrect.data.datasets[0].data = incorrectErrorBars.min;
         charts.incorrect.data.datasets[1].data = incorrectErrorBars.median;
         charts.incorrect.data.datasets[2].data = incorrectErrorBars.max;
-        charts.incorrect.data.datasets[3].data = filtered.reactions.inorrect_avg;
+        charts.incorrect.data.datasets[3].data = filtered.reactions.incorrect_avg;
         charts.incorrect.data.datasets[4].data = filtered.reactions.incorrect_points;
         charts.incorrect.config.plugins = [createVerticalStemPlugin(incorrectStem)];
+        applyThemeToChart(charts.incorrect, incorrectStem);
         charts.incorrect.update();
 
     }
 
-    document.getElementById('difficultyFilter').addEventListener('change', (e) => {
-        const filtered = filterByDifficulty(e.target.value);
-        updateAllCharts(filtered);
+    const buttonText = document.getElementById("difficultyButtonText");
+    document.querySelectorAll('#difficultyDropdown a').forEach(a => {
+        a.addEventListener('click', (e) => {
+            e.preventDefault(); // prevent the scroll up after selecting an option
+            buttonText.textContent = a.textContent; // set the button text value to selected option
+            const filtered = filterByDifficulty(a.textContent);
+            updateAllCharts(filtered);
+        })
+        
     })
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (!('color-theme' in localStorage)) {
+        Object.values(charts).forEach(chart => {
+            const stemData = chart === reactionChart ? reactionStem :
+                             chart === correctReactionChart ? correctStem :
+                             chart === incorrectReactionChart ? incorrectStem : null;
+            applyThemeToChart(chart, stemData);
+        });
+    }
+});
 
 </script>
 {% endblock %}

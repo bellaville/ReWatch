@@ -48,8 +48,6 @@ class TestLoginFlow:
         GIVEN a seeded physician account exists
         WHEN valid credentials are submitted
         THEN the physician is redirected away from the login page.
-
-        UPDATE email and password to match your seed_users() function.
         """
         login(browser, live_server_url, "dr.stephen@avengers.com", "password123") # submit valid credentials using the helper function above 
         assert "login" not in browser.current_url.lower() # after a successful login Flask redirects away — if "login" is still in the URL, login failed
