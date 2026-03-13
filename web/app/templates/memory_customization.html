@@ -11,7 +11,7 @@
             <div class="sm:col-span-2">
                 <label for="patient_id" class="block text-sm/6 font-medium">Select Patient</label>
                 <div class="mt-2 grid grid-cols-1">
-                    <select id="patient_id" name="patient_id"
+                    <select id="patient_id" name="patient_id" required
                         class="col-start-1 row-start-1 w-full appearance-none rounded-md dark:bg-white/5 py-1.5 pr-8 pl-3 text-base outline-1 outline-gray-300 dark:outline-white/10 -outline-offset-1 dark:*:bg-gray-800 focus:outline-2 focus:-outline-offset-2 focus:outline-orange-500 sm:text-sm/6">
                         {% if patients %}
                         <option value="">--Choose patient--</option>
@@ -39,7 +39,7 @@
                 <div class="col-span-1">
                     <label for="first-name" class="block text-sm/6 font-medium">Number of Shapes</label>
                     <div class="mt-2">
-                        <input id="num_shapes" type="number" name="num_shapes" value="{{num_shapes}}"
+                        <input id="num_shapes" type="number" name="num_shapes" value="{{num_shapes}}" min="1" max="7"
                             class="block w-full rounded-md outline-1 dark:bg-white/5 px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 dark:outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-orange-500 sm:text-sm/6" />
                     </div>
                 </div>
@@ -47,7 +47,7 @@
                 <div class="sm:col-span-1">
                     <label for="first-name" class="block text-sm/6 font-medium">Memorization Time (Sec)</label>
                     <div class="mt-2">
-                        <input id="memorization_time" type="number" name="memorization_time"
+                        <input id="memorization_time" type="number" name="memorization_time" min="1"
                             value="{{memorization_time}}"
                             class="block w-full rounded-md dark:bg-white/5 px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 dark:outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-orange-500 sm:text-sm/6" />
                     </div>
@@ -56,7 +56,7 @@
                 <div class="sm:col-span-2">
                     <label for="first-name" class="block text-sm/6 font-medium">Number of Rounds</label>
                     <div class="mt-2">
-                        <input id="num_rounds" type="number" name="num_rounds" value="{{num_rounds}}"
+                        <input id="num_rounds" type="number" name="num_rounds" value="{{num_rounds}}" min="1"
                             class="block w-full rounded-md dark:bg-white/5 px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 dark:outline-white/10 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-orange-500 sm:text-sm/6" />
                     </div>
                 </div>
@@ -65,7 +65,7 @@
                     <div class="flex gap-10 mt-4">
                         <div class="flex items-center gap-x-3">
                             <input id="easy" type="radio" value="easy" name="difficulty" {% if difficulty=='easy' %}checked{% endif
-                                %}
+                                %} required
                                 class="relative size-4 appearance-none rounded-full border border-white/10 bg-gray-300 dark:bg-white/5 before:absolute before:inset-1 before:rounded-full before:bg-white not-checked:before:hidden checked:border-orange-500 checked:bg-orange-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 disabled:border-white/5 disabled:bg-white/10 disabled:before:bg-white/20 forced-colors:appearance-auto forced-colors:before:hidden" />
                             <label for="easy" class="block text-sm/6 font-medium">Easy</label>
                         </div>
