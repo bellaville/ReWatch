@@ -69,18 +69,3 @@
 .visible {
     display: block;
 }
-
-/* buttons container */
-form {
-    display: flex;
-    justify-content: center; /* center buttons horizontally */
-    gap: 20px; /* spacing between buttons */
-    margin-top: 20px;
-}
-
-/* same/different buttons */
-form button {
-    font-size: 1rem;   /* bigger text */
-    padding: 15px 30px;  /* bigger clickable area */
-    border-radius: 10px; 
-}

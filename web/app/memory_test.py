@@ -10,12 +10,12 @@ memory_test = Blueprint('memory_test', __name__)
 # SHORT TERM MEMORY TEST #
 ##########################
 SHAPES = ['circle', 'square', 'triangle', 'star', 'trapezoid', 'pentagon', 'hexagon']
-COLOUR_LIST = ['blue', 'red', 'green', 'yellow', 'purple', 'orange', 'pink']
+COLOUR_LIST = ['blue', 'red', 'green', 'gold', 'purple', 'orange', 'pink']
 DEFAULT_COLOURS = {
     'circle': 'blue',
     'square': 'red',
     'triangle': 'green',
-    'star': 'yellow',
+    'star': 'gold',
     'trapezoid': 'purple',
     'pentagon': 'pink',
     'hexagon': 'orange'
