@@ -2,615 +2,644 @@
 
 {% block content %}
 
-<div class="container mt-5 text-center">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <!-- Profile Card -->
-        <div class="lg:col-span-4 flex">
-            <div class="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 h-full">
-                <div class="flex justify-end px-4 pt-4">
-                    <button id="dropdownButton" data-dropdown-toggle="dropdown" class="inline-block text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-1.5" type="button">
-                        <span class="sr-only">Open dropdown</span>
-                        <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 3">
-                            <path d="M2 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm6.041 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM14 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"/>
-                        </svg>
-                    </button>
-                    <!-- Dropdown menu -->
-                    <div id="dropdown" class="z-10 hidden text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700">
-                        <ul class="py-2" aria-labelledby="dropdownButton">
-                        <li>
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Edit</a>
-                        </li>
-                        <li>
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Export Data</a>
-                        </li>
-                        </ul>
+    <div class="mx-auto max-w-screen-xl px-4 lg:px-12">
+        <div class="container mt-5 text-center">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                <!-- Profile Card -->
+                <div class="lg:col-span-4 flex">
+                    <div class="w-full max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700 h-full">
+                        <div class="flex justify-end px-4 pt-4">
+                            <button id="dropdownButton" data-dropdown-toggle="dropdown"
+                                    class="inline-block text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-1.5"
+                                    type="button">
+                                <span class="sr-only">Open dropdown</span>
+                                <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+                                     fill="currentColor" viewBox="0 0 16 3">
+                                    <path d="M2 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm6.041 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM14 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"/>
+                                </svg>
+                            </button>
+                            <!-- Dropdown menu -->
+                            <div id="dropdown"
+                                 class="z-10 hidden text-base list-none bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700">
+                                <ul class="py-2" aria-labelledby="dropdownButton">
+                                    <li>
+                                        <a href="#"
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Edit</a>
+                                    </li>
+                                    <li>
+                                        <a href="#"
+                                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">Export
+                                            Data</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-center pb-10">
+                            <svg class="w-12 h-12 mb-4 text-body-subtle -left-1" fill="currentColor" viewBox="0 0 20 20"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                      clip-rule="evenodd"></path>
+                            </svg>
+                            <h5 class="mb-1 text-xl font-medium text-gray-900 dark:text-white">{{ name }}</h5>
+                            <span class="text-sm text-gray-500 dark:text-gray-400"><strong>Age: </strong>{{ age }}</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400"><strong>Gender: </strong>{{ gender }}</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400"><strong>Weight: </strong>{{ weight }} kg</span>
+                            <span class="text-sm text-gray-500 dark:text-gray-400"><strong>Height: </strong>{{ height }} cm</span>
+                        </div>
                     </div>
                 </div>
-                <div class="flex flex-col items-center pb-10">
-                    <svg class="w-12 h-12 mb-4 text-body-subtle -left-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
-                    <h5 class="mb-1 text-xl font-medium text-gray-900 dark:text-white">{{ name }}</h5>
-                    <span class="text-sm text-gray-500 dark:text-gray-400"><strong>Age: </strong>{{ age }}</span>
-                    <span class="text-sm text-gray-500 dark:text-gray-400"><strong>Gender: </strong>{{ gender }}</span>
-                    <span class="text-sm text-gray-500 dark:text-gray-400"><strong>Weight: </strong>{{ weight }} kg</span>
-                    <span class="text-sm text-gray-500 dark:text-gray-400"><strong>Height: </strong>{{ height }} cm</span>
-                </div>
-            </div>
-        </div>
-    
-         <!-- Past Assessments Details -->
-        <div class="lg:col-span-8 flex">
-            <div class="relative shadow-md sm:rounded-lg bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 h-full flex flex-col overflow-hidden w-full">
-                <div class="px-6 py-4 border-b">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                        Past Assessments
-                    </h2>
-                </div>
-                
-                <div class="flex-1 overflow-y-auto max-h-full">
-                    <table class="w-full text-sm text-center rtl:text-right text-gray-500 dark:text-gray-400">
-                        <thead class="sticky top-0 text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                            <tr>
-                                <th scope="col" class="px-6 py-3">
-                                    Test Type
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Date
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Score
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Average Reaction Time (ms)
-                                </th>
-                                <th scope="col" class="px-6 py-3">
-                                    Difficulty
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            {% if results %}
-                                {% for r in results %}
-                                    <tr class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
-                                        <td class="px-6 py-4">Short-Term Memory Test</td>
-                                        <td class="px-6 py-4">{{ r.date_taken.strftime("%Y-%m-%d %H:%M") }}</td>
-                                        <td class="px-6 py-4">{{ r.score }}/{{ r.total_rounds }}</td>
-                                        <td class="px-6 py-4">{{ "%.2f"|format(r.avg_reaction_time) }}</td>
-                                        <td class="px-6 py-4">{{ r.difficulty }}</td>
-                                    </tr>
-                                {% endfor %}
-                            {% else %}
+
+                <!-- Past Assessments Details -->
+                <div class="lg:col-span-8 flex">
+                    <div class="relative shadow-md sm:rounded-lg bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 h-full flex flex-col overflow-hidden w-full">
+                        <div class="px-6 py-4 border-b">
+                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                Past Assessments
+                            </h2>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto max-h-60">
+                            <table class="w-full text-sm text-center rtl:text-right text-gray-500 dark:text-gray-400">
+                                <thead class="sticky top-0 text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                                 <tr>
-                                    <td colspan="4">No past assessments found.</td>
+                                    <th scope="col" class="px-6 py-3">
+                                        Test Type
+                                    </th>
+                                    <th scope="col" class="px-6 py-3">
+                                        Date
+                                    </th>
+                                    <th scope="col" class="px-6 py-3">
+                                        Score
+                                    </th>
+                                    <th scope="col" class="px-6 py-3">
+                                        Average Reaction Time (ms)
+                                    </th>
+                                    <th scope="col" class="px-6 py-3">
+                                        Difficulty
+                                    </th>
                                 </tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                {% if results %}
+                                    {% for r in results %}
+                                        <tr class="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
+                                            <td class="px-6 py-4">Short-Term Memory Test</td>
+                                            <td class="px-6 py-4">{{ r.date_taken.strftime("%Y-%m-%d %H:%M") }}</td>
+                                            <td class="px-6 py-4">{{ r.score }}/{{ r.total_rounds }}</td>
+                                            <td class="px-6 py-4">{{ "%.2f"|format(r.avg_reaction_time) }}</td>
+                                            <td class="px-6 py-4">{{ r.difficulty }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4">No past assessments found.</td>
+                                    </tr>
+                                {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="lg:col-span-12 mt-8">
+                <div class="relative shadow-md sm:rounded-lg bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 flex flex-col overflow-hidden w-full">
+
+                    <div class="px-6 py-4 border-b">
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Assessment Charts</h2>
+
+                        <button id="difficultyButton" data-dropdown-toggle="difficultyDropdown"
+                                class="inline-flex items-center bg-primary-950 hover:bg-primary-900 text-white rounded-lg px-5 py-2.5 text-sm">
+                            <span id="difficultyButtonText">Filter by Difficulty</span>
+                            <svg class="w-2.5 h-2.5 ms-3" fill="none" viewBox="0 0 10 6" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+                            </svg>
+                        </button>
+
+                        <div id="difficultyDropdown"
+                             class="hidden z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700">
+                            <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
+                                <li><a href="#"
+                                       class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Both</a>
+                                </li>
+                                <li><a href="#"
+                                       class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Easy</a>
+                                </li>
+                                <li><a href="#"
+                                       class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Hard</a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Memory Score Chart-->
+                            <div class="card h-full shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
+                                <div class="card-body p-4 flex-1 flex flex-col">
+                                    <h5 class="mb-2 text-gray-900 dark:text-white">Memory Scores Over Time</h5>
+                                    <canvas id="scoreChart" class="flex-1" style="max-height:400px;"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Reaction Time Chart-->
+                            <div class="card h-full shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
+                                <div class="card-body p-4 flex-1 flex flex-col">
+                                    <h5 class="mb-2 text-gray-900 dark:text-white">Reaction Times Over Time</h5>
+                                    <canvas id="reactionChart" class="flex-1" style="max-height:400px;"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Correct Reaction Time Chart-->
+                            <div class="card h-full shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
+                                <div class="card-body p-4 flex-1 flex flex-col">
+                                    <h5 class="mb-2 text-gray-900 dark:text-white">Correct Response Reaction Times</h5>
+                                    <canvas id="correctReactionChart" class="flex-1" style="max-height:400px;"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Incorrect Reaction Time Chart-->
+                            <div class="card h-full shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
+                                <div class="card-body p-4 flex-1 flex flex-col">
+                                    <h5 class="mb-2 text-gray-900 dark:text-white">Incorrect Response Reaction
+                                        Times</h5>
+                                    <canvas id="incorrectReactionChart" class="flex-1"
+                                            style="max-height:400px;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-     <!-- Charts -->
-    <div class="lg:col-span-12 mt-8">
-        <div class="relative shadow-md sm:rounded-lg bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-700 flex flex-col overflow-hidden w-full">
-            
-            <div class="px-6 py-4 border-b">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Assessment Charts</h2>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            // Need to convert Flask lists to JS arrays
+            const chartData = {{ chart_data|tojson }}
 
-                <button id="difficultyButton" data-dropdown-toggle="difficultyDropdown" class="inline-flex items-center bg-primary-950 hover:bg-primary-900 text-white rounded-lg px-5 py-2.5 text-sm">
-                    <span id="difficultyButtonText">Filter by Difficulty</span>
-                    <svg class="w-2.5 h-2.5 ms-3" fill="none" viewBox="0 0 10 6" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
-                    </svg>
-                </button>
-                
-                <div id="difficultyDropdown" class="hidden z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700">
-                    <ul class="py-2 text-sm text-gray-700 dark:text-gray-200">
-                        <li><a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Both</a></li>
-                        <li><a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Easy</a></li>
-                        <li><a href="#" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Hard</a></li>
-                    </ul>
-                </div>
-
-                <div class="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Memory Score Chart-->
-                    <div class="card h-full shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
-                        <div class="card-body p-4 flex-1 flex flex-col">
-                            <h5 class="mb-2 text-gray-900 dark:text-white">Memory Scores Over Time</h5>
-                            <canvas id="scoreChart" class="flex-1" style="max-height:400px;"></canvas>
-                        </div>
-                      </div>
-
-                    <!-- Reaction Time Chart-->
-                    <div class="card h-full shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
-                        <div class="card-body p-4 flex-1 flex flex-col">
-                            <h5 class="mb-2 text-gray-900 dark:text-white">Reaction Times Over Time</h5>
-                            <canvas id="reactionChart" class="flex-1" style="max-height:400px;"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Correct Reaction Time Chart-->
-                    <div class="card h-full shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
-                        <div class="card-body p-4 flex-1 flex flex-col">
-                            <h5 class="mb-2 text-gray-900 dark:text-white">Correct Response Reaction Times</h5>
-                            <canvas id="correctReactionChart" class="flex-1" style="max-height:400px;"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Incorrect Reaction Time Chart-->
-                    <div class="card h-full shadow-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex flex-col">
-                        <div class="card-body p-4 flex-1 flex flex-col">
-                            <h5 class="mb-2 text-gray-900 dark:text-white">Incorrect Response Reaction Times</h5>
-                            <canvas id="incorrectReactionChart" class="flex-1" style="max-height:400px;"></canvas>
-                        </div>
-                    </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // Need to convert Flask lists to JS arrays
-    const chartData = {{ chart_data|tojson }}
-
-    function getColors() {
-        const darkMode = document.documentElement.classList.contains('dark');
-        return {
-            text: darkMode ? '#ffffff': '#1f2937', // white / gray-800
-            grid: darkMode ? '#374141' : '#d1d5db', // gray-700 / gray-300
-            stem: darkMode ? '#ffffff' : '#000000', // white / black
-            background: darkMode ? '#1f2937': '#ffffff' // gray-800 / white
-        }
-    }
-
-    // Prep min, median, and max points for error bars
-    function buildErrorBars(avg, std) {
-        return {
-            min: avg.map((p, i) => ({ x: p.x, y: +(p.y - std[i].y).toFixed(2)})),
-            median: avg.map((p, i) => ({ x: p.x, y: +(p.y).toFixed(2)})),
-            max: avg.map((p, i) => ({ x: p.x, y: +(p.y + std[i].y).toFixed(2)}))
-        }
-    }
-
-    // Build vertical stem for error bars by combining the matching min, median,
-    // and max values at each x into one object
-    function buildStem(errorBars){
-        // Iterate over min points array (using min as a base so median and max
-        // are relative to it)
-        return errorBars.min.map((p, i) => ({
-            x:p.x,
-            yMin: p.y,
-            yMedian: errorBars.median[i].y,
-            yMax: errorBars.max[i].y
-        
-        }))
-    }
-
-    // Add a custom plugin to draw vertical stem on top of chart
-    function createVerticalStemPlugin(stemArray, color) {
-        return {
-            id: 'verticalStem',
-            afterDatasetsDraw(chart, args, pluginOptions) {
-                const { ctx, scales: { x, y } } = chart;
-                ctx.save();
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 3;
-                stemArray.forEach(d => {
-
-                    // fail safe: only draw if x value exists in the current chart labels
-                    if (!x.getLabels().includes(d.x)) return;
-
-                    const xPos = x.getPixelForValue(d.x);
-                    ctx.beginPath();
-                    ctx.moveTo(xPos, y.getPixelForValue(d.yMin));
-                    ctx.lineTo(xPos, y.getPixelForValue(d.yMax));
-                    ctx.stroke();
-                });
-                ctx.restore();
-            }
-        };
-    }
-
-    function applyThemeToChart(chart, stemData){
-        const colors = getColors();
-
-        chart.options.plugins.legend.labels.color = colors.text;
-        chart.options.scales.x.title.color = colors.text;
-        chart.options.scales.y.title.color = colors.text;
-        chart.options.scales.x.ticks.color = colors.text;
-        chart.options.scales.y.ticks.color = colors.text;
-        chart.options.scales.x.grid.color = colors.grid;
-        chart.options.scales.y.grid.color = colors.grid;
-
-        // also update vertical stem plugin if present
-        if (stemData){
-            chart.config.plugins = [createVerticalStemPlugin(stemData, colors.stem)]
-        }
-        chart.update();
-    }
-
-    // Build initial errorBars and stems
-    let reactionErrorBars = buildErrorBars(chartData.reactions.average, chartData.reactions.std);
-    let correctErrorBars = buildErrorBars(chartData.reactions.correct_avg, chartData.reactions.correct_std);
-    let incorrectErrorBars = buildErrorBars(chartData.reactions.incorrect_avg, chartData.reactions.incorrect_std);
-
-    let reactionStem = buildStem(reactionErrorBars);
-    let correctStem = buildStem(correctErrorBars);
-    let incorrectStem = buildStem(incorrectErrorBars);
-
-    // Memory chart
-    const scoreChart = new Chart(document.getElementById('scoreChart'), {
-        type: 'line',
-        data: {
-            datasets: [{
-                label: 'Memory Score(s)',
-                data: chartData.scores,
-                borderColor: 'rgb(54, 162, 235)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: { x: {
-                    type: 'category',
-                    title: {
-                        display: true,
-                        text: 'Assessment Date',
-                    }
-                },
-                y: { 
-                    title: { display: true, text: 'Score (%)' },
-                    suggestedMin: 0,
-                    suggestedMax: 100
-                }}
-        }
-    });
-
-    // Reaction Time chart
-    const reactionChart = new Chart(document.getElementById('reactionChart'), {
-        type: 'scatter',
-        data: {
-            datasets: [
-                {
-                    label: 'Mean - Std. Dev. (Min)',
-                    data: reactionErrorBars.min,
-                    pointStyle: 'line',
-                    backgroundColor: 'black', 
-                    borderColor: 'black', 
-                    borderWidth: 2,
-                    radius: 6,
-                    showLine: false
-                },
-                {
-                    label: 'Median',
-                    data: reactionErrorBars.median,
-                    pointStyle: 'line',
-                    backgroundColor: 'black', 
-                    borderColor: 'black', 
-                    borderWidth: 2,
-                    radius: 6,
-                    showLine: false
-                },
-                {
-                    label: 'Mean + Std. Dev. (Max)',
-                    data: reactionErrorBars.max,
-                    pointStyle: 'line',
-                    backgroundColor: 'black', 
-                    borderColor: 'black', 
-                    borderWidth: 2,
-                    radius: 6,
-                    showLine: false
-                },
-                {
-                    type: 'line',
-                    label: 'Average Reaction Time (ms)',
-                    data: chartData.reactions.average,
-                    borderColor: 'rgb(54, 162, 235)',
-                    tension: 0.3
-                },
-                {
-                    type: 'scatter',
-                    label: 'Correct Response, Reaction Time (ms)',
-                    data: chartData.reactions.correct_points,
-                    backgroundColor: 'rgba(75, 192, 75, 0.7)',
-                    borderColor: 'rgba(75, 192, 75, 1)',
-                    tension: 0.3
-                },
-                {
-                    type: 'scatter',
-                    label: 'Incorrect Response, Reaction Time (ms)',
-                    data: chartData.reactions.incorrect_points,
-                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    tension: 0.3
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { 
-                    display: true,
-                    labels: {
-                        boxWidth: 20,
-                        padding: 15,
-                        // Below found at: https://stackoverflow.com/questions/52452440/remove-label-in-chart-js
-                        filter: (l) => (!(["Mean - Std. Dev. (Min)", "Mean + Std. Dev. (Max)", "Median"].includes(l.text)))
-                    }
-                 }
-            },
-            scales: { 
-                x: {
-                    type: 'category',
-                    title: {
-                        display: true,
-                        text: 'Assessment Date',
-                    }
-                },
-                y: { 
-                    title: { 
-                        display: true, 
-                        text: 'Reaction Time (ms)' 
-                    }
+            function getColors() {
+                const darkMode = document.documentElement.classList.contains('dark');
+                return {
+                    text: darkMode ? '#ffffff' : '#1f2937', // white / gray-800
+                    grid: darkMode ? '#374141' : '#d1d5db', // gray-700 / gray-300
+                    stem: darkMode ? '#ffffff' : '#000000', // white / black
+                    background: darkMode ? '#1f2937' : '#ffffff' // gray-800 / white
                 }
             }
-        },
-        plugins: [createVerticalStemPlugin(reactionStem)]
-    });
 
-    // Correct responses chart
-    const correctReactionChart = new Chart(document.getElementById('correctReactionChart'), {
-        type: 'scatter',
-        data: {
-            datasets: [
-                {
-                    label: 'Mean - Std. Dev. (Min)',
-                    data: correctErrorBars.min,
-                    pointStyle: 'line',
-                    backgroundColor: 'black', 
-                    borderColor: 'black', 
-                    borderWidth: 2,
-                    radius: 6,
-                    showLine: false
-                },
-                {
-                    label: 'Median',
-                    data: correctErrorBars.median,
-                    pointStyle: 'line',
-                    backgroundColor: 'black', 
-                    borderColor: 'black', 
-                    borderWidth: 2,
-                    radius: 6,
-                    showLine: false
-                },
-                {
-                    label: 'Mean + Std. Dev. (Max)',
-                    data: correctErrorBars.max,
-                    pointStyle: 'line',
-                    backgroundColor: 'black', 
-                    borderColor: 'black', 
-                    borderWidth: 2,
-                    radius: 6,
-                    showLine: false
-                },
-                {
-                    type: 'line',
-                    label: 'Average Reaction Time (ms)',
-                    data: chartData.reactions.correct_avg,
-                    borderColor: 'rgb(54, 162, 235)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    tension: 0.3
-                },
-                {
-                    type: 'scatter',
-                    label: 'Reaction Time (ms)',
-                    data: chartData.reactions.correct_points,
-                    backgroundColor: 'rgba(75, 192, 75, 0.7)',
-                    borderColor: 'rgba(75, 192, 75, 1)',
-                    tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { 
-                    display: true,
-                    labels: {
-                        boxWidth: 20,
-                        padding: 15,
-                        // Below found at: https://stackoverflow.com/questions/52452440/remove-label-in-chart-js
-                        filter: (l) => (!(["Mean - Std. Dev. (Min)", "Mean + Std. Dev. (Max)", "Median"].includes(l.text)))
+            // Prep min, median, and max points for error bars
+            function buildErrorBars(avg, std) {
+                return {
+                    min: avg.map((p, i) => ({x: p.x, y: +(p.y - std[i].y).toFixed(2)})),
+                    median: avg.map((p, i) => ({x: p.x, y: +(p.y).toFixed(2)})),
+                    max: avg.map((p, i) => ({x: p.x, y: +(p.y + std[i].y).toFixed(2)}))
+                }
+            }
+
+            // Build vertical stem for error bars by combining the matching min, median,
+            // and max values at each x into one object
+            function buildStem(errorBars) {
+                // Iterate over min points array (using min as a base so median and max
+                // are relative to it)
+                return errorBars.min.map((p, i) => ({
+                    x: p.x,
+                    yMin: p.y,
+                    yMedian: errorBars.median[i].y,
+                    yMax: errorBars.max[i].y
+
+                }))
+            }
+
+            // Add a custom plugin to draw vertical stem on top of chart
+            function createVerticalStemPlugin(stemArray, color) {
+                return {
+                    id: 'verticalStem',
+                    afterDatasetsDraw(chart, args, pluginOptions) {
+                        const {ctx, scales: {x, y}} = chart;
+                        ctx.save();
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = 3;
+                        stemArray.forEach(d => {
+
+                            // fail safe: only draw if x value exists in the current chart labels
+                            if (!x.getLabels().includes(d.x)) return;
+
+                            const xPos = x.getPixelForValue(d.x);
+                            ctx.beginPath();
+                            ctx.moveTo(xPos, y.getPixelForValue(d.yMin));
+                            ctx.lineTo(xPos, y.getPixelForValue(d.yMax));
+                            ctx.stroke();
+                        });
+                        ctx.restore();
                     }
-                 }
-            },
-            scales: { x: {
-                    type: 'category',
-                    title: {
-                        display: true,
-                        text: 'Assessment Date',
+                };
+            }
+
+            function applyThemeToChart(chart, stemData) {
+                const colors = getColors();
+
+                chart.options.plugins.legend.labels.color = colors.text;
+                chart.options.scales.x.title.color = colors.text;
+                chart.options.scales.y.title.color = colors.text;
+                chart.options.scales.x.ticks.color = colors.text;
+                chart.options.scales.y.ticks.color = colors.text;
+                chart.options.scales.x.grid.color = colors.grid;
+                chart.options.scales.y.grid.color = colors.grid;
+
+                // also update vertical stem plugin if present
+                if (stemData) {
+                    chart.config.plugins = [createVerticalStemPlugin(stemData, colors.stem)]
+                }
+                chart.update();
+            }
+
+            // Build initial errorBars and stems
+            let reactionErrorBars = buildErrorBars(chartData.reactions.average, chartData.reactions.std);
+            let correctErrorBars = buildErrorBars(chartData.reactions.correct_avg, chartData.reactions.correct_std);
+            let incorrectErrorBars = buildErrorBars(chartData.reactions.incorrect_avg, chartData.reactions.incorrect_std);
+
+            let reactionStem = buildStem(reactionErrorBars);
+            let correctStem = buildStem(correctErrorBars);
+            let incorrectStem = buildStem(incorrectErrorBars);
+
+            // Memory chart
+            const scoreChart = new Chart(document.getElementById('scoreChart'), {
+                type: 'line',
+                data: {
+                    datasets: [{
+                        label: 'Memory Score(s)',
+                        data: chartData.scores,
+                        borderColor: 'rgb(54, 162, 235)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {display: false}
+                    },
+                    scales: {
+                        x: {
+                            type: 'category',
+                            title: {
+                                display: true,
+                                text: 'Assessment Date',
+                            }
+                        },
+                        y: {
+                            title: {display: true, text: 'Score (%)'},
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    }
+                }
+            });
+
+            // Reaction Time chart
+            const reactionChart = new Chart(document.getElementById('reactionChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Mean - Std. Dev. (Min)',
+                            data: reactionErrorBars.min,
+                            pointStyle: 'line',
+                            backgroundColor: 'black',
+                            borderColor: 'black',
+                            borderWidth: 2,
+                            radius: 6,
+                            showLine: false
+                        },
+                        {
+                            label: 'Median',
+                            data: reactionErrorBars.median,
+                            pointStyle: 'line',
+                            backgroundColor: 'black',
+                            borderColor: 'black',
+                            borderWidth: 2,
+                            radius: 6,
+                            showLine: false
+                        },
+                        {
+                            label: 'Mean + Std. Dev. (Max)',
+                            data: reactionErrorBars.max,
+                            pointStyle: 'line',
+                            backgroundColor: 'black',
+                            borderColor: 'black',
+                            borderWidth: 2,
+                            radius: 6,
+                            showLine: false
+                        },
+                        {
+                            type: 'line',
+                            label: 'Average Reaction Time (ms)',
+                            data: chartData.reactions.average,
+                            borderColor: 'rgb(54, 162, 235)',
+                            tension: 0.3
+                        },
+                        {
+                            type: 'scatter',
+                            label: 'Correct Response, Reaction Time (ms)',
+                            data: chartData.reactions.correct_points,
+                            backgroundColor: 'rgba(75, 192, 75, 0.7)',
+                            borderColor: 'rgba(75, 192, 75, 1)',
+                            tension: 0.3
+                        },
+                        {
+                            type: 'scatter',
+                            label: 'Incorrect Response, Reaction Time (ms)',
+                            data: chartData.reactions.incorrect_points,
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                boxWidth: 20,
+                                padding: 15,
+                                // Below found at: https://stackoverflow.com/questions/52452440/remove-label-in-chart-js
+                                filter: (l) => (!(["Mean - Std. Dev. (Min)", "Mean + Std. Dev. (Max)", "Median"].includes(l.text)))
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'category',
+                            title: {
+                                display: true,
+                                text: 'Assessment Date',
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Reaction Time (ms)'
+                            }
+                        }
                     }
                 },
-                y: { title: { display: true, text: 'Reaction Time (ms)' }}}
-        },
-        plugins: [createVerticalStemPlugin(correctStem)]
-    });
+                plugins: [createVerticalStemPlugin(reactionStem)]
+            });
 
-    // Incorrect responses chart
-    const incorrectReactionChart = new Chart(document.getElementById('incorrectReactionChart'), {
-        type: 'scatter',
-        data: {
-            datasets: [
-                {
-                    label: 'Mean - Std. Dev. (Min)',
-                    data: incorrectErrorBars.min,
-                    pointStyle: 'line',
-                    backgroundColor: 'black', 
-                    borderColor: 'black', 
-                    borderWidth: 2,
-                    radius: 6,
-                    showLine: false
+            // Correct responses chart
+            const correctReactionChart = new Chart(document.getElementById('correctReactionChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Mean - Std. Dev. (Min)',
+                            data: correctErrorBars.min,
+                            pointStyle: 'line',
+                            backgroundColor: 'black',
+                            borderColor: 'black',
+                            borderWidth: 2,
+                            radius: 6,
+                            showLine: false
+                        },
+                        {
+                            label: 'Median',
+                            data: correctErrorBars.median,
+                            pointStyle: 'line',
+                            backgroundColor: 'black',
+                            borderColor: 'black',
+                            borderWidth: 2,
+                            radius: 6,
+                            showLine: false
+                        },
+                        {
+                            label: 'Mean + Std. Dev. (Max)',
+                            data: correctErrorBars.max,
+                            pointStyle: 'line',
+                            backgroundColor: 'black',
+                            borderColor: 'black',
+                            borderWidth: 2,
+                            radius: 6,
+                            showLine: false
+                        },
+                        {
+                            type: 'line',
+                            label: 'Average Reaction Time (ms)',
+                            data: chartData.reactions.correct_avg,
+                            borderColor: 'rgb(54, 162, 235)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            tension: 0.3
+                        },
+                        {
+                            type: 'scatter',
+                            label: 'Reaction Time (ms)',
+                            data: chartData.reactions.correct_points,
+                            backgroundColor: 'rgba(75, 192, 75, 0.7)',
+                            borderColor: 'rgba(75, 192, 75, 1)',
+                            tension: 0.3
+                        }]
                 },
-                {
-                    label: 'Median',
-                    data: incorrectErrorBars.median,
-                    pointStyle: 'line',
-                    backgroundColor: 'black', 
-                    borderColor: 'black', 
-                    borderWidth: 2,
-                    radius: 6,
-                    showLine: false
-                },
-                {
-                    label: 'Mean + Std. Dev. (Max)',
-                    data: incorrectErrorBars.max,
-                    pointStyle: 'line',
-                    backgroundColor: 'black', 
-                    borderColor: 'black', 
-                    borderWidth: 2,
-                    radius: 6,
-                    showLine: false
-                },
-                {
-                    type: 'line',
-                    label: 'Average Reaction Time (ms)',
-                    data: chartData.reactions.incorrect_avg,
-                    borderColor: 'rgb(54, 162, 235)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    tension: 0.3
-                },
-                {
-                    type: 'scatter',
-                    label: 'Reaction Time (ms)',
-                    data: chartData.reactions.incorrect_points,
-                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { 
-                    display: true,
-                    labels: {
-                        boxWidth: 20,
-                        padding: 15,
-                        // Below found at: https://stackoverflow.com/questions/52452440/remove-label-in-chart-js
-                        filter: (l) => (!(["Mean - Std. Dev. (Min)", "Mean + Std. Dev. (Max)", "Median"].includes(l.text)))
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                boxWidth: 20,
+                                padding: 15,
+                                // Below found at: https://stackoverflow.com/questions/52452440/remove-label-in-chart-js
+                                filter: (l) => (!(["Mean - Std. Dev. (Min)", "Mean + Std. Dev. (Max)", "Median"].includes(l.text)))
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'category',
+                            title: {
+                                display: true,
+                                text: 'Assessment Date',
+                            }
+                        },
+                        y: {title: {display: true, text: 'Reaction Time (ms)'}}
                     }
-                 }
-            },
-            scales: { x: {
-                    type: 'category',
-                    title: {
-                        display: true,
-                        text: 'Assessment Date',
+                },
+                plugins: [createVerticalStemPlugin(correctStem)]
+            });
+
+            // Incorrect responses chart
+            const incorrectReactionChart = new Chart(document.getElementById('incorrectReactionChart'), {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Mean - Std. Dev. (Min)',
+                            data: incorrectErrorBars.min,
+                            pointStyle: 'line',
+                            backgroundColor: 'black',
+                            borderColor: 'black',
+                            borderWidth: 2,
+                            radius: 6,
+                            showLine: false
+                        },
+                        {
+                            label: 'Median',
+                            data: incorrectErrorBars.median,
+                            pointStyle: 'line',
+                            backgroundColor: 'black',
+                            borderColor: 'black',
+                            borderWidth: 2,
+                            radius: 6,
+                            showLine: false
+                        },
+                        {
+                            label: 'Mean + Std. Dev. (Max)',
+                            data: incorrectErrorBars.max,
+                            pointStyle: 'line',
+                            backgroundColor: 'black',
+                            borderColor: 'black',
+                            borderWidth: 2,
+                            radius: 6,
+                            showLine: false
+                        },
+                        {
+                            type: 'line',
+                            label: 'Average Reaction Time (ms)',
+                            data: chartData.reactions.incorrect_avg,
+                            borderColor: 'rgb(54, 162, 235)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            tension: 0.3
+                        },
+                        {
+                            type: 'scatter',
+                            label: 'Reaction Time (ms)',
+                            data: chartData.reactions.incorrect_points,
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            tension: 0.3
+                        }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                boxWidth: 20,
+                                padding: 15,
+                                // Below found at: https://stackoverflow.com/questions/52452440/remove-label-in-chart-js
+                                filter: (l) => (!(["Mean - Std. Dev. (Min)", "Mean + Std. Dev. (Max)", "Median"].includes(l.text)))
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'category',
+                            title: {
+                                display: true,
+                                text: 'Assessment Date',
+                            }
+                        },
+                        y: {title: {display: true, text: 'Reaction Time (ms)'}}
                     }
                 },
-                y: { title: { display: true, text: 'Reaction Time (ms)' }}}
-        },
-        plugins: [createVerticalStemPlugin(incorrectStem)]
-    });
+                plugins: [createVerticalStemPlugin(incorrectStem)]
+            });
 
-    const charts = {
-        score: scoreChart,
-        reaction: reactionChart,
-        correct: correctReactionChart,
-        incorrect: incorrectReactionChart
-    }
+            const charts = {
+                score: scoreChart,
+                reaction: reactionChart,
+                correct: correctReactionChart,
+                incorrect: incorrectReactionChart
+            }
 
-    function filterByDifficulty(difficulty){
-        // if difficulty = both, then return everything without filtering
-        if (difficulty === 'Both') return chartData;
+            function filterByDifficulty(difficulty) {
+                // if difficulty = both, then return everything without filtering
+                if (difficulty === 'Both') return chartData;
 
-        // otherwise, filter each dataset by difficulty
-        const filteredScores = chartData.scores.filter(p => p.difficulty === difficulty);
+                // otherwise, filter each dataset by difficulty
+                const filteredScores = chartData.scores.filter(p => p.difficulty === difficulty);
 
-        // find the datapoint with the filtered difficulty
-        const filteredReactions = {}
-        Object.keys(chartData.reactions).forEach(key => {
-            filteredReactions[key] = chartData.reactions[key].filter(p => p.difficulty === difficulty);
-        })
+                // find the datapoint with the filtered difficulty
+                const filteredReactions = {}
+                Object.keys(chartData.reactions).forEach(key => {
+                    filteredReactions[key] = chartData.reactions[key].filter(p => p.difficulty === difficulty);
+                })
 
-        return {
-            scores: filteredScores,
-            reactions: filteredReactions
-        }
-    }
+                return {
+                    scores: filteredScores,
+                    reactions: filteredReactions
+                }
+            }
 
-    function updateAllCharts(filtered){
-        // Store error bar values for each assessment date
-        let reactionErrorBars = buildErrorBars(filtered.reactions.average, filtered.reactions.std);
-        let correctErrorBars = buildErrorBars(filtered.reactions.correct_avg, filtered.reactions.correct_std);
-        let incorrectErrorBars = buildErrorBars(filtered.reactions.incorrect_avg, filtered.reactions.incorrect_std);
+            function updateAllCharts(filtered) {
+                // Store error bar values for each assessment date
+                let reactionErrorBars = buildErrorBars(filtered.reactions.average, filtered.reactions.std);
+                let correctErrorBars = buildErrorBars(filtered.reactions.correct_avg, filtered.reactions.correct_std);
+                let incorrectErrorBars = buildErrorBars(filtered.reactions.incorrect_avg, filtered.reactions.incorrect_std);
 
-        let reactionStem = buildStem(reactionErrorBars);
-        let correctStem = buildStem(correctErrorBars);
-        let incorrectStem = buildStem(incorrectErrorBars);
+                let reactionStem = buildStem(reactionErrorBars);
+                let correctStem = buildStem(correctErrorBars);
+                let incorrectStem = buildStem(incorrectErrorBars);
 
-        // score chart
-        charts.score.data.datasets[0].data = filtered.scores;
-        applyThemeToChart(charts.score)
-        charts.score.update();
+                // score chart
+                charts.score.data.datasets[0].data = filtered.scores;
+                applyThemeToChart(charts.score)
+                charts.score.update();
 
-        // reactionChart chart
-        charts.reaction.data.datasets[0].data = reactionErrorBars.min;
-        charts.reaction.data.datasets[1].data = reactionErrorBars.median;
-        charts.reaction.data.datasets[2].data = reactionErrorBars.max;
-        charts.reaction.data.datasets[3].data = filtered.reactions.average;
-        charts.reaction.data.datasets[4].data = filtered.reactions.correct_points;
-        charts.reaction.data.datasets[5].data = filtered.reactions.incorrect_points;
-        charts.reaction.config.plugins = [createVerticalStemPlugin(reactionStem)];
-        applyThemeToChart(charts.reaction, reactionStem);
-        charts.reaction.update();
+                // reactionChart chart
+                charts.reaction.data.datasets[0].data = reactionErrorBars.min;
+                charts.reaction.data.datasets[1].data = reactionErrorBars.median;
+                charts.reaction.data.datasets[2].data = reactionErrorBars.max;
+                charts.reaction.data.datasets[3].data = filtered.reactions.average;
+                charts.reaction.data.datasets[4].data = filtered.reactions.correct_points;
+                charts.reaction.data.datasets[5].data = filtered.reactions.incorrect_points;
+                charts.reaction.config.plugins = [createVerticalStemPlugin(reactionStem)];
+                applyThemeToChart(charts.reaction, reactionStem);
+                charts.reaction.update();
 
-        // correct chart
-        charts.correct.data.datasets[0].data = correctErrorBars.min;
-        charts.correct.data.datasets[1].data = correctErrorBars.median;
-        charts.correct.data.datasets[2].data = correctErrorBars.max;
-        charts.correct.data.datasets[3].data = filtered.reactions.correct_avg;
-        charts.correct.data.datasets[4].data = filtered.reactions.correct_points;
-        charts.correct.config.plugins = [createVerticalStemPlugin(correctStem)];
-        applyThemeToChart(charts.correct, correctStem);
-        charts.correct.update();
+                // correct chart
+                charts.correct.data.datasets[0].data = correctErrorBars.min;
+                charts.correct.data.datasets[1].data = correctErrorBars.median;
+                charts.correct.data.datasets[2].data = correctErrorBars.max;
+                charts.correct.data.datasets[3].data = filtered.reactions.correct_avg;
+                charts.correct.data.datasets[4].data = filtered.reactions.correct_points;
+                charts.correct.config.plugins = [createVerticalStemPlugin(correctStem)];
+                applyThemeToChart(charts.correct, correctStem);
+                charts.correct.update();
 
-        // incorrect chart
-        charts.incorrect.data.datasets[0].data = incorrectErrorBars.min;
-        charts.incorrect.data.datasets[1].data = incorrectErrorBars.median;
-        charts.incorrect.data.datasets[2].data = incorrectErrorBars.max;
-        charts.incorrect.data.datasets[3].data = filtered.reactions.incorrect_avg;
-        charts.incorrect.data.datasets[4].data = filtered.reactions.incorrect_points;
-        charts.incorrect.config.plugins = [createVerticalStemPlugin(incorrectStem)];
-        applyThemeToChart(charts.incorrect, incorrectStem);
-        charts.incorrect.update();
+                // incorrect chart
+                charts.incorrect.data.datasets[0].data = incorrectErrorBars.min;
+                charts.incorrect.data.datasets[1].data = incorrectErrorBars.median;
+                charts.incorrect.data.datasets[2].data = incorrectErrorBars.max;
+                charts.incorrect.data.datasets[3].data = filtered.reactions.incorrect_avg;
+                charts.incorrect.data.datasets[4].data = filtered.reactions.incorrect_points;
+                charts.incorrect.config.plugins = [createVerticalStemPlugin(incorrectStem)];
+                applyThemeToChart(charts.incorrect, incorrectStem);
+                charts.incorrect.update();
 
-    }
+            }
 
-    const buttonText = document.getElementById("difficultyButtonText");
-    document.querySelectorAll('#difficultyDropdown a').forEach(a => {
-        a.addEventListener('click', (e) => {
-            e.preventDefault(); // prevent the scroll up after selecting an option
-            buttonText.textContent = a.textContent; // set the button text value to selected option
-            const filtered = filterByDifficulty(a.textContent);
-            updateAllCharts(filtered);
-        })
-        
-    })
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (!('color-theme' in localStorage)) {
-        Object.values(charts).forEach(chart => {
-            const stemData = chart === reactionChart ? reactionStem :
-                             chart === correctReactionChart ? correctStem :
-                             chart === incorrectReactionChart ? incorrectStem : null;
-            applyThemeToChart(chart, stemData);
-        });
-    }
-});
+            const buttonText = document.getElementById("difficultyButtonText");
+            document.querySelectorAll('#difficultyDropdown a').forEach(a => {
+                a.addEventListener('click', (e) => {
+                    e.preventDefault(); // prevent the scroll up after selecting an option
+                    buttonText.textContent = a.textContent; // set the button text value to selected option
+                    const filtered = filterByDifficulty(a.textContent);
+                    updateAllCharts(filtered);
+                })
 
-</script>
+            })
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                if (!('color-theme' in localStorage)) {
+                    Object.values(charts).forEach(chart => {
+                        const stemData = chart === reactionChart ? reactionStem :
+                            chart === correctReactionChart ? correctStem :
+                                chart === incorrectReactionChart ? incorrectStem : null;
+                        applyThemeToChart(chart, stemData);
+                    });
+                }
+            });
+
+        </script>
 {% endblock %}

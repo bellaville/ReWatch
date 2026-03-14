@@ -107,6 +107,10 @@ def patient_details():
         if patient_role:
             # Get all users that have this role
             patients = physician_profile.patients
+            # Get patient assessments
+            patient_assessments = []
+            for p in patients:
+                patient_assessments += p.assessments
         else:
             patients = []
 
@@ -120,7 +124,7 @@ def patient_details():
 
             return render_template('specific_patient.html', name=patient_name, results=results, chart_data=chart_data, age=age, gender=gender, height=height, weight=weight)
         
-        return render_template('patient_details.html', patients=patients)
+        return render_template('patient_details.html', patients=patients, patient_assessments=patient_assessments)
     
     # If patient, redirect to specific patient page
     if current_user.patient_profile:
