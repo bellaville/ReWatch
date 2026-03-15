@@ -18,4 +18,7 @@ interface SendAccelerometerData {
 
     @POST("/assessments/memory_test/time/request_future")
     suspend fun obtainFutureTiming(@Body averageTimingDelay: AverageTimingDelay): Response<AverageTimingDelay>
+
+    @POST("/imu_testing/upload")
+    suspend fun uploadTestSensorData(@Body data: SensorDTO): Response<Unit>
 }
