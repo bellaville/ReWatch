@@ -37,6 +37,7 @@ def display():
 
         # Get correct location and plot
         ax = axs[i // 4][i % 4]
+        ax.set_ylabel("Acceleration (m/s²)")
         df.plot('timestamp', ['x', 'y', 'z', 'norm'], ax=ax, title=title)
 
     plt.show()
