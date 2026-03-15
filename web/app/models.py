@@ -189,7 +189,7 @@ class PatientAssessment(db.Model):
         # If exists, simply return
         if self.test_start > datetime.now():
             timeval = (self.test_start - datetime.now())
-            return round(timeval.total_seconds() * 1000 +  timeval.microseconds / 1000)
+            return round(timeval.total_seconds() * 1000)        
         
         # Create future start time
         session = Session.object_session(self)
@@ -201,7 +201,7 @@ class PatientAssessment(db.Model):
 
         # Submit time difference between now and test start
         timeval = (self.test_start - datetime.now())
-        return round(timeval.total_seconds() * 1000 +  timeval.microseconds / 1000)
+        return round(timeval.total_seconds() * 1000)
 
 
 class AssessmentStageData(db.Model):

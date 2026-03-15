@@ -172,9 +172,7 @@
             handshakes[i] = performance.now() + (await handshakeTiming.json()).delay;
         }
 
-        handshakes.sort()
-        console.log(avgDelay);
-        console.log(handshakes[2] - performance.now());
+        handshakes.sort((a, b) => a - b)
         return handshakes[2] - performance.now() - avgDelay;
     }
 
