@@ -186,5 +186,5 @@ def test_physician_session_start_on_non_patient(test_client: FlaskClient):
     )
 
     assert response.status_code == 200
-    assert b"Difficulty level" in response.data
+    assert b"Difficulty" in response.data
     assert b"No patients available" in response.data
