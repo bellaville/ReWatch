@@ -2,43 +2,65 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/memory_test.css') }}">
 
+<div>
+    {% include 'memory_timeline.html' %}
+    <script>
+        set_completed_steps(2)
+    </script>
+</div>
+
 <div class="container text-center mt-5">
-    <h2>Round {{ round_num }}</h2>
-    <h2>Memorize these shapes:</h2>
-    <div id="memory-shapes-frame" style="display: none">
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+        Round {{ round_num }}
+    </h2>
+    <h3 id="phase-heading" class="text-xl font-semibold text-gray-900 dark:text-white">
+        Memorize These Shapes
+    </h3>
+
+    <!-- Memorization Frame -->
+    <div id="memory-shapes-frame" class="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700" style="display: none">
         {% for shape in memorized_shapes %}
-            <div class="shape {{ shape }}" 
-                style="background-color: {{ memorized_colours[loop.index0] }};
+        <div class="shape {{ shape }}" style="background-color: {{ memorized_colours[loop.index0] }};
                 top: {{ memorized_positions[loop.index0].top }}px;
                 left: {{ memorized_positions[loop.index0].left }}px;">
-            </div>
+        </div>
         {% endfor %}
     </div>
+
+    <!-- Test Frame -->
     <div id="test-frame" style="display: none">
-        <div id="test-shapes-frame">
+        <div id="test-shapes-frame" class="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
             {% for shape in test_shapes %}
-                <div class="shape {{ shape }}" 
-                    style="background-color: {{ test_colours[loop.index0] }};
+            <div class="shape {{ shape }}" style="background-color: {{ test_colours[loop.index0] }};
                     top: {{ test_positions[loop.index0].top }}px;
                     left: {{ test_positions[loop.index0].left }}px;">
-                </div>
+            </div>
             {% endfor %}
         </div>
-        <form method="POST" action="{{ url_for('memory_test.memory_test_view') }}">
-            <input type="hidden" name="reaction_time" id="reaction_time">
-            <button type="submit" name="choice" value="Same" class="btn btn-success btn-lg">Same</button>
-            <button type="submit" name="choice" value="Different" class="btn btn-danger btn-lg">Different</button>
-        </form>
     </div>
-</div>
+
+    <!-- https://tailwindcss.com/docs/gradient-color-stops -->
+    <div id="zone-different" class="fixed top-0 left-0 w-1/2 h-full bg-gradient-to-r from-primary-500/30 to-transparent flex items-center justify-center pl-4 z-10 hidden pointer-events-none">
+        <span class="absolute left-[30%] -translate-x-1/2 text-primary-500 dark:text-primary-100 text-3xl font-bold uppercase">Different</span>
+    </div>
+    
+    <div id="zone-same" class="fixed top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary-950/30 to-transparent flex items-center justify-center pr-4 z-10 hidden pointer-events-none">
+        <span class="absolute right-[20%] -translate-x-1/2 text-primary-950 dark:text-primary-1000 text-3xl font-bold uppercase">Same</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('memory_test.memory_test_view') }}" id="choice-form">
+        <input type="hidden" name="reaction_time" id="reaction_time">
+        <input type="hidden" name="choice" id="choice-input">
+    </form>
+
 
 <script>
     // Handle leaving via back button
     // Replace current history entry with a custom state object, {page:1}
     // so the page exists in the stack
-    history.replaceState({page:1}, null, location.href);
+    history.replaceState({ page: 1 }, null, location.href);
     // Push a dummy state {page:2} on top so the back button triggers popstate
-    history.pushState({page:2}, null, location.href);
+    history.pushState({ page: 2 }, null, location.href);
 
     window.addEventListener('popstate', function (event) {
         const goBack = confirm("Warning: your progress will be lost if you go back. Do you wish to continue?");
@@ -47,9 +69,33 @@
             window.location.href = "{{ url_for('main.assessments') }}";
         } else {
             // User cancelled: push dummy state again to block back navigation
-            history.pushState({page:2}, null, location.href);
+            history.pushState({ page: 2 }, null, location.href);
         }
     })
+    
+    // Check which half of the screen was clicked
+    function getScreenHalf(posX){
+        const screenWidth = window.innerWidth;
+        return posX < screenWidth / 2 ? 'Different': 'Same'
+    }
+
+    function handleChoiceInteraction(event){
+        const testFrame = document.getElementById('test-frame');
+
+        // Only respond when the test frame is available
+        if (testFrame.style.display === 'none') return;
+
+        const posX = event.clientX;
+        const choice = getScreenHalf(posX);
+        if (startTime !== null) {
+            const reactionTime = performance.now() - startTime;
+            document.getElementById("reaction_time").value = reactionTime.toFixed(2);
+        }
+        // Sumbit the selected choice
+        document.getElementById("choice-input").value = choice;
+        document.getElementById("choice-form").submit();
+        
+    }
 
     function calculateAverageTimingDelay(watchTimingCalibration) {
         const t1 = watchTimingCalibration.timing1;
@@ -72,15 +118,15 @@
             var start = performance.now();
             var watchTimingCalibration = await fetch(
                 "/assessments/memory_test/time/sync", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        join_code: "{{ join_code }}",
-                        device: "browser"
-                    })
-                }
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    join_code: "{{ join_code }}",
+                    device: "browser"
+                })
+            }
             )
             var end = performance.now();
             var watchTimingCalibration = await watchTimingCalibration.json();
@@ -97,6 +143,20 @@
         for (var i = 0; i < 5; i++) {
             var handshakeTiming = await fetch(
                 "/assessments/memory_test/time/request_future", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    join_code: "{{ join_code }}",
+                    delay: avgDelay
+                })
+            }
+            )
+            while (handshakeTiming.status == 206) {
+                await sleep(1000);
+                handshakeTiming = await fetch(
+                    "/assessments/memory_test/time/request_future", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -106,29 +166,13 @@
                         delay: avgDelay
                     })
                 }
-            )
-            while (handshakeTiming.status == 206) {
-                await sleep(1000);
-                handshakeTiming = await fetch(
-                    "/assessments/memory_test/time/request_future", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            join_code: "{{ join_code }}",
-                            delay: avgDelay
-                        })
-                    }
                 )
             }
 
             handshakes[i] = performance.now() + (await handshakeTiming.json()).delay;
         }
 
-        handshakes.sort()
-        console.log(avgDelay);
-        console.log(handshakes[2] - performance.now());
+        handshakes.sort((a, b) => a - b)
         return handshakes[2] - performance.now() - avgDelay;
     }
 
@@ -137,13 +181,18 @@
         console.log(handshakedTime);
         time_to_show = handshakedTime - {{ memorization_time * 1000 }};
         // redirect to comparison phase after customized seconds
-        setTimeout(function() {
+        setTimeout(function () {
             document.getElementById("memory-shapes-frame").style.display = "block";
-        }, time_to_show); 
+        }, time_to_show);
         // redirect to comparison phase after customized seconds
-        setTimeout(function() {
+        setTimeout(function () {
             document.getElementById("memory-shapes-frame").style.display = "none";
             document.getElementById("test-frame").style.display = "block";
+
+            document.getElementById("zone-different").classList.remove("hidden");
+            document.getElementById("zone-same").classList.remove("hidden");
+            document.getElementById("phase-heading").textContent = "Are These The Same Shapes?"
+
             requestAnimationFrame(startTimer);
         }, handshakedTime); 
     }
@@ -151,23 +200,13 @@
     // Capture more accurate reaction time using performance.now() and requestAnimationFrame
     let startTime = null;
 
-    function startTimer(timestamp){
+    function startTimer(timestamp) {
         // timestamp will be provided by requestAnimationFrame
         startTime = timestamp;
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-        const choiceButtons = document.querySelectorAll("button[name='choice']");
-
-        if (choiceButtons.length == 0) return;        
-        choiceButtons.forEach(button => { 
-            button.addEventListener("pointerdown", () => {
-                if (startTime !== null) {
-                    const reactionTime = performance.now() - startTime;
-                    document.getElementById("reaction_time").value = reactionTime.toFixed(2);
-                }
-            })
-        })
+        document.addEventListener('pointerdown', handleChoiceInteraction);
     });
 
     do_sync()

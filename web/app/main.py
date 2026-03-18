@@ -107,6 +107,10 @@ def patient_details():
         if patient_role:
             # Get all users that have this role
             patients = physician_profile.patients
+            # Get patient assessments
+            patient_assessments = []
+            for p in patients:
+                patient_assessments += p.assessments
         else:
             patients = []
 
@@ -120,7 +124,7 @@ def patient_details():
 
             return render_template('specific_patient.html', name=patient_name, results=results, chart_data=chart_data, age=age, gender=gender, height=height, weight=weight)
         
-        return render_template('patient_details.html', patients=patients)
+        return render_template('patient_details.html', patients=patients, patient_assessments=patient_assessments)
     
     # If patient, redirect to specific patient page
     if current_user.patient_profile:
@@ -157,28 +161,29 @@ def all_patients():
     else:
         return render_template('403.html')
 
-@main.route('/assessments', methods=['GET', 'POST'])
+@main.route('/assessments', methods=['GET'])
 @login_required
 def assessments():
     selected_patient_id = None
+    selected_patient_name = None
     results = []
 
     if current_user.has_role('Physician'):
         # Get all patients assigned to this physician
         patients = [p.user for p in current_user.physician_profile.patients if p.user is not None and p.user.patient_profile is not None]
 
-        # If physician selects a patient
-        if request.method == 'POST':
-            selected_patient_id = request.form.get('patient_id')
-            if selected_patient_id:
-                selected_patient_id = int(selected_patient_id)
-                session['selected_patient_id'] = selected_patient_id
-        else:
-            # use session if already set
-            selected_patient_id = session.get('selected_patient_id')
+        # Get the paitent id from URL query string
+        selected_patient_id = request.args.get('patient_id', type=int)
 
-        # Fetch assessments for the selected patient
         if selected_patient_id:
+            # Extract the patient profile ids from the physician's assigned patients
+            assigned_ids = [p.patient_profile.id for p in patients]
+            # Block access if requested patient is not assigned to this physician
+            if selected_patient_id not in assigned_ids:
+                return render_template('403.html'), 403
+            
+            selected_patient_name = next(p.name for p in patients if p.patient_profile.id == selected_patient_id)
+
             results = PatientAssessment.query.filter_by(patient_id=selected_patient_id)\
                                              .order_by(PatientAssessment.date_taken.desc()).all()
 
@@ -186,7 +191,8 @@ def assessments():
             'assessments.html',
             results=results,
             patients=patients,
-            selected_patient_id=selected_patient_id
+            selected_patient_id=selected_patient_id,
+            selected_patient_name=selected_patient_name
         )
 
     # If a patient is logged in, show their own assessments

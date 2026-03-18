@@ -10,12 +10,12 @@ memory_test = Blueprint('memory_test', __name__)
 # SHORT TERM MEMORY TEST #
 ##########################
 SHAPES = ['circle', 'square', 'triangle', 'star', 'trapezoid', 'pentagon', 'hexagon']
-COLOUR_LIST = ['blue', 'red', 'green', 'yellow', 'purple', 'orange', 'pink']
+COLOUR_LIST = ['blue', 'red', 'green', 'gold', 'purple', 'orange', 'pink']
 DEFAULT_COLOURS = {
     'circle': 'blue',
     'square': 'red',
     'triangle': 'green',
-    'star': 'yellow',
+    'star': 'gold',
     'trapezoid': 'purple',
     'pentagon': 'pink',
     'hexagon': 'orange'
@@ -365,10 +365,11 @@ def memory_result():
 
     assessment.avg_reaction_time = avg_reaction
     assessment.reaction_records = reaction_records
+    assessment.memory_accuracy = (assessment.score/assessment.total_rounds)*100
 
     assessment.increment_step()
 
-    return render_template('memory_result.html', score=assessment.score, avg_reaction=avg_reaction, total_rounds=assessment.total_rounds)
+    return render_template('memory_result.html', score=assessment.score, avg_reaction=avg_reaction, total_rounds=assessment.total_rounds, memory_accuracy=assessment.memory_accuracy)
 
 ######################
 # CUSTOMIZATION PAGE #
@@ -383,7 +384,7 @@ def memory_test_customization():
     defaults = {
         'num_shapes': 3,
         'memorization_time': 5,
-        'difficulty': "easy",
+        'difficulty': "Easy",
         'num_rounds': 5
     }
 

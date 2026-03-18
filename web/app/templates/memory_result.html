@@ -1,14 +1,39 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="container text-center mt-5">
-  <h2>Test Completed</h2>
-  <p><strong>Score:</strong> {{ score }}/{{ total_rounds }}</p>
-  <p><strong>Average Reaction Time:</strong> {{ avg_reaction | round(2) }}ms</p>
-
-  <a href="{{ url_for('main.assessments') }}" class="btn btn-primary mt-3">
-    Back to Assessments
-  </a>
+<div>
+    {% include 'memory_timeline.html' %}
+    <script>
+        set_completed_steps(4)
+    </script>
 </div>
+<div class="container mx-auto px-4 py-10 text-center">
+  <h2 class="text-3xl font-bold text-heading mb-6">
+    Memory Test Results
+  </h2>
+
+  <div class="flex flex-col gap-6 items-center"> 
+    <a href="#" class="block w-full max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 pointer-events-none">
+      <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Memory Score</h5>
+      <p class="font-medium text-lg text-gray-700 dark:text-gray-400">{{ score }}/{{ total_rounds }}</p>
+    </a>
+
+    <a href="#" class="block w-full max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 pointer-events-none">
+      <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Memory Accuracy</h5>
+      <p class="font-medium text-lg text-gray-700 dark:text-gray-400">{{memory_accuracy | round(2) }}%</p>
+    </a>
+
+    <a href="#" class="block w-full max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 pointer-events-none">
+      <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Average Reaction Time</h5>
+      <p class="font-medium text-lg text-gray-700 dark:text-gray-400">{{ avg_reaction | round(2) }} ms</p>
+    </a>
+  </div>
+
+  <div class="mt-10">
+    <a href="{{ url_for('main.assessments') }}" class="inline-flex items-center text-black dark:text-white bg-primary-950 hover:bg-primary-900 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:focus:ring-primary-900
+    ">Back to Assessments</a>
+  </div>
+</div>
+
 <script>
   // Handle leaving via back button
   // Replace current entry with results page state
@@ -21,4 +46,5 @@
       window.location.href = "{{ url_for('main.assessments') }}";
   });
 </script>
+
 {% endblock %}

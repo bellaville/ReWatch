@@ -1,0 +1,183 @@
+{% block content %}
+<!-- ADAPTED FROM: https://readymadeui.com/tailwind-components/stepper -->
+<div class="flex items-start max-md:flex-col gap-y-6 gap-x-4 max-w-screen-xl mx-auto px-4 mt-4">
+    <div class="w-full" id="watch_pair_step">
+        <div class="w-full h-1 rounded-xl bg-gray-300"></div>
+        <div class="mt-2 mr-4 flex">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="shrink-0 fill-gray-300"
+                viewBox="0 0 24 24">
+                <g transform="matrix(1.16 0 0 1.16 -1.92 -1.92)">
+                    <clipPath id="a">
+                        <path d="M0 0h24v24H0z" data-original="#000000" />
+                    </clipPath>
+                    <g clip-path="url(#a)">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"
+                            data-original="#000000" />
+                        <path
+                            d="M7 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
+                            data-original="#000000" />
+                    </g>
+                </g>
+            </svg>
+            <div class="ml-2">
+                <h6 class="text-sm font-semibold text-gray-400">Pair Watch</h6>
+                <p class="text-xs font-medium text-gray-400">Pending</p>
+            </div>
+        </div>
+    </div>
+    <div class="w-full" id="watch_calibration_step">
+        <div class="w-full h-1 rounded-xl bg-gray-300"></div>
+        <div class="mt-2 mr-4 flex">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="shrink-0 fill-gray-300"
+                viewBox="0 0 24 24">
+                <g transform="matrix(1.16 0 0 1.16 -1.92 -1.92)">
+                    <clipPath id="a">
+                        <path d="M0 0h24v24H0z" data-original="#000000" />
+                    </clipPath>
+                    <g clip-path="url(#a)">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"
+                            data-original="#000000" />
+                        <path
+                            d="M7 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
+                            data-original="#000000" />
+                    </g>
+                </g>
+            </svg>
+            <div class="ml-2">
+                <h6 class="text-sm font-semibold text-gray-400">Begin Calibration</h6>
+                <p class="text-xs font-medium text-gray-400">Pending</p>
+            </div>
+        </div>
+    </div>
+    <div class="w-full" id="watch_calibration_complete">
+        <div class="w-full h-1 rounded-xl bg-gray-300"></div>
+        <div class="mt-2 mr-4 flex">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="shrink-0 fill-gray-300"
+                viewBox="0 0 24 24">
+                <g transform="matrix(1.16 0 0 1.16 -1.92 -1.92)">
+                    <clipPath id="a">
+                        <path d="M0 0h24v24H0z" data-original="#000000" />
+                    </clipPath>
+                    <g clip-path="url(#a)">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"
+                            data-original="#000000" />
+                        <path
+                            d="M7 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
+                            data-original="#000000" />
+                    </g>
+                </g>
+            </svg>
+            <div class="ml-2">
+                <h6 class="text-sm font-semibold text-gray-400">Calibration Complete</h6>
+                <p class="text-xs font-medium text-gray-400">Pending</p>
+            </div>
+        </div>
+    </div>
+    <div class="w-full" id="reaction_time_complete">
+        <div class="w-full h-1 rounded-xl bg-gray-300"></div>
+        <div class="mt-2 mr-4 flex">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="shrink-0 fill-gray-300"
+                viewBox="0 0 24 24">
+                <g transform="matrix(1.16 0 0 1.16 -1.92 -1.92)">
+                    <clipPath id="a">
+                        <path d="M0 0h24v24H0z" data-original="#000000" />
+                    </clipPath>
+                    <g clip-path="url(#a)">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"
+                            data-original="#000000" />
+                        <path
+                            d="M7 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
+                            data-original="#000000" />
+                    </g>
+                </g>
+            </svg>
+            <div class="ml-2">
+                <h6 class="text-sm font-semibold text-gray-400">Reaction Time</h6>
+                <p class="text-xs font-medium text-gray-400">Pending</p>
+            </div>
+        </div>
+    </div>
+    <div class="w-full" id="assessment_complete">
+        <div class="w-full h-1 rounded-xl bg-gray-300"></div>
+        <div class="mt-2 mr-4 flex">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" class="shrink-0 fill-gray-300"
+                viewBox="0 0 24 24">
+                <g transform="matrix(1.16 0 0 1.16 -1.92 -1.92)">
+                    <clipPath id="a">
+                        <path d="M0 0h24v24H0z" data-original="#000000" />
+                    </clipPath>
+                    <g clip-path="url(#a)">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"
+                            data-original="#000000" />
+                        <path
+                            d="M7 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
+                            data-original="#000000" />
+                    </g>
+                </g>
+            </svg>
+            <div class="ml-2">
+                <h6 class="text-sm font-semibold text-gray-400">Finished</h6>
+                <p class="text-xs font-medium text-gray-400">Pending</p>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    STEP_IDS = [
+        "watch_pair_step",
+        "watch_calibration_step",
+        "watch_calibration_complete",
+        "reaction_time_complete",
+        "assessment_complete"
+    ]
+
+    SUCCESS_SVG = `<switch>
+        <g>
+            <g>
+                <path
+                    d="M9.7 11.3c-.4-.4-1-.4-1.4 0s-.4 1 0 1.4l3 3c.2.2.4.3.7.3s.5-.1.7-.3l7-8c.3-.5.3-1.1-.2-1.4-.4-.3-1-.3-1.3.1L12 13.5z" />
+                <path
+                    d="M21 11c-.6 0-1 .4-1 1 0 4.4-3.6 8-8 8s-8-3.6-8-8c0-2.1.8-4.1 2.3-5.6C7.8 4.8 9.8 4 12 4c.6 0 1.3.1 1.9.2.5.2 1.1-.1 1.3-.7s-.2-1-.7-1.2h-.1c-.8-.2-1.6-.3-2.4-.3C6.5 2 2 6.5 2 12.1c0 2.6 1.1 5.2 2.9 7 1.9 1.9 4.4 2.9 7 2.9 5.5 0 10-4.5 10-10 .1-.6-.4-1-.9-1z" />
+            </g>
+        </g>
+    </switch>`
+    PENDING_SVG = `<g transform="matrix(1.16 0 0 1.16 -1.92 -1.92)">
+        <clipPath id="a">
+            <path d="M0 0h24v24H0z" data-original="#000000" />
+        </clipPath>
+        <g clip-path="url(#a)">
+            <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"
+                data-original="#000000" />
+            <path
+                d="M7 13.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm5 0a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
+                data-original="#000000" />
+        </g>
+    </g>`
+
+    function set_completed_steps(index) {
+        for (i = 0; i <= index; i++) {
+            var step = document.getElementById(STEP_IDS[i]);
+            console.log(step);
+            step.firstElementChild.classList.remove("bg-gray-300");
+            step.firstElementChild.classList.add("bg-orange-500");
+            var svg = step.querySelector("svg");
+            svg.classList.remove("fill-gray-300");
+            svg.classList.add("fill-orange-500");
+            svg.innerHTML = SUCCESS_SVG;
+            var heading = step.querySelector("h6");
+            heading.classList.remove("text-gray-400");
+            heading.classList.add("text-orange-500");
+            var description = step.querySelector("p");
+            description.classList.remove("text-gray-400");
+            description.classList.add("text-orange-500");
+            description.textContent = "Completed";
+        }
+    }
+</script>
+{% endblock %}
