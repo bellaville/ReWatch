@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from datetime import datetime
 from app.decorators import roles_required
 from app.models import Role, PatientAssessment, Patient, User, Physician
-from app.utilities.utils import get_patient_assessment_data, get_patient_information
+from app.utilities.utils import get_patient_assessment_data, get_patient_information, get_gait_zero_crossing
 from app.db import db
 
 main = Blueprint('main', __name__)
@@ -144,7 +144,9 @@ def gait_data():
     assessment_id = request.args.get('assessment_id', type=int)
     name = request.args.get('name', type=str)
     assessment = PatientAssessment.query.filter_by(id=assessment_id).first()
-    return render_template('gait_data.html', assessment=assessment, name=name)
+    gait_analysis = get_gait_zero_crossing(assessment_id)
+
+    return render_template('gait_data.html', assessment=assessment, name=name, gait_analysis=gait_analysis)
 
 
 @main.route('/all_patients', methods=['GET', 'POST'])
