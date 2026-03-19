@@ -137,7 +137,18 @@ def patient_details():
 
         return render_template('specific_patient.html', name=current_user.name, results=results, chart_data=chart_data, age=age, height=height, gender=gender, weight=weight)
 
+@main.route('/gait_data')
+@login_required
+@roles_required('Physician')
+def gait_data():
+    assessment_id = request.args.get('assessment_id', type=int)
+    name = request.args.get('name', type=str)
+    assessment = PatientAssessment.query.filter_by(id=assessment_id).first()
+    return render_template('gait_data.html', assessment=assessment, name=name)
+
+
 @main.route('/all_patients', methods=['GET', 'POST'])
+@login_required
 @roles_required('Physician')
 def all_patients():
     if current_user.has_role('Physician'):
