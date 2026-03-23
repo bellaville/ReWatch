@@ -19,23 +19,11 @@
 
     <!-- Memorization Frame -->
     <div id="memory-shapes-frame" class="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700" style="display: none">
-        {% for shape in memorized_shapes %}
-        <div class="shape {{ shape }}" style="background-color: {{ memorized_colours[loop.index0] }};
-                top: {{ memorized_positions[loop.index0].top }}px;
-                left: {{ memorized_positions[loop.index0].left }}px;">
-        </div>
-        {% endfor %}
     </div>
 
     <!-- Test Frame -->
     <div id="test-frame" style="display: none">
         <div id="test-shapes-frame" class="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-            {% for shape in test_shapes %}
-            <div class="shape {{ shape }}" style="background-color: {{ test_colours[loop.index0] }};
-                    top: {{ test_positions[loop.index0].top }}px;
-                    left: {{ test_positions[loop.index0].left }}px;">
-            </div>
-            {% endfor %}
         </div>
     </div>
 
@@ -55,6 +43,73 @@
 
 
 <script>
+    const memorizedShapes = {{ memorized_shapes | tojson }};
+    const memorizedColours = {{ memorized_colours | tojson }};
+    const testShapes = {{ test_shapes | tojson }};
+    const testColours = {{ test_colours | tojson }};
+
+    const shapeSizes = {
+        circle: [50, 50], square: [50, 50], triangle: [50, 50], star: [50, 50],
+        trapezoid: [60, 50], pentagon: [60, 60], hexagon: [60, 60]
+    };
+
+    const memFrame = document.getElementById('memory-shapes-frame');
+    memFrame.style.visibility = 'hidden'; // make sure that the memory test frame is hidden
+    memFrame.style.display = 'block'; // overrides display:none so the frame has a renderable width to measure
+    const FRAME_PADDING = 24; // p-6 = 24px on each side
+    // https://www.digitalocean.com/community/tutorials/js-getboundingclientrect
+    const FRAME_SIZE = memFrame.getBoundingClientRect().width - (FRAME_PADDING * 2);
+    memFrame.style.display = 'none'; // hide the frame again until do_sync() reveals it at the right time
+    memFrame.style.visibility = 'visible'; // reset visibility so it shows correctly when display:block is set later in do_sync()
+
+    function generatePositions(shapes, frameSize) {
+        const positions = [];
+
+        for (const shape of shapes) {
+            const [width, height] = shapeSizes[shape] || [50, 50];
+            let placed = false;
+
+            for (let attempt = 0; attempt < 100; attempt++) {
+                const top = Math.random() * (frameSize - height);
+                const left = Math.random() * (frameSize - width);
+                const newRect = [top, left, top + height, left + width];
+
+                const overlap = positions.some(r =>
+                    !(newRect[2] <= r[0] || newRect[0] >= r[2] || newRect[3] <= r[1] || newRect[1] >= r[3])
+                );
+
+                if (!overlap) {
+                    positions.push(newRect);
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) positions.push([0, 0, height, width]);
+        }
+
+        return positions.map(r => ({ top: r[0], left: r[1] }));
+    }
+
+    function renderShapes(shapes, colours, positions, frameId) {
+        const frame = document.getElementById(frameId);
+        shapes.forEach((shape, i) => {
+            const div = document.createElement('div');
+            div.className = `shape ${shape}`;
+            div.style.backgroundColor = colours[i];
+            div.style.top = `${positions[i].top}px`;
+            div.style.left = `${positions[i].left}px`;
+            frame.appendChild(div);
+        });
+    }
+
+    function initShapes() {
+        const memorizedPositions = generatePositions(memorizedShapes, FRAME_SIZE);
+        const testPositions = generatePositions(testShapes, FRAME_SIZE);
+
+        renderShapes(memorizedShapes, memorizedColours, memorizedPositions, 'memory-shapes-frame');
+        renderShapes(testShapes, testColours, testPositions, 'test-shapes-frame');
+    }
+
     // Handle leaving via back button
     // Replace current history entry with a custom state object, {page:1}
     // so the page exists in the stack
@@ -207,6 +262,7 @@
 
     window.addEventListener("DOMContentLoaded", () => {
         document.addEventListener('pointerdown', handleChoiceInteraction);
+        initShapes();
     });
 
     do_sync()
