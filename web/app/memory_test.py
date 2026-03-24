@@ -387,3 +387,46 @@ def confirm_memory_test_configuration():
     session['join_code'] = assessment.join_code
     
     return redirect(url_for('memory_test.connect_watch_page')) 
+
+#################
+# PRACTICE TEST #
+#################
+@memory_test.route('/practice')
+@login_required
+def practice_memory_test():
+    """
+    Practice memory test with no watch dependency, no DB saving, and using default settings
+    """
+    memorized_shapes = random.sample(SHAPES, 3) # default 3 shapes
+    memorized_colours = [DEFAULT_COLOURS[shapes] for shapes in memorized_shapes]
+
+    if random.random() < 0.5:
+        test_shapes = memorized_shapes
+        test_colours = memorized_colours
+        session['practice_correct'] = "Same"
+    else:
+        test_shapes = random.sample(SHAPES, 3)
+        test_colours = [DEFAULT_COLOURS[shapes] for shapes in test_shapes]
+        session['practice_correct'] = "Different"
+
+    return render_template('memory_practice.html',
+                           memorized_shapes = memorized_shapes,
+                           memorized_colours=memorized_colours,
+                           test_shapes=test_shapes,
+                           test_colours=test_colours,
+                           memorization_time=5)
+
+@memory_test.route('/practice/response', methods=['POST'])
+@login_required
+def practice_response():
+    """
+    Handles the practice round responses, just shows the results, no DB saving
+    """
+    choice = request.form.get('choice')
+    correct = session.get('practice_correct')
+    was_correct = choice == correct
+
+    return render_template('memory_practice_result.html',
+                           was_correct=was_correct,
+                           correct_answer = correct)
+                           
