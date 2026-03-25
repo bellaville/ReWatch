@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, render_template, request, session, redirec
 from flask_login import login_required, current_user
 from datetime import datetime
 from app.decorators import roles_required
-from app.models import Role, PatientAssessment, Patient, User, Physician
+from app.models import Role, PatientAssessment, Patient, User, Physician, ZeroCrossingAnalysis
 from app.utilities.utils import get_patient_assessment_data, get_patient_information, get_gait_zero_crossing
 from app.db import db
 
@@ -144,9 +144,17 @@ def gait_data():
     assessment_id = request.args.get('assessment_id', type=int)
     name = request.args.get('name', type=str)
     assessment = PatientAssessment.query.filter_by(id=assessment_id).first()
+    date = assessment.date_taken.strftime('%d-%m-%Y')
     gait_analysis = get_gait_zero_crossing(assessment_id)
 
-    return render_template('gait_data.html', assessment=assessment, name=name, gait_analysis=gait_analysis)
+    sample_analysis = ZeroCrossingAnalysis(
+        avg_peak_distance=145.2,
+        std_dev_peak_distance=8.3,
+        avg_trough_distance=142.7,
+        std_dev_trough_distance=7.9
+    )
+
+    return render_template('gait_data.html', assessment=assessment, date=date, name=name, gait_analysis=sample_analysis)
 
 
 @main.route('/all_patients', methods=['GET', 'POST'])
