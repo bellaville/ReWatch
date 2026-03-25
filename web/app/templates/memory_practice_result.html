@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container text-center mt-5">
+    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+        Practice Results
+    </h2>
+
+    {% if was_correct %}
+    <p class="text-green-500 text-xl font-semibold">Correct!</p>
+    {% else %}
+    <p class="text-red-500 text-xl font-semibold">Incorrect - the answer was {{ correct_answer }}</p>
+    {% endif %}
+
+    <a href="{{ url_for('memory_test.practice_memory_test') }}" 
+       class="mt-4 inline-block px-4 py-2 bg-primary-500 text-white rounded-lg">
+        Try Again
+    </a>
+    <a href="{{ url_for('main.assessments') }}" 
+       class="mt-4 inline-block px-4 py-2 bg-primary-500 text-white rounded-lg">
+        Return
+    </a>
+</div>
+
+{% endblock %}
