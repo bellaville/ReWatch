@@ -292,7 +292,6 @@ class TroughIndex(db.Model):
     analysis_id = db.Column(db.Integer, db.ForeignKey('zerocrossinganalysis.id'))
     index = db.Column(db.Integer)
 
-<<<<<<< memory-test-data-analysis
 class MemoryAnalysis(db.Model):
     __tablename__ = 'memoryanalysis'
     id = db.Column(db.Integer, primary_key=True)
@@ -300,8 +299,6 @@ class MemoryAnalysis(db.Model):
     time_to_move = db.Column(db.Float)
     average_accl_post_threshold = db.Column(db.Float)
     max_accl = db.Column(db.Float)
-=======
-########################################### event listeners ##############################################
 
 # listens for new users and adds patient or physician profile based on user role
 @event.listens_for(Session, "after_flush")
@@ -321,4 +318,3 @@ def create_profiles_for_new_users(session, flush_context):
             if PHYSICIAN_ROLE in role_names and obj.physician_profile is None:
                 physician = Physician(user=obj)
                 session.add(physician)
->>>>>>> master
