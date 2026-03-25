@@ -107,7 +107,6 @@ def test_identify_peaks_celery_integration(test_client: FlaskClient, sample_asse
     WHEN the identify_peaks Celery task is called
     THEN peaks and troughs are correctly identified and stored in the database.
     """
-    print([d.id for d in AssessmentStageData.query.all()])
     identifier = identify_peaks.delay(sample_assessment_stage_data.id)
 
     # Wait for the task to complete
