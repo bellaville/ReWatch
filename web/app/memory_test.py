@@ -20,53 +20,6 @@ DEFAULT_COLOURS = {
     'pentagon': 'pink',
     'hexagon': 'orange'
 }
-# shape sizes (width, height)
-SHAPE_SIZES = {
-    'circle': (50, 50),
-    'square': (50, 50),
-    'triangle': (50, 50),
-    'star': (50, 50),
-    'trapezoid': (60, 50),
-    'pentagon': (60, 60),
-    'hexagon': (60, 60)
-}
-
-#############################
-# RANDOMIZE SHAPE POSITIONS #
-#############################
-def generate_positions(shapes, frame_size=500, max_attempts=100):
-    """Generate random top/left positions for shapes inside the frames
-    and ensure that no shapes overlap each other
-    """
-    positions = []
-
-    for shape in shapes:
-        width, height = SHAPE_SIZES.get(shape, (50,50))
-
-        for attempt in range(max_attempts):
-            top = random.randint(0, frame_size - height)
-            left = random.randint(0, frame_size - width)
-            new_rect = (top, left, top + height, left + width)
-
-            # check overlap
-            overlap = any(
-                not (
-                    new_rect[2] <= existing[0] or  # bottom <= top
-                    new_rect[0] >= existing[2] or  # top >= bottom
-                    new_rect[3] <= existing[1] or  # right <= left
-                    new_rect[1] >= existing[3]     # left >= right
-                )
-                for existing in positions
-            )
-
-            if not overlap:
-                positions.append(new_rect)
-                break
-        else:
-            # fallback if can't find a spot
-            positions.append(new_rect)
-
-    return [{'top': r[0], 'left': r[1]} for r in positions]
 
 ############################
 # HELPER TO GET ASSESSMENT #
@@ -279,9 +232,6 @@ def memory_run_test():
         else:
             # randomize colours for harder difficulty
             memorized_colours.append(random.choice(COLOUR_LIST))
-
-    # generate random positions for the shapes in the test frame
-    memorized_positions = generate_positions(memorized_shapes, frame_size=500)
     
     # Generate test set
     if random.random() < 0.5:
@@ -297,11 +247,8 @@ def memory_run_test():
         ]
         session['correct'] = "Different"
 
-    # generate positions
-    test_positions = generate_positions(test_colours, frame_size=500)
-
-    return render_template('memory_run_test.html', test_shapes=test_shapes, test_colours=test_colours, test_positions=test_positions, 
-                           memorized_shapes=memorized_shapes, memorized_colours=memorized_colours, memorized_positions=memorized_positions, 
+    return render_template('memory_run_test.html', test_shapes=test_shapes, test_colours=test_colours, 
+                           memorized_shapes=memorized_shapes, memorized_colours=memorized_colours, 
                            round_num=session['round'], memorization_time=assessment.memorization_time, join_code=assessment.join_code)
 
 ##################
@@ -440,3 +387,46 @@ def confirm_memory_test_configuration():
     session['join_code'] = assessment.join_code
     
     return redirect(url_for('memory_test.connect_watch_page')) 
+
+#################
+# PRACTICE TEST #
+#################
+@memory_test.route('/practice')
+@login_required
+def practice_memory_test():
+    """
+    Practice memory test with no watch dependency, no DB saving, and using default settings
+    """
+    memorized_shapes = random.sample(SHAPES, 3) # default 3 shapes
+    memorized_colours = [DEFAULT_COLOURS[shapes] for shapes in memorized_shapes]
+
+    if random.random() < 0.5:
+        test_shapes = memorized_shapes
+        test_colours = memorized_colours
+        session['practice_correct'] = "Same"
+    else:
+        test_shapes = random.sample(SHAPES, 3)
+        test_colours = [DEFAULT_COLOURS[shapes] for shapes in test_shapes]
+        session['practice_correct'] = "Different"
+
+    return render_template('memory_practice.html',
+                           memorized_shapes = memorized_shapes,
+                           memorized_colours=memorized_colours,
+                           test_shapes=test_shapes,
+                           test_colours=test_colours,
+                           memorization_time=5)
+
+@memory_test.route('/practice/response', methods=['POST'])
+@login_required
+def practice_response():
+    """
+    Handles the practice round responses, just shows the results, no DB saving
+    """
+    choice = request.form.get('choice')
+    correct = session.get('practice_correct')
+    was_correct = choice == correct
+
+    return render_template('memory_practice_result.html',
+                           was_correct=was_correct,
+                           correct_answer = correct)
+                           

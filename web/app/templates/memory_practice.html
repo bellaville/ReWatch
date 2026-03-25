@@ -2,17 +2,7 @@
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/memory_test.css') }}">
 
-<div>
-    {% include 'memory_timeline.html' %}
-    <script>
-        set_completed_steps(2)
-    </script>
-</div>
-
 <div class="container text-center mt-5">
-    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-        Round {{ round_num }}
-    </h2>
     <h3 id="phase-heading" class="text-xl font-semibold text-gray-900 dark:text-white">
         Memorize These Shapes
     </h3>
@@ -36,7 +26,7 @@
         <span class="absolute right-[20%] -translate-x-1/2 text-primary-950 dark:text-primary-1000 text-3xl font-bold uppercase">Same</span>
     </div>
 
-    <form method="POST" action="{{ url_for('memory_test.memory_test_view') }}" id="choice-form">
+    <form method="POST" action="{{ url_for('memory_test.practice_response') }}" id="choice-form">
         <input type="hidden" name="reaction_time" id="reaction_time">
         <input type="hidden" name="choice" id="choice-input">
     </form>
@@ -152,93 +142,11 @@
         
     }
 
-    function calculateAverageTimingDelay(watchTimingCalibration) {
-        const t1 = watchTimingCalibration.timing1;
-        const t4 = watchTimingCalibration.timing4;
-
-        const t2 = watchTimingCalibration.timing2 / 1e6;
-        const t3 = watchTimingCalibration.timing3 / 1e6;
-
-        return Math.round(((t2 - t1) + (t4 - t3)) / 2);
-    }
-
-    function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    async function timingHandshake() {
-
-        var delays = Array(10)
-        for (var i = 0; i < 10; i++) {
-            var start = performance.now();
-            var watchTimingCalibration = await fetch(
-                "/assessments/memory_test/time/sync", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    join_code: "{{ join_code }}",
-                    device: "browser"
-                })
-            }
-            )
-            var end = performance.now();
-            var watchTimingCalibration = await watchTimingCalibration.json();
-            watchTimingCalibration.timing1 = start;
-            watchTimingCalibration.timing4 = end;
-            console.log(watchTimingCalibration)
-            delays[i] = calculateAverageTimingDelay(watchTimingCalibration);
-            console.log(delays[i])
-        }
-
-        var avgDelay = delays.reduce((a, b) => a + b) / delays.length
-        var handshakes = Array(5)
-
-        for (var i = 0; i < 5; i++) {
-            var handshakeTiming = await fetch(
-                "/assessments/memory_test/time/request_future", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    join_code: "{{ join_code }}",
-                    delay: avgDelay
-                })
-            }
-            )
-            while (handshakeTiming.status == 206) {
-                await sleep(1000);
-                handshakeTiming = await fetch(
-                    "/assessments/memory_test/time/request_future", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        join_code: "{{ join_code }}",
-                        delay: avgDelay
-                    })
-                }
-                )
-            }
-
-            handshakes[i] = performance.now() + (await handshakeTiming.json()).delay;
-        }
-
-        handshakes.sort((a, b) => a - b)
-        return handshakes[2] - performance.now() - avgDelay;
-    }
-
-    async function do_sync() {
-        handshakedTime = await timingHandshake();
-        console.log(handshakedTime);
-        time_to_show = handshakedTime - {{ memorization_time * 1000 }};
-        // redirect to comparison phase after customized seconds
-        setTimeout(function () {
-            document.getElementById("memory-shapes-frame").style.display = "block";
-        }, time_to_show);
+    function startPracticeTest() {
+        const memorizationTime = {{ memorization_time * 1000 }};
+        // show memorization frame
+        document.getElementById("memory-shapes-frame").style.display = "block";
+        
         // redirect to comparison phase after customized seconds
         setTimeout(function () {
             document.getElementById("memory-shapes-frame").style.display = "none";
@@ -247,24 +155,16 @@
             document.getElementById("zone-different").classList.remove("hidden");
             document.getElementById("zone-same").classList.remove("hidden");
             document.getElementById("phase-heading").textContent = "Are These The Same Shapes?"
-
-            requestAnimationFrame(startTimer);
-        }, handshakedTime); 
+            startTime = performance.now();
+        }, memorizationTime); 
     }
 
-    // Capture more accurate reaction time using performance.now() and requestAnimationFrame
-    let startTime = null;
-
-    function startTimer(timestamp) {
-        // timestamp will be provided by requestAnimationFrame
-        startTime = timestamp;
-    }
 
     window.addEventListener("DOMContentLoaded", () => {
         document.addEventListener('pointerdown', handleChoiceInteraction);
         initShapes();
+        startPracticeTest();
     });
 
-    do_sync()
 </script>
 {% endblock %}
