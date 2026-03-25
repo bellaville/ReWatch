@@ -25,6 +25,10 @@
                         </svg>
                     </a>
                 {% endif %}
+                {% if current_user.is_authenticated %}
+                   <h3 class="mb-4 text-3xl tracking-tight font-extrabold text-gray-900 dark:text-white">
+                       Welcome, {{ current_user.name }}</h3>
+                {% endif %}
                 {% if current_user.is_authenticated and current_user.has_role('Physician') %}
                     <a href="{{ url_for('main.patient_details') }}"
                        class="inline-flex items-center text-white dark:text-white bg-primary-950 hover:bg-primary-900 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:focus:ring-primary-900">
@@ -40,7 +44,7 @@
                 {% if current_user.is_authenticated and current_user.has_role('Patient') %}
                     <a href="{{ url_for('main.assessments') }}"
                        class="inline-flex items-center text-white dark:text-white bg-primary-950 hover:bg-primary-900 focus:ring-4 focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:focus:ring-primary-900">
-                        View Assessments
+                        Perform Assessment
                         <svg class="ml-2 -mr-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
                              xmlns="http://www.w3.org/2000/svg">
                             <path fill-rule="evenodd"

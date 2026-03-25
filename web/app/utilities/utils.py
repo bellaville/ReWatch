@@ -1,16 +1,18 @@
-from app.models import PatientAssessment, Patient
+from app.models import PatientAssessment, Patient, ZeroCrossingAnalysis, AssessmentStageData, AssessmentStage
 import statistics
+
 
 def avg_and_std(values):
     if not values:
-        return 0,0
-    
+        return 0, 0
+
     avg = sum(values) / len(values)
     if len(values) > 1:
         std = statistics.stdev(values)
     else:
         std = 0.0
     return avg, std
+
 
 def build_point(date_label, value, difficulty):
     return {
@@ -19,12 +21,13 @@ def build_point(date_label, value, difficulty):
         "difficulty": difficulty
     }
 
+
 def get_patient_assessment_data(patient_id):
     """
     Fetch assessments and prepare chart data for a patient
     """
-    results = PatientAssessment.query.filter_by(patient_id=patient_id)\
-                                         .order_by(PatientAssessment.date_taken.asc()).all()
+    results = PatientAssessment.query.filter_by(patient_id=patient_id) \
+        .order_by(PatientAssessment.date_taken.asc()).all()
 
     # Create the dataset from the memory test for charts in dictionary format
     chart_data = {
@@ -66,7 +69,7 @@ def get_patient_assessment_data(patient_id):
         chart_data["reactions"]["incorrect_std"].append(build_point(date_label, incorrect_std, difficulty))
 
         # memory score
-        score_percent = (assessment.score/assessment.total_rounds)*100
+        score_percent = (assessment.score / assessment.total_rounds) * 100
         chart_data["scores"].append(build_point(date_label, score_percent, difficulty))
 
         # Individual reaction times (many per assessment)
@@ -85,6 +88,7 @@ def get_patient_assessment_data(patient_id):
 
     return results, chart_data
 
+
 def get_patient_information(patient_id):
     patient_age = Patient.query.filter_by(id=patient_id).first().age
     patient_height = Patient.query.filter_by(id=patient_id).first().height
@@ -92,3 +96,24 @@ def get_patient_information(patient_id):
     patient_weight = Patient.query.filter_by(id=patient_id).first().weight
 
     return patient_age, patient_height, patient_gender, patient_weight
+
+
+def get_gait_zero_crossing(patient_assessment_id):
+    gait_analysis = ZeroCrossingAnalysis.query. \
+        join(AssessmentStageData, ZeroCrossingAnalysis.stage_data_id == AssessmentStageData.id). \
+        join(PatientAssessment, AssessmentStageData.assessment_id == PatientAssessment.id). \
+        filter(
+        PatientAssessment.id == patient_assessment_id,
+        AssessmentStageData.stage == AssessmentStage.GAIT
+    ).first()
+
+    if gait_analysis:
+        return {
+            'avg_peak_distance': gait_analysis.avg_peak_distance,
+            'std_dev_peak_distance': gait_analysis.std_dev_peak_distance,
+            'avg_trough_distance': gait_analysis.avg_trough_distance,
+            'std_dev_trough_distance': gait_analysis.std_dev_trough_distance,
+            'num_peaks': len(gait_analysis.peak_indices),
+            'num_troughs': len(gait_analysis.trough_indices)
+        }
+    return None

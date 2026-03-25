@@ -3,8 +3,8 @@ from flask import Blueprint, jsonify, render_template, request, session, redirec
 from flask_login import login_required, current_user
 from datetime import datetime
 from app.decorators import roles_required
-from app.models import Role, PatientAssessment, Patient, User, Physician
-from app.utilities.utils import get_patient_assessment_data, get_patient_information
+from app.models import Role, PatientAssessment, Patient, User, Physician, ZeroCrossingAnalysis
+from app.utilities.utils import get_patient_assessment_data, get_patient_information, get_gait_zero_crossing
 from app.db import db
 
 main = Blueprint('main', __name__)
@@ -122,7 +122,7 @@ def patient_details():
             patient_name = patient_user.name if patient_user else "Unknown"
             age, height, gender, weight = get_patient_information(patient_id)
 
-            return render_template('specific_patient.html', name=patient_name, results=results, chart_data=chart_data, age=age, gender=gender, height=height, weight=weight)
+            return render_template('specific_patient.html',patient_id=patient_id, name=patient_name, results=results, chart_data=chart_data, age=age, gender=gender, height=height, weight=weight)
         
         return render_template('patient_details.html', patients=patients, patient_assessments=patient_assessments)
     
@@ -137,7 +137,29 @@ def patient_details():
 
         return render_template('specific_patient.html', name=current_user.name, results=results, chart_data=chart_data, age=age, height=height, gender=gender, weight=weight)
 
+@main.route('/gait_data')
+@login_required
+def gait_data():
+    assessment_id = request.args.get('assessment_id', type=int)
+    name = request.args.get('name', type=str)
+    assessment = PatientAssessment.query.filter_by(id=assessment_id).first()
+    date = assessment.date_taken.strftime('%d-%m-%Y')
+    gait_analysis = get_gait_zero_crossing(assessment_id)
+
+    sample_analysis = ZeroCrossingAnalysis(
+        avg_peak_distance=145.2,
+        std_dev_peak_distance=8.3,
+        avg_trough_distance=142.7,
+        std_dev_trough_distance=7.9
+    )
+
+    patient_id = request.args.get('patient_id', type=int)
+
+    return render_template('gait_data.html', assessment=assessment, date=date, name=name, gait_analysis=sample_analysis, patient_id=patient_id)
+
+
 @main.route('/all_patients', methods=['GET', 'POST'])
+@login_required
 @roles_required('Physician')
 def all_patients():
     if current_user.has_role('Physician'):
