@@ -122,7 +122,7 @@ def patient_details():
             patient_name = patient_user.name if patient_user else "Unknown"
             age, height, gender, weight = get_patient_information(patient_id)
 
-            return render_template('specific_patient.html', name=patient_name, results=results, chart_data=chart_data, age=age, gender=gender, height=height, weight=weight)
+            return render_template('specific_patient.html',patient_id=patient_id, name=patient_name, results=results, chart_data=chart_data, age=age, gender=gender, height=height, weight=weight)
         
         return render_template('patient_details.html', patients=patients, patient_assessments=patient_assessments)
     
@@ -139,7 +139,6 @@ def patient_details():
 
 @main.route('/gait_data')
 @login_required
-@roles_required('Physician')
 def gait_data():
     assessment_id = request.args.get('assessment_id', type=int)
     name = request.args.get('name', type=str)
@@ -154,7 +153,9 @@ def gait_data():
         std_dev_trough_distance=7.9
     )
 
-    return render_template('gait_data.html', assessment=assessment, date=date, name=name, gait_analysis=sample_analysis)
+    patient_id = request.args.get('patient_id', type=int)
+
+    return render_template('gait_data.html', assessment=assessment, date=date, name=name, gait_analysis=sample_analysis, patient_id=patient_id)
 
 
 @main.route('/all_patients', methods=['GET', 'POST'])

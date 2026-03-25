@@ -92,7 +92,7 @@
                                         <td class="px-6 py-4">{{ "%.2f"|format(r.avg_reaction_time) }}</td>
                                         <td class="px-6 py-4">{{ r.difficulty }}</td>
                                         <td class="px-6 py-4"><a
-                                    href="{{ url_for('main.gait_data', assessment_id=r.id, name=name) }}">View</a></td>
+                                    href="{{ url_for('main.gait_data', assessment_id=r.id, name=name, patient_id=patient_id) }}">View</a></td>
                                     </tr>
                                 {% endfor %}
                             {% else %}
