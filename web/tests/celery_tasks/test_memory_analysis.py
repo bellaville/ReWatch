@@ -15,7 +15,7 @@ def generate_stage_data_points():
     using a cubic spline and an arbitrary but fixed direction.
     """
     assessment = AssessmentStageData(
-        stage=AssessmentStage.REACTION
+        stage=AssessmentStage.RT_TEST
     )
 
     db.session.add(assessment)
@@ -24,6 +24,7 @@ def generate_stage_data_points():
     # Creating accleleration data based on hand-estimated sketch
     t_points = np.array([0, 20, 40, 60, 80, 95, 110, 125, 150, 175, 200], dtype=float)
     a_points = np.array([0.02, 0.03, 0.15, 0.55, 0.85, 0.92, 0.90, 0.75, 0.45, 0.25, 0.15], dtype=float)
+    a_points *= 10
 
     spline = CubicSpline(t_points, a_points, bc_type="natural")
 
@@ -86,7 +87,7 @@ def test_memory_analysis(test_client: FlaskClient, generate_stage_data_points: i
     # Validate computed values (these expected values are based on the generated data)
     assert analysis.time_to_move <= 60 and analysis.time_to_move >= 40, "Time to move should be between 40 and 60 ms."
     assert analysis.average_accl_post_threshold > 0, "Average acceleration post-threshold should be positive."
-    assert analysis.max_accl > 0.9 and analysis.max_accl < 1.0, "Max acceleration should be between 0.9 and 1.0 G."
+    assert analysis.max_accl > 9 and analysis.max_accl < 10, "Max acceleration should be between 9 and 10 G."
 
 def test_invalid_assessment_id(test_client: FlaskClient):
     """
@@ -126,4 +127,4 @@ def test_memory_analysis_celery_integration(test_client: FlaskClient, generate_s
     # Validate computed values (these expected values are based on the generated data)
     assert analysis.time_to_move <= 60 and analysis.time_to_move >= 40, "Time to move should be between 40 and 60 ms."
     assert analysis.average_accl_post_threshold > 0, "Average acceleration post-threshold should be positive."
-    assert analysis.max_accl > 0.9 and analysis.max_accl < 1.0, "Max acceleration should be between 0.9 and 1.0 G."
+    assert analysis.max_accl > 9 and analysis.max_accl < 10, "Max acceleration should be between 9 and 10 G."
