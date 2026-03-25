@@ -18,13 +18,13 @@ This projects requires the use of a Redis Key-Value store that is to be used by 
 ```
 cd web
 $env:REDIS_URL = "redis://localhost:6379/0"
-docker compose -f docker-compose.dev.yaml up -d
+docker compose -f docker-compose.dev.yaml up -d --build
 ```
 For Mac users (macOS does not recognize redis as a hostname):
 ```
 cd web
 export REDIS_URL="redis://127.0.0.1:6379/0"
-docker compose -f docker-compose.dev.yaml up -d
+docker compose -f docker-compose.dev.yaml up -d --build
 ```
 
 ### Env. Vars
@@ -40,6 +40,51 @@ To run web tests, use the following commands:
 ```
 cd web
 python -m pytest
+```
+
+# Overall Setup of the WebApp
+1. Download project file
+2. Open Terminal (for Mac) or Command Prompt (for Windows)
+3. Navigate to project directory
+4. Execute the following commands based on your operating system:
+
+For Windows
+```
+python -m venv .venv
+.venv\Scripts\activate.bat
+cd web
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install pytest
+set FLASK_ENV=development
+set REDIS_URL=redis://127.0.0.1:6379/0
+docker compose -f docker-compose.dev.yaml up -d --build
+python run.py
+
+```
+For Mac
+```
+python3.11 -m venv venv
+source venv/bin/activate
+cd web
+python3.11 -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install pytest
+export FLASK_APP=run.py
+export FLASK_ENV=development
+export REDIS_URL="redis://127.0.0.1:6379/0"
+docker compose -f docker-compose.dev.yaml up -d
+flask run
+```
+For Linux
+```
+cd web
+sudo systemctl start docker
+export FLASK_APP=run.py
+export FLASK_ENV=development
+export REDIS_URL="redis://127.0.0.1:6379/0"
+docker compose -f docker-compose.dev.yaml up -d
+flask run --host 0.0.0.0
 ```
 
 ## Web Libraries & Frameworks

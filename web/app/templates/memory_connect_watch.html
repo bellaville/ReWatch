@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <script>
+        /**
+         * Check with the API every second whether the assessment
+         * has been joined by a watch. On join, display a button
+         * to start gait analysis.
+         */
+        var checkConnection = setInterval(() => {
+            fetch('/assessments/memory_test/connect', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    "join_code": "{{ join_code }}"
+                })
+            }).then(function (res) {
+                if (res.ok) {
+                    res.json().then(function (data) {
+                        if (data.status == true) {
+                            document.getElementById("start_gait").classList.remove("hidden");
+                            clearInterval(checkConnection);
+                            set_completed_steps(0);
+                        }
+                    });
+                }
+            })
+        }, 1000)
+
+
+        function start_gait() {
+            fetch('/assessments/memory_test/gait', {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    "join_code": "{{ join_code }}"
+                })
+            }).then(function (res) {
+                if (res.ok) {
+                    res.json().then(function (data) {
+                        if (data.success == true) {
+                            document.getElementById("start_gait").classList.add("hidden");
+                            document.getElementById("end_gait").classList.remove("hidden");
+                            set_completed_steps(1);
+                        }
+                    });
+                }
+            })
+        }
+
+        function end_gait() {
+            fetch('/assessments/memory_test/gait_complete', {
+                method: "POST",
+                redirect: 'follow',
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    "join_code": "{{ join_code }}"
+                })
+            }).then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                }
+            })
+        }
+    </script>
+
+    <div>
+        {% include 'memory_timeline.html' %}
+    </div>
+
+
+    <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+        <!-- SOURCE: https://tailwindcss.com/plus/ui-blocks/application-ui/forms/sign-in-forms -->
+        <div class="sm:mx-auto sm:w-full sm:max-w-lg">
+            <h1 class="font-semibold text-center text-3xl">Connect Your Watch</h1>
+            <p class="mt-1 text-sm/6 text-gray-400 text-center">
+                Pair Your Watch Using The 6 Digit Code Below
+            </p>
+            <br>
+            <h2 class="font-semibold text-center text-2xl">{{ join_code }}</h2>
+            <button type="submit" id="start_gait"
+                class="hidden flex w-full justify-center rounded-md bg-orange-500 px-3 py-1.5 text-sm/6 font-semibold text-white hover:bg-orange-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 my-6" onclick="start_gait()">
+                Start Calibration
+            </button>
+            <button type="submit" id="end_gait"
+                class="hidden flex w-full justify-center rounded-md bg-orange-500 px-3 py-1.5 text-sm/6 font-semibold text-white hover:bg-orange-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 my-6" onclick="end_gait()">
+                End Calibration
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/memory_test.css') }}">
+
+<div class="container text-center mt-5">
+    <h3 id="phase-heading" class="text-xl font-semibold text-gray-900 dark:text-white">
+        Memorize These Shapes
+    </h3>
+
+    <!-- Memorization Frame -->
+    <div id="memory-shapes-frame" class="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700" style="display: none">
+    </div>
+
+    <!-- Test Frame -->
+    <div id="test-frame" style="display: none">
+        <div id="test-shapes-frame" class="block p-6 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
+        </div>
+    </div>
+
+    <!-- https://tailwindcss.com/docs/gradient-color-stops -->
+    <div id="zone-different" class="fixed top-0 left-0 w-1/2 h-full bg-gradient-to-r from-primary-500/30 to-transparent flex items-center justify-center pl-4 z-10 hidden pointer-events-none">
+        <span class="absolute left-[30%] -translate-x-1/2 text-primary-500 dark:text-primary-100 text-3xl font-bold uppercase">Different</span>
+    </div>
+    
+    <div id="zone-same" class="fixed top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary-950/30 to-transparent flex items-center justify-center pr-4 z-10 hidden pointer-events-none">
+        <span class="absolute right-[20%] -translate-x-1/2 text-primary-950 dark:text-primary-1000 text-3xl font-bold uppercase">Same</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('memory_test.practice_response') }}" id="choice-form">
+        <input type="hidden" name="reaction_time" id="reaction_time">
+        <input type="hidden" name="choice" id="choice-input">
+    </form>
+
+
+<script>
+    const memorizedShapes = {{ memorized_shapes | tojson }};
+    const memorizedColours = {{ memorized_colours | tojson }};
+    const testShapes = {{ test_shapes | tojson }};
+    const testColours = {{ test_colours | tojson }};
+
+    const shapeSizes = {
+        circle: [50, 50], square: [50, 50], triangle: [50, 50], star: [50, 50],
+        trapezoid: [60, 50], pentagon: [60, 60], hexagon: [60, 60]
+    };
+
+    const memFrame = document.getElementById('memory-shapes-frame');
+    memFrame.style.visibility = 'hidden'; // make sure that the memory test frame is hidden
+    memFrame.style.display = 'block'; // overrides display:none so the frame has a renderable width to measure
+    const FRAME_PADDING = 24; // p-6 = 24px on each side
+    // https://www.digitalocean.com/community/tutorials/js-getboundingclientrect
+    const FRAME_SIZE = memFrame.getBoundingClientRect().width - (FRAME_PADDING * 2);
+    memFrame.style.display = 'none'; // hide the frame again until do_sync() reveals it at the right time
+    memFrame.style.visibility = 'visible'; // reset visibility so it shows correctly when display:block is set later in do_sync()
+
+    function generatePositions(shapes, frameSize) {
+        const positions = [];
+
+        for (const shape of shapes) {
+            const [width, height] = shapeSizes[shape] || [50, 50];
+            let placed = false;
+
+            for (let attempt = 0; attempt < 100; attempt++) {
+                const top = Math.random() * (frameSize - height);
+                const left = Math.random() * (frameSize - width);
+                const newRect = [top, left, top + height, left + width];
+
+                const overlap = positions.some(r =>
+                    !(newRect[2] <= r[0] || newRect[0] >= r[2] || newRect[3] <= r[1] || newRect[1] >= r[3])
+                );
+
+                if (!overlap) {
+                    positions.push(newRect);
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) positions.push([0, 0, height, width]);
+        }
+
+        return positions.map(r => ({ top: r[0], left: r[1] }));
+    }
+
+    function renderShapes(shapes, colours, positions, frameId) {
+        const frame = document.getElementById(frameId);
+        shapes.forEach((shape, i) => {
+            const div = document.createElement('div');
+            div.className = `shape ${shape}`;
+            div.style.backgroundColor = colours[i];
+            div.style.top = `${positions[i].top}px`;
+            div.style.left = `${positions[i].left}px`;
+            frame.appendChild(div);
+        });
+    }
+
+    function initShapes() {
+        const memorizedPositions = generatePositions(memorizedShapes, FRAME_SIZE);
+        const testPositions = generatePositions(testShapes, FRAME_SIZE);
+
+        renderShapes(memorizedShapes, memorizedColours, memorizedPositions, 'memory-shapes-frame');
+        renderShapes(testShapes, testColours, testPositions, 'test-shapes-frame');
+    }
+
+    // Handle leaving via back button
+    // Replace current history entry with a custom state object, {page:1}
+    // so the page exists in the stack
+    history.replaceState({ page: 1 }, null, location.href);
+    // Push a dummy state {page:2} on top so the back button triggers popstate
+    history.pushState({ page: 2 }, null, location.href);
+
+    window.addEventListener('popstate', function (event) {
+        const goBack = confirm("Warning: your progress will be lost if you go back. Do you wish to continue?");
+        if (goBack) {
+            // Redirect to main assessments page
+            window.location.href = "{{ url_for('main.assessments') }}";
+        } else {
+            // User cancelled: push dummy state again to block back navigation
+            history.pushState({ page: 2 }, null, location.href);
+        }
+    })
+    
+    // Check which half of the screen was clicked
+    function getScreenHalf(posX){
+        const screenWidth = window.innerWidth;
+        return posX < screenWidth / 2 ? 'Different': 'Same'
+    }
+
+    function handleChoiceInteraction(event){
+        const testFrame = document.getElementById('test-frame');
+
+        // Only respond when the test frame is available
+        if (testFrame.style.display === 'none') return;
+
+        const posX = event.clientX;
+        const choice = getScreenHalf(posX);
+        if (startTime !== null) {
+            const reactionTime = performance.now() - startTime;
+            document.getElementById("reaction_time").value = reactionTime.toFixed(2);
+        }
+        // Sumbit the selected choice
+        document.getElementById("choice-input").value = choice;
+        document.getElementById("choice-form").submit();
+        
+    }
+
+    function startPracticeTest() {
+        const memorizationTime = {{ memorization_time * 1000 }};
+        // show memorization frame
+        document.getElementById("memory-shapes-frame").style.display = "block";
+        
+        // redirect to comparison phase after customized seconds
+        setTimeout(function () {
+            document.getElementById("memory-shapes-frame").style.display = "none";
+            document.getElementById("test-frame").style.display = "block";
+
+            document.getElementById("zone-different").classList.remove("hidden");
+            document.getElementById("zone-same").classList.remove("hidden");
+            document.getElementById("phase-heading").textContent = "Are These The Same Shapes?"
+            startTime = performance.now();
+        }, memorizationTime); 
+    }
+
+
+    window.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener('pointerdown', handleChoiceInteraction);
+        initShapes();
+        startPracticeTest();
+    });
+
+</script>
+{% endblock %}

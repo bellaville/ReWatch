@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, session, redirect, url_for, request, flash
+from flask import Blueprint, jsonify, render_template, session, redirect, url_for, request, flash
 from flask_login import login_required, current_user
 import time, random
-from app.models import PatientAssessment
+from app.models import AssessmentStage, AssessmentStageData, PatientAssessment, Physician
 from app.db import db
 
 memory_test = Blueprint('memory_test', __name__)
@@ -10,68 +10,33 @@ memory_test = Blueprint('memory_test', __name__)
 # SHORT TERM MEMORY TEST #
 ##########################
 SHAPES = ['circle', 'square', 'triangle', 'star', 'trapezoid', 'pentagon', 'hexagon']
-COLOUR_LIST = ['blue', 'red', 'green', 'yellow', 'purple', 'orange', 'pink']
+COLOUR_LIST = ['blue', 'red', 'green', 'gold', 'purple', 'orange', 'pink']
 DEFAULT_COLOURS = {
     'circle': 'blue',
     'square': 'red',
     'triangle': 'green',
-    'star': 'yellow',
+    'star': 'gold',
     'trapezoid': 'purple',
     'pentagon': 'pink',
     'hexagon': 'orange'
 }
-# shape sizes (width, height)
-SHAPE_SIZES = {
-    'circle': (50, 50),
-    'square': (50, 50),
-    'triangle': (50, 50),
-    'star': (50, 50),
-    'trapezoid': (60, 50),
-    'pentagon': (60, 60),
-    'hexagon': (60, 60)
-}
 
-#############################
-# RANDOMIZE SHAPE POSITIONS #
-#############################
-def generate_positions(shapes, frame_size=500, max_attempts=100):
-    """Generate random top/left positions for shapes inside the frames
-    and ensure that no shapes overlap each other
+############################
+# HELPER TO GET ASSESSMENT #
+############################
+def fetch_assessment(join_code: str, cur_step: int | None = None) -> PatientAssessment | None:
     """
-    positions = []
+    Gets assessment given a join code and optional cur_step
+    """
+    if cur_step:
+        return db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True, PatientAssessment.join_code == join_code, PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(cur_step)).first()
+    return db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True, PatientAssessment.join_code == join_code).first()
 
-    for shape in shapes:
-        width, height = SHAPE_SIZES.get(shape, (50,50))
-
-        for attempt in range(max_attempts):
-            top = random.randint(0, frame_size - height)
-            left = random.randint(0, frame_size - width)
-            new_rect = (top, left, top + height, left + width)
-
-            # check overlap
-            overlap = any(
-                not (
-                    new_rect[2] <= existing[0] or  # bottom <= top
-                    new_rect[0] >= existing[2] or  # top >= bottom
-                    new_rect[3] <= existing[1] or  # right <= left
-                    new_rect[1] >= existing[3]     # left >= right
-                )
-                for existing in positions
-            )
-
-            if not overlap:
-                positions.append(new_rect)
-                break
-        else:
-            # fallback if can't find a spot
-            positions.append(new_rect)
-
-    return [{'top': r[0], 'left': r[1]} for r in positions]
 
 ##############
 # START TEST #
 ##############
-@memory_test.route('/start')
+@memory_test.route('/start', methods=["GET"])
 @login_required
 def start_memory_test():
     """ Initializes a short term memory test session for the current user.
@@ -80,192 +45,388 @@ def start_memory_test():
     allowing the memory test to track progress and user responses
     throughout multiple rounds.
     """
-    # if user is physician, use the selected patient from session
-    if current_user.has_role('Physician'):
-        patient_id = session.get('selected_patient_id')
-    else:
-        # patient is performing their own test, use their own id from db/login
-        patient_id = current_user.patient_profile.id
+    if not session.get("join_code"):
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
 
-    session['test_patient_id'] = patient_id 
+    assessment = fetch_assessment(session["join_code"], AssessmentStage.GAIT_COMPLETE)
+    
+    if not assessment:
+        return jsonify({"success": False, "error": "Could not find assessment"}), 400   
 
     # initialize session variables
-    session['round'] = 0
-    session['score'] = 0
-    session['reaction_times'] = []
-    session['show_test'] = False # don't show the test frame yet
+    session['round'] = 1
+    session['reaction_records'] = []
 
-    memorization_time = session.get('memorization_time', 5)
-    num_rounds = session.get('num_rounds', 5)
+    return render_template('memory_display_warning.html', memorization_time=assessment.memorization_time, num_rounds=assessment.total_rounds)
 
-    # flash instructions
-    flash(
-         "<strong>THIS IS NOT A MEDICAL DIAGNOSIS!</strong><br><br>"
-        f"You will see a set of shapes to memorize for {memorization_time} seconds. "
-        "After that, a new set will appear. Decide if the shapes are the same or different. "
-        f"Your reaction time will be recorded and there will be {num_rounds} rounds. Are you ready to start?",
-        "memory_test"
-    )
 
-    return render_template('memory_test.html', show_test=False)
+@memory_test.route('/start', methods=["POST"])
+@login_required
+def confirm_start_memory_test():
+    """ 
+    Initializes a short term memory test session for the current user.
+
+    Establishes a Flask session to store temporary test metrics for a user,
+    allowing the memory test to track progress and user responses
+    throughout multiple rounds.
+    """
+    if not session.get("join_code"):
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
+
+    assessment = fetch_assessment(session["join_code"], AssessmentStage.GAIT_COMPLETE)
+    
+    if not assessment:
+        return jsonify({"success": False, "error": "Could not find assessment"}), 400   
+    
+    assessment.increment_step()
+
+    return jsonify({"success": True }), 200
+
+#################
+# CONNECT WATCH #
+#################
+@memory_test.route('/connect', methods = ["GET"])
+@login_required
+def connect_watch_page():
+    if not session.get("join_code"):
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
+
+    assessment = fetch_assessment(session["join_code"], AssessmentStage.WAITING)
+
+    if not assessment:
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
+
+    return render_template('memory_connect_watch.html', join_code = session['join_code'])
+
+@memory_test.route('/connect', methods = ["POST"])
+@login_required
+def connect_watch_check():
+    if not request.json or not request.json.get("join_code"):
+        return jsonify({"status": False, "error": "Could not find join_code"}), 400
+    
+    assessment = fetch_assessment(session["join_code"])
+    return jsonify({"status": assessment.watch_connected}), 200
+    
+###################
+# WATCH ENDPOINTS #
+###################
+
+@memory_test.route('/connect/<join_code>', methods = ["POST"])
+def connect_add_watch(join_code: str):   
+    assessment = fetch_assessment(join_code)
+    assessment.watch_connected = True
+    db.session.commit()
+    return jsonify({"experimentID": assessment.join_code, "stage": assessment.get_current_step()}), 200
+
+@memory_test.route('/<join_code>/status', methods = ["GET"])
+def watch_get_status(join_code: str):   
+    assessment = fetch_assessment(join_code)
+    return jsonify({"experimentID": assessment.join_code, "stage": assessment.get_current_step()}), 200
+
+@memory_test.route('/<join_code>/<stage>/upload', methods = ["POST"])
+def watch_upload_data(join_code: str, stage: str):   
+    stage = AssessmentStage(stage)
+    assessment = fetch_assessment(join_code, stage)
+    json_body = request.json
+    assessment_data = AssessmentStageData.from_json(json_body, stage, assessment.id)
+    
+    # If its at complete, finalize and set running to false
+    if (assessment.get_current_step() == AssessmentStage.COMPLETE.value):
+        assessment.is_running = False
+        db.session.add(assessment)
+
+    db.session.add(assessment_data)
+    db.session.commit()
+    return jsonify({"success": True}), 200
+
+#################
+# GAIT ANALYSIS #
+#################
+@memory_test.route('/gait', methods = ["POST"])
+@login_required
+def begin_gait():
+    if not request.json or not request.json.get("join_code"):
+        return jsonify({"status": False, "error": "Could not find join_code"}), 400
+    
+    assessment = fetch_assessment(request.json.get("join_code"), AssessmentStage.WAITING)
+    
+    if not assessment:
+        return jsonify({"success": False, "error": "Could not find assessment"}), 400
+    
+    assessment.increment_step()
+    
+    return jsonify({"success": True}), 200
+
+@memory_test.route('/gait_complete', methods = ["POST"])
+@login_required
+def end_gait():
+    if not request.json or not request.json.get("join_code"):
+        return jsonify({"status": False, "error": "Could not find join_code"}), 400
+    
+    assessment = fetch_assessment(request.json.get("join_code"), AssessmentStage.GAIT)
+    
+    if not assessment:
+        return jsonify({"success": False, "error": "Could not find assessment"}), 400
+    
+    assessment.increment_step()
+
+    return redirect(url_for('memory_test.start_memory_test'))
+
+###################
+# TIME SYNC PHASE #
+###################
+@memory_test.route('/time/sync', methods=["POST"])
+def receive_sync_request():
+    receive_time = round(time.time_ns())
+
+    if not request.json or not request.json.get("join_code"):
+        return jsonify({"status": False, "error": "Could not find join_code"}), 400
+    
+    assessment = fetch_assessment(request.json.get("join_code"), AssessmentStage.RT_TEST)
+
+    if not assessment:
+        return jsonify({"error": "Assessment could not be found"}), 404
+    
+    assessment.increment_synchronization(request.json['device'])
+
+    return jsonify({"timing2": receive_time, "timing3": round(time.time_ns())}), 200
+
+@memory_test.route('/time/request_future', methods=["POST"])
+def give_synched_timing():
+
+    if not request.json or not request.json.get("join_code"):
+        return jsonify({"status": False, "error": "Could not find join_code"}), 400
+    
+    assessment = fetch_assessment(request.json.get("join_code"), AssessmentStage.RT_TEST)
+
+    if assessment.can_create_test_time():
+        return jsonify({"delay": assessment.get_test_start()}), 200
+    else:
+        return jsonify({"error": "Cannot start test yet"}), 206
 
 ######################
 # MEMORIZATION PHASE #
 ######################
 @memory_test.route('/memorize')
 @login_required
-def memory_memorize():
+def memory_run_test():
     """ Memorization phase: user has a configured number of seconds to
     memorize the displayed set of shapes
     """
-    num_rounds = session.get('num_rounds', 5)
-    if 'round' not in session or session['round'] >= int(num_rounds):
-        return redirect(url_for('memory_test.memory_result'))
+    if not session.get("join_code"):
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
+
+    assessment = fetch_assessment(session["join_code"], AssessmentStage.RT_TEST)
+
+    if not assessment:
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
     
-    # load settings from session (customized by physician)
-    num_shapes = session.get('num_shapes', 3)
-    difficulty = session.get('difficulty', 'easy')
-    memorization_time = session.get('memorization_time', 5)
-
     # generate shape set and assign colors
-    current_set = random.sample(SHAPES, num_shapes)
+    memorized_shapes = random.sample(SHAPES, assessment.num_shapes)
 
-    shape_colours = []
-    for shape in current_set:
-        if difficulty == 'easy':
+    memorized_colours = []
+    for shape in memorized_shapes:
+        if assessment.difficulty == 'Easy':
             # each shape always has the same distinct colour
-            shape_colours.append(DEFAULT_COLOURS.get(shape, 'gray'))
+            memorized_colours.append(DEFAULT_COLOURS.get(shape, 'gray'))
         else:
             # randomize colours for harder difficulty
-            shape_colours.append(random.choice(COLOUR_LIST))
+            memorized_colours.append(random.choice(COLOUR_LIST))
+    
+    # Generate test set
+    if random.random() < 0.5:
+        test_shapes = memorized_shapes
+        test_colours = memorized_colours
+        session['correct'] = "Same"
+    else:
+        test_shapes = random.sample(SHAPES, assessment.num_shapes)
+        # assign colours
+        test_colours = [
+            DEFAULT_COLOURS.get(shape, 'gray') if assessment.difficulty == 'Easy' else random.choice(COLOUR_LIST)
+            for shape in test_shapes
+        ]
+        session['correct'] = "Different"
 
-    # generate random positions for the shapes in the test frame
-    shape_positions = generate_positions(current_set, frame_size=500)
-
-    # save data for comparison round
-    session['previous_set'] = current_set
-    session['current_set'] = current_set
-    session['shape_colours'] = shape_colours
-    session['shape_positions'] = shape_positions
-    session['memorization_time'] = memorization_time
-
-    return render_template('memory_memorize.html', shapes=current_set, round_num=session['round']+1, shape_positions=shape_positions, shape_colours=shape_colours, memorization_time=session['memorization_time'] )
+    return render_template('memory_run_test.html', test_shapes=test_shapes, test_colours=test_colours, 
+                           memorized_shapes=memorized_shapes, memorized_colours=memorized_colours, 
+                           round_num=session['round'], memorization_time=assessment.memorization_time, join_code=assessment.join_code)
 
 ##################
 # RESPONSE PHASE #
 ##################
-@memory_test.route('/response', methods=['GET', 'POST'])
+@memory_test.route('/response', methods=['POST'])
 @login_required
 def memory_test_view():
-    """ Comparison phase where user responds """
-    num_rounds = session.get('num_rounds', 5)
-    if 'round' not in session or session['round'] >= int(num_rounds):
+    """
+    Route that recieves the user response and progresses the assessment with
+    either another test or by showing the results
+    """
+
+    if not session.get("join_code"):
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
+
+    assessment = fetch_assessment(session["join_code"], AssessmentStage.RT_TEST)
+
+    if not assessment:
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
+
+    # handle user's answer
+    reaction_time = request.form.get('reaction_time', type=float)
+    choice = request.form.get('choice')
+
+    if session["correct"] == choice:
+        assessment.score += 1
+        db.session.commit()
+
+    if reaction_time is not None:
+        session['reaction_records'].append({
+            "time": reaction_time,
+            "correct": session["correct"] == choice,
+            "num_shapes": assessment.num_shapes,
+        })
+
+    session['round'] += 1
+
+    if session["round"] > assessment.total_rounds:
         return redirect(url_for('memory_test.memory_result'))
 
-    num_shapes = session.get('num_shapes', 3)
-    difficulty = session.get('difficulty', 'easy')
-
-    if request.method == 'POST':
-        # handle user's answer
-        choice = request.form.get('choice')
-        reaction_time = time.time() - session['start_time']
-        session['reaction_times'].append(reaction_time)
-
-        prev_set = session['previous_set']
-        current_set = session['current_set']
-        correct = (prev_set == current_set)
-        if (choice == 'Same' and correct) or (choice == 'Different' and not correct):
-            session['score'] += 1
-
-        session['round'] += 1
-        return redirect(url_for('memory_test.memory_memorize'))  # start next memorization round
-
-    # GET request: show comparison phase
-    prev_set = session['previous_set']
-
-    # 50% chance to show same or new set
-    if random.random() < 0.5:
-        current_set = prev_set.copy()
-    else:
-        current_set = random.sample(SHAPES, num_shapes)
-
-    # assign colours
-    shape_colours = [
-        DEFAULT_COLOURS.get(shape, 'gray') if difficulty == 'easy' else random.choice(COLOUR_LIST)
-        for shape in current_set
-    ]
-
-    # generate positions
-    shape_positions = generate_positions(current_set, frame_size=500)
-
-    # save for template and reaction timing
-    session['current_set'] = current_set
-    session['shape_colours'] = shape_colours
-    session['shape_positions'] = shape_positions
-    session['start_time'] = time.time()
-
-    return render_template(
-        'memory_test.html',
-        shapes=current_set,
-        round_num=session['round'] + 1,
-        buttons_enabled=True,
-        show_test=True,
-        shape_positions=shape_positions,
-        shape_colours=shape_colours
-    )
+    return redirect(url_for('memory_test.memory_run_test'))  # start next memorization round
 
 ################
 # RESULTS PAGE #
 ################
-@memory_test.route('/result')
+@memory_test.route('/result', methods=["GET"])
 @login_required
 def memory_result():
-    avg_reaction = sum(session.get('reaction_times', [])) / max(len(session.get('reaction_times', [])), 1)
-    score = session.get('score', 0)
-    total_rounds = session.get('num_rounds', 5)
 
-    # use the patient ID stored in the session (set by the physician selecting the patient)
-    patient_id = session.get('test_patient_id')
-    if not patient_id:
-        # check if currently logged-in user is a patient, if so, use their own id
-        if current_user.patient_profile:
-            patient_id = current_user.patient_profile.id
-        else:
-            return redirect(url_for('main.index'))
+    if not session.get("join_code"):
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
 
-    result = PatientAssessment(
-            patient_id=patient_id,
-            score=score,
-            total_rounds=total_rounds,
-            avg_reaction_time=avg_reaction,
-    )
-    db.session.add(result)
-    db.session.commit()
+    assessment = fetch_assessment(session["join_code"], AssessmentStage.RT_TEST)
+    
+    if not assessment:
+        return jsonify({"error": "Could not find assessment"}), 404
 
-    return render_template('memory_result.html', score=score, avg_reaction=avg_reaction, total_rounds=int(total_rounds))
+    reaction_records = session.get('reaction_records', [])
+    avg_reaction = sum(r["time"] for r in reaction_records) / max(len(reaction_records), 1)
+
+    assessment.avg_reaction_time = avg_reaction
+    assessment.reaction_records = reaction_records
+    assessment.memory_accuracy = (assessment.score/assessment.total_rounds)*100
+
+    assessment.increment_step()
+
+    return render_template('memory_result.html', score=assessment.score, avg_reaction=avg_reaction, total_rounds=assessment.total_rounds, memory_accuracy=assessment.memory_accuracy)
 
 ######################
 # CUSTOMIZATION PAGE #
 ######################
-@memory_test.route("/customize", methods=['GET', 'POST'])
+@memory_test.route("/customize", methods=['GET'])
 @login_required
 def memory_test_customization():
-    """Page for physician to configure short-term memory test settings
     """
-    if request.method == "POST":
-        # store physician's inputted customization in session
-        session['num_shapes'] = int(request.form.get('num_shapes', 3))
-        session['memorization_time'] = int(request.form.get('memorization_time', 5))
-        session['difficulty'] = request.form.get('difficulty', 'easy') # easy or hard
-        session['num_rounds'] = request.form.get('num_rounds', 5)
-        return redirect(url_for('memory_test.start_memory_test')) # go to flash instruction message
-    
+    Page for physician to configure short-term memory test settings
+    """    
     # show default customization values as a dictionary for easier unpacking in html (GET request)
     defaults = {
-        'num_shapes': session.get('num_shapes', 3),
-        'memorization_time': session.get('memorization_time', 5),
-        'difficulty': session.get('difficulty', 'easy'),
-        'num_rounds': session.get('num_rounds', 5)
+        'num_shapes': 3,
+        'memorization_time': 5,
+        'difficulty': "Easy",
+        'num_rounds': 5
     }
 
-    return render_template('memory_customization.html', **defaults)
+    selected_id = None
+
+    if current_user.has_role('Physician'):
+        patients = [p.user for p in current_user.physician_profile.patients if p.user is not None and p.user.patient_profile is not None] 
+        if patients:
+            selected_id = patients[0].patient_profile.id
+
+    else:
+        patients = []
+        selected_id = current_user.id
+
+
+    return render_template('memory_customization.html', **defaults, patients=patients, selected_id=selected_id)
+
+
+@memory_test.route("/customize", methods=['POST'])
+@login_required
+def confirm_memory_test_configuration():
+    """
+    POST endpoint to create initial assessment and begin steps
+    """    
+
+    if current_user.has_role('Physician'):
+        # if user is physician, use the selected patient from session
+        patient_id = int(request.form['patient_id'])
+        if patient_id not in [p.id for p in db.session.get(Physician, current_user.physician_profile.id).patients]:
+            return memory_test_customization()
+    else:
+        # patient is performing their own test, use their own id from db/login
+        patient_id = current_user.patient_profile.id
+            
+    # Start assessment tracking in DB
+    assessment = PatientAssessment(
+        patient_id=patient_id,
+        score=0,
+        total_rounds=request.form["num_rounds"],
+        avg_reaction_time=0,
+        difficulty=request.form['difficulty'],
+        reaction_records=[],
+        is_running=True,
+        watch_connected=False,
+        current_step = 0,
+        memorization_time=request.form['memorization_time'],
+        num_shapes=request.form["num_shapes"]
+    )        
+
+    db.session.add(assessment)
+    db.session.commit()
+    
+    session['join_code'] = assessment.join_code
+    
+    return redirect(url_for('memory_test.connect_watch_page')) 
+
+#################
+# PRACTICE TEST #
+#################
+@memory_test.route('/practice')
+@login_required
+def practice_memory_test():
+    """
+    Practice memory test with no watch dependency, no DB saving, and using default settings
+    """
+    memorized_shapes = random.sample(SHAPES, 3) # default 3 shapes
+    memorized_colours = [DEFAULT_COLOURS[shapes] for shapes in memorized_shapes]
+
+    if random.random() < 0.5:
+        test_shapes = memorized_shapes
+        test_colours = memorized_colours
+        session['practice_correct'] = "Same"
+    else:
+        test_shapes = random.sample(SHAPES, 3)
+        test_colours = [DEFAULT_COLOURS[shapes] for shapes in test_shapes]
+        session['practice_correct'] = "Different"
+
+    return render_template('memory_practice.html',
+                           memorized_shapes = memorized_shapes,
+                           memorized_colours=memorized_colours,
+                           test_shapes=test_shapes,
+                           test_colours=test_colours,
+                           memorization_time=5)
+
+@memory_test.route('/practice/response', methods=['POST'])
+@login_required
+def practice_response():
+    """
+    Handles the practice round responses, just shows the results, no DB saving
+    """
+    choice = request.form.get('choice')
+    correct = session.get('practice_correct')
+    was_correct = choice == correct
+
+    return render_template('memory_practice_result.html',
+                           was_correct=was_correct,
+                           correct_answer = correct)
+                           
