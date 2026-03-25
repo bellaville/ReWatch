@@ -7,7 +7,7 @@
         {% if not gait_analysis %}
             <p>Nothing to show</p>
         {% else %}
-            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 relative shadow-md sm:rounded-lg overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 relative shadow-md sm:rounded-lg overflow-hidden max-w-150">
                 <div class="overflow-x-auto overflow-y-auto">
                     <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400 rounded-b-lg">
                         <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 min-w-full table-fixed sticky top-0">
@@ -27,7 +27,7 @@
                         </tr>
                         <tr class="border-b dark:border-gray-700">
                             <td class="px-4 py-3">Coefficient of Variation for Peak</td>
-                            <td>
+                            <td class="px-4 py-3">
                                 {% set cv_peak = (gait_analysis.std_dev_peak_distance / gait_analysis.avg_peak_distance * 100)|round(1) %}{{ cv_peak }}%
                             </td>
                         </tr>
@@ -41,7 +41,7 @@
                         </tr>
                         <tr class="border-b dark:border-gray-700">
                             <td class="px-4 py-3">Coefficient of Variation for Trough</td>
-                            <td>
+                            <td class="px-4 py-3">
                                 {% set cv_peak = (gait_analysis.std_dev_trough_distance / gait_analysis.avg_trough_distance * 100)|round(1) %}{{ cv_peak }}%
                             </td>
                         </tr>
