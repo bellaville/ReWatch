@@ -330,7 +330,7 @@ def memory_test_customization():
     # show default customization values as a dictionary for easier unpacking in html (GET request)
     defaults = {
         'num_shapes': 3,
-        'memorization_time': 5,
+        'memorization_time': 3,
         'difficulty': "Easy",
         'num_rounds': 5
     }
@@ -414,7 +414,7 @@ def practice_memory_test():
                            memorized_colours=memorized_colours,
                            test_shapes=test_shapes,
                            test_colours=test_colours,
-                           memorization_time=5)
+                           memorization_time=3)
 
 @memory_test.route('/practice/response', methods=['POST'])
 @login_required
