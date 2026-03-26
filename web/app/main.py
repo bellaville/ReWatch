@@ -1,3 +1,4 @@
+import json
 import time
 from flask import Blueprint, jsonify, render_template, request, session, redirect, url_for, flash
 from flask_login import login_required, current_user
@@ -152,6 +153,7 @@ def gait_data():
     
     gait_analysis = db.session.query(ZeroCrossingAnalysis).filter_by(stage_data_id=gait_data.id).first()
 
+
     return render_template('gait_data.html', assessment=assessment, date=assessment.date_taken.strftime('%d-%m-%Y'), name=name, gait_analysis=gait_analysis, patient_id=patient_id)
 
 @main.route('/reaction_data')
@@ -244,3 +246,9 @@ def assessments():
 @main.route('/about')
 def about():
     return render_template('about.html')
+
+@main.route('/imu_testing/upload', methods=["POST"])
+def uploaded_imu_testing():
+    with open("./imu_testing/imu_data_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".json", "w") as json_file:
+        json.dump(request.json, json_file)
+    return jsonify({"success": True}), 200

@@ -28,6 +28,7 @@ android {
     buildTypes {
         debug {
             buildConfigField("String", "API_ENDPOINT", "\"http://192.168.2.13:5000/\"") // Change this when debugging
+            buildConfigField("Boolean", "IMU_TESTING", "false")
         }
 
         release {
