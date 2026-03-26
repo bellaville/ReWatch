@@ -1,18 +1,12 @@
 package ca.carleton.rewatch.presentation
 
-import android.hardware.Sensor
-import android.hardware.SensorEvent
 import android.os.Bundle
-import android.widget.TextView
-import android.widget.ToggleButton
 import androidx.activity.ComponentActivity
-import android.hardware.SensorManager
-import android.hardware.SensorEventListener
-import android.util.Log
 import android.view.WindowManager
 import androidx.activity.compose.setContent
-import ca.carleton.rewatch.dataclasses.SensorReading
+import ca.carleton.rewatch.BuildConfig.IMU_TESTING
 import ca.carleton.rewatch.presentation.navigation.NavigationStack
+import ca.carleton.rewatch.presentation.views.TestingIMUViewModel
 
 /**
  * Main Activity that gathers accelerometer data.
@@ -25,7 +19,11 @@ class MainActivity : ComponentActivity() {
         setTheme(android.R.style.Theme_DeviceDefault)
 
         setContent {
-            NavigationStack()
+            if (!IMU_TESTING) {
+                NavigationStack()
+            } else {
+                TestingIMUViewModel()
+            }
         }
     }
 }
