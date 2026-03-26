@@ -34,9 +34,21 @@
                             {% for idx, reaction_analysis in reaction_analyses %}
                             <tr class="border-b dark:border-gray-700">
                                 <td class="px-4 py-3">{{ idx + 1 }}</td>
-                                <td class="px-4 py-3">{{ reaction_analysis.time_to_move }}</td>
-                                <td class="px-4 py-3">{{ reaction_analysis.average_accl_post_threshold  | round(2)}}</td>
-                                <td class="px-4 py-3">{{ reaction_analysis.max_accl  | round(2)}}</td>
+                                {% if reaction_analysis.time_to_move %}
+                                    <td class="px-4 py-3">{{ reaction_analysis.time_to_move | round(2) }}</td>
+                                {% else %}
+                                    <td class="px-4 py-3">Not Detected</td>
+                                {% endif %}
+                                {% if reaction_analysis.average_accl_post_threshold %}
+                                    <td class="px-4 py-3">{{ reaction_analysis.average_accl_post_threshold | round(2) }}</td>
+                                {% else %}
+                                    <td class="px-4 py-3">Not Detected</td>
+                                {% endif %}
+                                {% if reaction_analysis.max_accl %}
+                                    <td class="px-4 py-3">{{ reaction_analysis.max_accl | round(2) }}</td>
+                                {% else %}
+                                    <td class="px-4 py-3">Not Detected</td>
+                                {% endif %}
                             </tr>
                             {% endfor %}
                             </tbody>

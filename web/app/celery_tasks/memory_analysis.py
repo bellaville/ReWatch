@@ -34,7 +34,7 @@ def memory_analysis(assessment_stage_data_id: int):
     table = table.sort_values(by="Timestamp").reset_index(drop=True)
 
     # Set parameters
-    threshold = 5 # m/s2
+    threshold = 2 # m/s2
 
     # 1. Take Euclidian norm of each row
     table['norm'] = np.linalg.norm(table[['X','Y','Z']].values, axis=1)

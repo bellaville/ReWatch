@@ -238,8 +238,17 @@ class AssessmentStageData(db.Model):
             stage=stage
         )
         
+        initial_ts = None
+        skip_first_second = stage == AssessmentStage.GAIT
         for point in json_data["data"]:
             ts = datetime.fromtimestamp(point["timestamp"] / 1000.0)
+
+            if not initial_ts:
+                initial_ts = ts
+            elif skip_first_second and (ts - initial_ts).total_seconds() < 1:
+                # Needed because the accelerometer spikes on startup
+                continue
+
             stage_data.points.append(StageDataPoint(
                 timestamp=ts,
                 x=point["x"],

@@ -28,6 +28,10 @@ class RTTestViewModel(application: Application, private val savedStateHandle: Sa
     var collectionText by mutableStateOf("Awaiting Reaction Time Test Start")
     var circleColour by mutableIntStateOf(0)
 
+    fun setupCollector() {
+        sensorManager.setup()
+    }
+
     fun startCollection() {
         sensorManager.start()
         circleColour = 1;
@@ -109,9 +113,11 @@ class RTTestViewModel(application: Application, private val savedStateHandle: Sa
                     stopCollection(experimentID, joinedExperiment.stage)
                     isAwaiting = false
                     Log.d("EXPPOLL3", "Status Changed to " + joinedExperiment.stage)
+                    sensorManager.teardown()
                     navController.navigate(Screen.Complete.route)
                 } else {
                     Log.d("EXPPOLL3", "Something went wrong")
+                    sensorManager.teardown()
                     navController.navigate(Screen.JoinExperiment.route)
                 }
                 delay(1000)
