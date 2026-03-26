@@ -3,6 +3,7 @@ from flask_login import LoginManager
 
 from app.db import db
 from app.config.environment import *  # Import environment variable checks
+from app.models import *
 
 def create_app(test_config=False):
     # initialize flask app
@@ -23,15 +24,8 @@ def create_app(test_config=False):
     # Initialize extensions with app
     db.init_app(app)
 
-    from .models import User, Role
-    from .config.seeding import seed_roles, seed_users, seed_patient_assessments
-
     with app.app_context():
-        #db.drop_all() # for development
         db.create_all()
-        #seed_roles()
-        #seed_users()
-        #seed_patient_assessments()
 
     # Initialize login manager
     login_manager = LoginManager()
