@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="mx-auto max-w-screen-xl px-4 lg:px-12 pb-12 lg:pb-16 text-center">
+        <h2>
+            <a href="{{ url_for('main.patient_details',patient_id=patient_id) }}"
+               class="inline-flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-lg font-medium transition-colors duration-200 px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                <!-- Back Arrow Icon -->
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                     xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Back To Assessment Data
+            </a>
+        </h2>
+        <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
+            Reaction Analysis for {{ name }} taken at {{ date }}
+        </h1><br>
+        {% if not reaction_analyses %}
+            <p>Nothing to show</p>
+        {% else %}
+            <div class="flex justify-center w-full">
+                <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 relative shadow-md sm:rounded-lg overflow-hidden w-lg">
+                    <div class="overflow-x-auto overflow-y-auto">
+                        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400 rounded-b-lg">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 table-fixed sticky top-0">
+                            <tr>
+                                <th scope="col" class="px-4 py-3">Round</th>
+                                <th scope="col" class="px-4 py-3">Time to Move (ms)</th>
+                                <th scope="col" class="px-4 py-3">Average Acceleration (m/s2)</th>
+                                <th scope="col" class="px-4 py-3">Max Acceleration (m/s2)</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for idx, reaction_analysis in reaction_analyses %}
+                            <tr class="border-b dark:border-gray-700">
+                                <td class="px-4 py-3">{{ idx + 1 }}</td>
+                                <td class="px-4 py-3">{{ reaction_analysis.time_to_move }}</td>
+                                <td class="px-4 py-3">{{ reaction_analysis.average_accl_post_threshold  | round(2)}}</td>
+                                <td class="px-4 py-3">{{ reaction_analysis.max_accl  | round(2)}}</td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        {% endif %}
+
+    </div>
+{% endblock %}
