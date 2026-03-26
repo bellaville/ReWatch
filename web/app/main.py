@@ -143,7 +143,7 @@ def gait_data():
     assessment_id = request.args.get('assessment_id', type=int)
     name = request.args.get('name', type=str)
     assessment = PatientAssessment.query.filter_by(id=assessment_id).first()
-    date = assessment.date_taken.strftime('%d-%m-%Y')
+    date = assessment.local_date_taken.strftime('%d-%m-%Y')
     gait_analysis = get_gait_zero_crossing(assessment_id)
 
     sample_analysis = ZeroCrossingAnalysis(
