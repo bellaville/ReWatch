@@ -36,7 +36,7 @@ class RTTestViewModel(application: Application, private val savedStateHandle: Sa
     fun stopCollection(experimentID: String, stage: String) {
         if (sensorManager.isRunning()) {
             sensorManager.stop()
-            uploadCollectedData(experimentID, stage)
+            uploadCollectedData(experimentID, "RT_TEST")
         }
         circleColour = 0;
     }

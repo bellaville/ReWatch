@@ -94,9 +94,9 @@ def identify_peaks(assessment_stage_data_id: int):
 
     # Add peaks and troughs to analysis
     for peak in peaks:
-        analysis.peak_indices.append(PeakIndex(index=peak))
+        analysis.peak_indices.append(PeakIndex(point_index=peak))
     for trough in troughs:
-        analysis.trough_indices.append(TroughIndex(index=trough))
+        analysis.trough_indices.append(TroughIndex(point_index=trough))
 
     # Commit to database
     db.session.add(analysis)

@@ -202,6 +202,17 @@ class PatientAssessment(db.Model):
         # Submit time difference between now and test start
         timeval = (self.test_start - datetime.now())
         return round(timeval.total_seconds() * 1000)
+        
+    def run_celery_tasks(self):
+        """
+        Runs all celery tasks on available data.
+        """
+        from app.celery_tasks.tasks import memory_analysis, identify_peaks
+        for stage_data in db.session.query(AssessmentStageData).filter_by(stage=AssessmentStage.GAIT, assessment_id=self.id).all():
+            identify_peaks.delay(stage_data.id)
+        
+        for stage_data in db.session.query(AssessmentStageData).filter_by(stage=AssessmentStage.RT_TEST, assessment_id=self.id).all():
+            memory_analysis.delay(stage_data.id)
 
 
 class AssessmentStageData(db.Model):
@@ -284,13 +295,13 @@ class PeakIndex(db.Model):
     __tablename__ = 'peakindex'
     id = db.Column(db.Integer, primary_key=True)
     analysis_id = db.Column(db.Integer, db.ForeignKey('zerocrossinganalysis.id'))
-    index = db.Column(db.Integer)
+    point_index  = db.Column(db.Integer)
 
 class TroughIndex(db.Model):
     __tablename__ = 'troughindex'
     id = db.Column(db.Integer, primary_key=True)
     analysis_id = db.Column(db.Integer, db.ForeignKey('zerocrossinganalysis.id'))
-    index = db.Column(db.Integer)
+    point_index  = db.Column(db.Integer)
 
 class MemoryAnalysis(db.Model):
     __tablename__ = 'memoryanalysis'

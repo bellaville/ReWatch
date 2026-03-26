@@ -126,7 +126,7 @@ def watch_get_status(join_code: str):
 @memory_test.route('/<join_code>/<stage>/upload', methods = ["POST"])
 def watch_upload_data(join_code: str, stage: str):   
     stage = AssessmentStage(stage)
-    assessment = fetch_assessment(join_code, stage)
+    assessment = fetch_assessment(join_code)
     json_body = request.json
     assessment_data = AssessmentStageData.from_json(json_body, stage, assessment.id)
     
@@ -137,6 +137,7 @@ def watch_upload_data(join_code: str, stage: str):
 
     db.session.add(assessment_data)
     db.session.commit()
+    assessment.run_celery_tasks()
     return jsonify({"success": True}), 200
 
 #################
