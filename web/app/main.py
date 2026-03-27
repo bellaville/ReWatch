@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, render_template, request, session, redirec
 from flask_login import login_required, current_user
 from datetime import datetime
 from app.decorators import roles_required
-from app.models import Role, PatientAssessment, Patient, User, Physician, ZeroCrossingAnalysis
+from app.models import AssessmentStage, AssessmentStageData, MemoryAnalysis, Role, PatientAssessment, Patient, User, Physician, ZeroCrossingAnalysis
 from app.utilities.utils import get_patient_assessment_data, get_patient_information, get_gait_zero_crossing
 from app.db import db
 
@@ -141,22 +141,39 @@ def patient_details():
 @main.route('/gait_data')
 @login_required
 def gait_data():
+    patient_id = request.args.get('patient_id', type=int)
     assessment_id = request.args.get('assessment_id', type=int)
     name = request.args.get('name', type=str)
+
     assessment = PatientAssessment.query.filter_by(id=assessment_id).first()
-    date = assessment.local_date_taken.strftime('%d-%m-%Y')
-    gait_analysis = get_gait_zero_crossing(assessment_id)
+    gait_data = db.session.query(AssessmentStageData).filter_by(assessment_id=assessment_id, stage=AssessmentStage.GAIT.name).first()
+    
+    if not gait_data:
+        return render_template('gait_data.html', assessment=assessment, date=assessment.date_taken.strftime('%d-%m-%Y'), name=name, gait_analysis=None, patient_id=patient_id)
+    
+    gait_analysis = db.session.query(ZeroCrossingAnalysis).filter_by(stage_data_id=gait_data.id).first()
 
-    sample_analysis = ZeroCrossingAnalysis(
-        avg_peak_distance=145.2,
-        std_dev_peak_distance=8.3,
-        avg_trough_distance=142.7,
-        std_dev_trough_distance=7.9
-    )
 
+    return render_template('gait_data.html', assessment=assessment, date=assessment.date_taken.strftime('%d-%m-%Y'), name=name, gait_analysis=gait_analysis, patient_id=patient_id)
+
+@main.route('/reaction_data')
+@login_required
+def reaction_data():
     patient_id = request.args.get('patient_id', type=int)
+    assessment_id = request.args.get('assessment_id', type=int)
+    name = request.args.get('name', type=str)
 
-    return render_template('gait_data.html', assessment=assessment, date=date, name=name, gait_analysis=sample_analysis, patient_id=patient_id)
+    assessment = PatientAssessment.query.filter_by(id=assessment_id).first()
+    reaction_data = db.session.query(AssessmentStageData).filter_by(assessment_id=assessment_id, stage=AssessmentStage.RT_TEST.name).all()
+    
+    if not reaction_data:
+        return render_template('gait_data.html', assessment=assessment, date=assessment.date_taken.strftime('%d-%m-%Y'), name=name, gait_analysis=None, patient_id=patient_id)
+    
+    reaction_analyses = []
+    for idx, reaction_data_piece in enumerate(reaction_data):
+        reaction_analyses.append([idx, db.session.query(MemoryAnalysis).filter_by(assessment_stage_data_id=reaction_data_piece.id).first()])
+
+    return render_template('reaction_data.html', assessment=assessment, date=assessment.date_taken.strftime('%d-%m-%Y'), name=name, reaction_analyses=reaction_analyses, patient_id=patient_id)
 
 
 @main.route('/all_patients', methods=['GET', 'POST'])

@@ -31,34 +31,21 @@
                             <tbody>
                             <tr class="border-b dark:border-gray-700">
                                 <td class="px-4 py-3">Avg Peak Distance (ms)</td>
-                                <td class="px-4 py-3">{{ gait_analysis.avg_peak_distance|round(2) }}</td>
+                                <td class="px-4 py-3">{{ (gait_analysis.avg_peak_distance * 1000)|round(2) }}</td>
                             </tr>
                             <tr class="border-b dark:border-gray-700">
                                 <td class="px-4 py-3">Std Dev Peak (ms)</td>
-                                <td class="px-4 py-3">{{ gait_analysis.std_dev_peak_distance|round(2) }}</td>
-                            </tr>
-                            <tr class="border-b dark:border-gray-700">
-                                <td class="px-4 py-3">Coefficient of Variation for Peak</td>
-                                <td class="px-4 py-3">
-                                    {% set cv_peak = (gait_analysis.std_dev_peak_distance / gait_analysis.avg_peak_distance * 100)|round(1) %}{{ cv_peak }}%
-                                </td>
+                                <td class="px-4 py-3">{{ (gait_analysis.std_dev_peak_distance * 1000)|round(2) }}</td>
                             </tr>
                             <tr class="border-b dark:border-gray-700">
                                 <td class="px-4 py-3">Avg Trough Distance (ms)</td>
-                                <td class="px-4 py-3">{{ gait_analysis.avg_trough_distance|round(2) }}</td>
+                                <td class="px-4 py-3">{{ (gait_analysis.avg_trough_distance * 1000)|round(2) }}</td>
                             </tr>
                             <tr class="border-b dark:border-gray-700">
                                 <td class="px-4 py-3">Std Dev Trough (ms)</td>
-                                <td class="px-4 py-3">{{ gait_analysis.std_dev_trough_distance|round(2) }}</td>
-                            </tr>
-                            <tr class="border-b dark:border-gray-700">
-                                <td class="px-4 py-3">Coefficient of Variation for Trough</td>
-                                <td class="px-4 py-3">
-                                    {% set cv_peak = (gait_analysis.std_dev_trough_distance / gait_analysis.avg_trough_distance * 100)|round(1) %}{{ cv_peak }}%
-                                </td>
+                                <td class="px-4 py-3">{{ (gait_analysis.std_dev_trough_distance * 1000)|round(2) }}</td>
                             </tr>
                             </tbody>
-
                         </table>
                     </div>
                 </div>

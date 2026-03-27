@@ -202,6 +202,17 @@ class PatientAssessment(db.Model):
         # Submit time difference between now and test start
         timeval = (self.test_start - datetime.now())
         return round(timeval.total_seconds() * 1000)
+        
+    def run_celery_tasks(self):
+        """
+        Runs all celery tasks on available data.
+        """
+        from app.celery_tasks.tasks import memory_analysis, identify_peaks
+        for stage_data in db.session.query(AssessmentStageData).filter_by(stage=AssessmentStage.GAIT, assessment_id=self.id).all():
+            identify_peaks.delay(stage_data.id)
+        
+        for stage_data in db.session.query(AssessmentStageData).filter_by(stage=AssessmentStage.RT_TEST, assessment_id=self.id).all():
+            memory_analysis.delay(stage_data.id)
 
 
 class AssessmentStageData(db.Model):
@@ -227,8 +238,17 @@ class AssessmentStageData(db.Model):
             stage=stage
         )
         
+        initial_ts = None
+        skip_first_second = stage == AssessmentStage.GAIT
         for point in json_data["data"]:
             ts = datetime.fromtimestamp(point["timestamp"] / 1000.0)
+
+            if not initial_ts:
+                initial_ts = ts
+            elif skip_first_second and (ts - initial_ts).total_seconds() < 1:
+                # Needed because the accelerometer spikes on startup
+                continue
+
             stage_data.points.append(StageDataPoint(
                 timestamp=ts,
                 x=point["x"],
@@ -284,13 +304,13 @@ class PeakIndex(db.Model):
     __tablename__ = 'peakindex'
     id = db.Column(db.Integer, primary_key=True)
     analysis_id = db.Column(db.Integer, db.ForeignKey('zerocrossinganalysis.id'))
-    index = db.Column(db.Integer)
+    point_index  = db.Column(db.Integer)
 
 class TroughIndex(db.Model):
     __tablename__ = 'troughindex'
     id = db.Column(db.Integer, primary_key=True)
     analysis_id = db.Column(db.Integer, db.ForeignKey('zerocrossinganalysis.id'))
-    index = db.Column(db.Integer)
+    point_index  = db.Column(db.Integer)
 
 class MemoryAnalysis(db.Model):
     __tablename__ = 'memoryanalysis'

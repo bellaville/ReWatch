@@ -25,13 +25,15 @@ class CalibrationViewModel(application: Application, private val savedStateHandl
     var collectionText by mutableStateOf("Calibrating Watch")
 
     fun startCalibration() {
+        sensorManager.setup()
         sensorManager.start()
     }
 
     fun stopCalibration(experimentID: String, joinedExperiment: JoinedExperiment) {
         if (sensorManager.isRunning()) {
             sensorManager.stop()
-            uploadCollectedData(experimentID, joinedExperiment.stage)
+            sensorManager.teardown()
+            uploadCollectedData(experimentID, "GAIT")
         }
     }
 

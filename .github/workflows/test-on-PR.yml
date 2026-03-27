@@ -42,6 +42,11 @@ jobs:
       - name: Make run_celery.sh executable
         run: chmod +x web/run_celery.sh
 
+      - name: Seed DB
+        run: |
+          cd web
+          python -m app.seed
+
       - name: Test with PyTest and coverage
         run: |
           cd web

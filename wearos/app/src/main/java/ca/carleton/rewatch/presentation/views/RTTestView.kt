@@ -34,6 +34,7 @@ fun RTTestView(
 ) {
 
     LaunchedEffect(Unit) {
+        viewModel.setupCollector()
         viewModel.startTimeSync()
         viewModel.pollExperiment(navController)
     }
