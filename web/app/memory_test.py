@@ -137,7 +137,10 @@ def watch_upload_data(join_code: str, stage: str):
 
     db.session.add(assessment_data)
     db.session.commit()
-    assessment.run_celery_tasks()
+
+    if not assessment.is_running:
+        assessment.run_celery_tasks()
+
     return jsonify({"success": True}), 200
 
 #################
