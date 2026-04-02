@@ -8,6 +8,10 @@ import android.hardware.SensorManager
 import android.util.Log
 import ca.carleton.rewatch.dataclasses.SensorReading
 
+/**
+ * Manages access to the accelerometer and provides an interface for starting and stopping the recording
+ * of data
+ */
 class AccelerometerManager(context: Context): SensorEventListener {
     private val MAX_READINGS = 1500;
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
