@@ -3,6 +3,9 @@ import statistics
 
 
 def avg_and_std(values):
+    """
+    Calculate the average and standard deviation of given reaction times
+    """
     if not values:
         return 0, 0
 
@@ -15,6 +18,9 @@ def avg_and_std(values):
 
 
 def build_point(date_label, value, difficulty):
+    """
+    Build a chart data point with date (x), value (y), and difficulty
+    """
     return {
         "x": date_label,
         "y": value,
@@ -90,6 +96,9 @@ def get_patient_assessment_data(patient_id):
 
 
 def get_patient_information(patient_id):
+    """
+    Fetch all corresponding profile information of a selected patient
+    """
     patient_age = Patient.query.filter_by(id=patient_id).first().age
     patient_height = Patient.query.filter_by(id=patient_id).first().height
     patient_gender = Patient.query.filter_by(id=patient_id).first().gender
@@ -99,6 +108,9 @@ def get_patient_information(patient_id):
 
 
 def get_gait_zero_crossing(patient_assessment_id):
+    """
+    Fetch zero-crossing gait analysis metrics for a specific assessment
+    """
     gait_analysis = ZeroCrossingAnalysis.query. \
         join(AssessmentStageData, ZeroCrossingAnalysis.stage_data_id == AssessmentStageData.id). \
         join(PatientAssessment, AssessmentStageData.assessment_id == PatientAssessment.id). \

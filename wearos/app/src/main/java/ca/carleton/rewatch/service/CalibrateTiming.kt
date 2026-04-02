@@ -8,7 +8,10 @@ import kotlinx.coroutines.delay
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-
+/**
+ * Implements the timing handshake to sync the time between the watch application and the web
+ * application
+ */
 @OptIn(ExperimentalTime::class)
 suspend fun timingHandshake(experimentID: String): Long {
 
