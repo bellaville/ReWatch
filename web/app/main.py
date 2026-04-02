@@ -12,6 +12,9 @@ main = Blueprint('main', __name__)
 
 @main.route('/')
 def index():
+    """
+    Render homepage based on user role (physician, patient, or a non-logged in user)
+    """
     physician = False
     count = 0
     if current_user.is_authenticated:
@@ -33,6 +36,9 @@ state = 0
 
 @main.route('/join/<experimentID>', methods=['GET'])
 def joinExp(experimentID: str):
+    """
+    Initialize experiment session and return initial WAITING stage
+    """
     time.sleep(1)
     global state
     state = 0
@@ -40,6 +46,9 @@ def joinExp(experimentID: str):
 
 @main.route('/join/<experimentID>/status', methods=['GET'])
 def joinExpStatus(experimentID: str):
+    """
+    Return current experiment stage based on internal state progression
+    """
     global state
     if state <= 5:
         stage = "WAITING"
@@ -56,16 +65,21 @@ def joinExpStatus(experimentID: str):
 
 @main.route('/api/sensor-data', methods=['POST'])
 def receive_sensor_data():
+    """
+    Endpoint for watch stub to send sensor data and
+    simply return acknowledgment
+    """
     data = request.get_json()
     stage = data["metadata"]["stage"]
     readings = data["data"]
-    # TODO: store readings in database
     return jsonify({"status": "ok"}), 200
 
 @main.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-
+    """
+    View or update user profile depending on request method
+    """
     if request.method == 'POST':
         age = request.form['age']
         height = request.form['height']
@@ -100,6 +114,9 @@ def profile():
 @main.route('/patient_details')
 @login_required
 def patient_details():
+    """
+    Display patient list for physicians or personal data for patients
+    """
     if current_user.has_role('Physician'):
         # Find the Role object for 'Patient'
         patient_role = Role.query.filter_by(name='Patient').first()
@@ -141,6 +158,9 @@ def patient_details():
 @main.route('/gait_data')
 @login_required
 def gait_data():
+    """
+    Retrieve and display gait analysis data for a specific assessment
+    """
     patient_id = request.args.get('patient_id', type=int)
     assessment_id = request.args.get('assessment_id', type=int)
     name = request.args.get('name', type=str)
@@ -159,6 +179,9 @@ def gait_data():
 @main.route('/reaction_data')
 @login_required
 def reaction_data():
+    """
+    Retrieve and display reaction time analysis for an assessment
+    """
     patient_id = request.args.get('patient_id', type=int)
     assessment_id = request.args.get('assessment_id', type=int)
     name = request.args.get('name', type=str)
@@ -180,6 +203,9 @@ def reaction_data():
 @login_required
 @roles_required('Physician')
 def all_patients():
+    """
+    Allow physicians to view and assign patients
+    """
     if current_user.has_role('Physician'):
         if request.method == 'POST':
             patient_id = request.args.get('patient_id', type=int)
@@ -204,6 +230,9 @@ def all_patients():
 @main.route('/assessments', methods=['GET'])
 @login_required
 def assessments():
+    """
+    Display assessments for selected patient (if they are a physician) or current user
+    """
     selected_patient_id = None
     selected_patient_name = None
     results = []
@@ -245,10 +274,16 @@ def assessments():
 
 @main.route('/about')
 def about():
+    """
+    Render the About page
+    """
     return render_template('about.html')
 
 @main.route('/imu_testing/upload', methods=["POST"])
 def uploaded_imu_testing():
+    """
+    Save uploaded IMU test data to a timestamped JSON file
+    """
     with open("./imu_testing/imu_data_" + datetime.now().strftime("%Y%m%d%H%M%S") + ".json", "w") as json_file:
         json.dump(request.json, json_file)
     return jsonify({"success": True}), 200
