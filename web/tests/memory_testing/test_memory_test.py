@@ -182,7 +182,7 @@ def test_physician_session_start_on_non_patient(test_client: FlaskClient):
 
     response = test_client.post(
         "/assessments/memory_test/customize",
-        data={"num_shapes": NUM_SHAPES, "memorization_time": MEM_TIME, "num_rounds": NUM_ROUNDS, "difficulty": DIFFICULTY, "patient_id": patient.id}
+        data={"num_shapes": NUM_SHAPES, "memorization_time": MEM_TIME, "num_rounds": NUM_ROUNDS, "difficulty": DIFFICULTY, "patient_id": patient.id},follow_redirects=True
     )
 
     assert response.status_code == 200

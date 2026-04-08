@@ -27,23 +27,28 @@ DEFAULT_COLOURS = {
 def fetch_assessment(join_code: str, cur_step: int | None = None) -> PatientAssessment | None:
     """
     Gets assessment given a join code and optional cur_step
+
+    Args:
+        join_code (str): 6-digit string code for the assessment
+        cur_step (Optional[int]): Integer representing current step
+
+    Returns:
+        Optional[PatientAssessment]: PatientAssessment if found, None otherwise
     """
     if cur_step:
         return db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True, PatientAssessment.join_code == join_code, PatientAssessment.current_step == PatientAssessment.STEP_ORDER.index(cur_step)).first()
     return db.session.query(PatientAssessment).filter(PatientAssessment.is_running == True, PatientAssessment.join_code == join_code).first()
 
 
-##############
-# START TEST #
-##############
+################
+# WARNING PAGE #
+################
 @memory_test.route('/start', methods=["GET"])
 @login_required
 def start_memory_test():
-    """ Initializes a short term memory test session for the current user.
-
-    Establishes a Flask session to store temporary test metrics for a user,
-    allowing the memory test to track progress and user responses
-    throughout multiple rounds.
+    """ 
+    Shows users memory test warning to indicate that this is not a 
+    licensed assessment.
     """
     if not session.get("join_code"):
         return redirect(url_for('memory_test.confirm_memory_test_configuration'))
@@ -53,10 +58,6 @@ def start_memory_test():
     if not assessment:
         return jsonify({"success": False, "error": "Could not find assessment"}), 400   
 
-    # initialize session variables
-    session['round'] = 1
-    session['reaction_records'] = []
-
     return render_template('memory_display_warning.html', memorization_time=assessment.memorization_time, num_rounds=assessment.total_rounds)
 
 
@@ -64,11 +65,8 @@ def start_memory_test():
 @login_required
 def confirm_start_memory_test():
     """ 
-    Initializes a short term memory test session for the current user.
-
-    Establishes a Flask session to store temporary test metrics for a user,
-    allowing the memory test to track progress and user responses
-    throughout multiple rounds.
+    Initializes the short term memory test for the user since they accepted
+    the warning.
     """
     if not session.get("join_code"):
         return redirect(url_for('memory_test.confirm_memory_test_configuration'))
@@ -80,6 +78,10 @@ def confirm_start_memory_test():
     
     assessment.increment_step()
 
+    # initialize memory session variables
+    session['round'] = 1
+    session['reaction_records'] = []
+
     return jsonify({"success": True }), 200
 
 #################
@@ -88,6 +90,9 @@ def confirm_start_memory_test():
 @memory_test.route('/connect', methods = ["GET"])
 @login_required
 def connect_watch_page():
+    """
+    Gets the page prompting the user to connect their watch to the assessment.
+    """
     if not session.get("join_code"):
         return redirect(url_for('memory_test.confirm_memory_test_configuration'))
 
@@ -101,10 +106,17 @@ def connect_watch_page():
 @memory_test.route('/connect', methods = ["POST"])
 @login_required
 def connect_watch_check():
+    """
+    Gets the currrent watch connection status for the assessment
+    """
     if not request.json or not request.json.get("join_code"):
         return jsonify({"status": False, "error": "Could not find join_code"}), 400
     
     assessment = fetch_assessment(session["join_code"])
+
+    if not assessment:
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
+    
     return jsonify({"status": assessment.watch_connected}), 200
     
 ###################
@@ -113,20 +125,48 @@ def connect_watch_check():
 
 @memory_test.route('/connect/<join_code>', methods = ["POST"])
 def connect_add_watch(join_code: str):   
+    """
+    Connects the watch to the assessment and updates the DB to reflect the watch has joined
+    """
     assessment = fetch_assessment(join_code)
+
+    if not assessment:
+        return jsonify({"success": False}), 404
+    elif assessment.watch_connected:
+        return jsonify({"success": False}), 404
+    
     assessment.watch_connected = True
     db.session.commit()
+
     return jsonify({"experimentID": assessment.join_code, "stage": assessment.get_current_step()}), 200
 
 @memory_test.route('/<join_code>/status', methods = ["GET"])
 def watch_get_status(join_code: str):   
+    """
+    Endpoint for the watch to check the current status of the assessment
+    """
     assessment = fetch_assessment(join_code)
+
+    if not assessment:
+        return jsonify({"success": False}), 404
+    elif assessment.watch_connected:
+        return jsonify({"success": False}), 404
+    
     return jsonify({"experimentID": assessment.join_code, "stage": assessment.get_current_step()}), 200
 
 @memory_test.route('/<join_code>/<stage>/upload', methods = ["POST"])
 def watch_upload_data(join_code: str, stage: str):   
+    """
+    Endpoint for the watch to upload it's data
+    """
     stage = AssessmentStage(stage)
     assessment = fetch_assessment(join_code)
+
+    if not assessment:
+        return jsonify({"success": False}), 404
+    elif assessment.watch_connected:
+        return jsonify({"success": False}), 404
+        
     json_body = request.json
     assessment_data = AssessmentStageData.from_json(json_body, stage, assessment.id)
     
@@ -138,6 +178,7 @@ def watch_upload_data(join_code: str, stage: str):
     db.session.add(assessment_data)
     db.session.commit()
 
+    # Start celery tasks when completed
     if not assessment.is_running:
         assessment.run_celery_tasks()
 
@@ -149,6 +190,10 @@ def watch_upload_data(join_code: str, stage: str):
 @memory_test.route('/gait', methods = ["POST"])
 @login_required
 def begin_gait():
+    """
+    Endpoint when the button to "Begin Calibration" is pressed by a user
+    on the web application.
+    """
     if not request.json or not request.json.get("join_code"):
         return jsonify({"status": False, "error": "Could not find join_code"}), 400
     
@@ -164,6 +209,10 @@ def begin_gait():
 @memory_test.route('/gait_complete', methods = ["POST"])
 @login_required
 def end_gait():
+    """
+    Endpoint when the button to "End Calibration" is pressed by a user
+    on the web application.
+    """
     if not request.json or not request.json.get("join_code"):
         return jsonify({"status": False, "error": "Could not find join_code"}), 400
     
@@ -181,6 +230,10 @@ def end_gait():
 ###################
 @memory_test.route('/time/sync', methods=["POST"])
 def receive_sync_request():
+    """
+    Endpoint called by watch and by web browser to establish RTT
+    of a request between the devices
+    """
     receive_time = round(time.time_ns())
 
     if not request.json or not request.json.get("join_code"):
@@ -197,7 +250,10 @@ def receive_sync_request():
 
 @memory_test.route('/time/request_future', methods=["POST"])
 def give_synched_timing():
-
+    """
+    Endpoint called by watch and by web browser to establish a future time when
+    a watch should start recording / correct images should display for memory testing
+    """
     if not request.json or not request.json.get("join_code"):
         return jsonify({"status": False, "error": "Could not find join_code"}), 400
     
@@ -214,8 +270,9 @@ def give_synched_timing():
 @memory_test.route('/memorize')
 @login_required
 def memory_run_test():
-    """ Memorization phase: user has a configured number of seconds to
-    memorize the displayed set of shapes
+    """ 
+    Generates the memorization and the test images for the user and embeds
+    them into the return page.
     """
     if not session.get("join_code"):
         return redirect(url_for('memory_test.confirm_memory_test_configuration'))
@@ -232,7 +289,7 @@ def memory_run_test():
     for shape in memorized_shapes:
         if assessment.difficulty == 'Easy':
             # each shape always has the same distinct colour
-            memorized_colours.append(DEFAULT_COLOURS.get(shape, 'gray'))
+            memorized_colours.append(DEFAULT_COLOURS[shape])
         else:
             # randomize colours for harder difficulty
             memorized_colours.append(random.choice(COLOUR_LIST))
@@ -262,8 +319,7 @@ def memory_run_test():
 @login_required
 def memory_test_view():
     """
-    Route that recieves the user response and progresses the assessment with
-    either another test or by showing the results
+    Receives the user response and progresses the assessment with either another test or by showing the results
     """
 
     if not session.get("join_code"):
@@ -291,7 +347,7 @@ def memory_test_view():
 
     session['round'] += 1
 
-    if session["round"] > assessment.total_rounds:
+    if session["round"] > assessment.total_rounds: # Test complete
         return redirect(url_for('memory_test.memory_result'))
 
     return redirect(url_for('memory_test.memory_run_test'))  # start next memorization round
@@ -302,6 +358,9 @@ def memory_test_view():
 @memory_test.route('/result', methods=["GET"])
 @login_required
 def memory_result():
+    """
+    Gets the test, increments it, and shows initial results for the completed assessment
+    """
 
     if not session.get("join_code"):
         return redirect(url_for('memory_test.confirm_memory_test_configuration'))
@@ -309,7 +368,7 @@ def memory_result():
     assessment = fetch_assessment(session["join_code"], AssessmentStage.RT_TEST)
     
     if not assessment:
-        return jsonify({"error": "Could not find assessment"}), 404
+        return redirect(url_for('memory_test.confirm_memory_test_configuration'))
 
     reaction_records = session.get('reaction_records', [])
     avg_reaction = sum(r["time"] for r in reaction_records) / max(len(reaction_records), 1)
@@ -329,7 +388,7 @@ def memory_result():
 @login_required
 def memory_test_customization():
     """
-    Page for physician to configure short-term memory test settings
+    Page for configururing short-term memory test settings
     """    
     # show default customization values as a dictionary for easier unpacking in html (GET request)
     defaults = {
@@ -358,14 +417,14 @@ def memory_test_customization():
 @login_required
 def confirm_memory_test_configuration():
     """
-    POST endpoint to create initial assessment and begin steps
+    Endpoint to create initial assessment from a configuration and begin steps
     """    
 
     if current_user.has_role('Physician'):
         # if user is physician, use the selected patient from session
         patient_id = int(request.form['patient_id'])
         if patient_id not in [p.id for p in db.session.get(Physician, current_user.physician_profile.id).patients]:
-            return memory_test_customization()
+            return redirect(url_for('memory_test.confirm_memory_test_configuration'))
     else:
         # patient is performing their own test, use their own id from db/login
         patient_id = current_user.patient_profile.id

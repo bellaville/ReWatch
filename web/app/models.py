@@ -21,12 +21,15 @@ roles_users = db.Table('roles_users',
 
 # model for user objects
 class User(UserMixin, db.Model):
+    """
+    Primary user model that encompases physicians and patients
+    """
     __tablename__ = "user"
-    id = db.Column(db.Integer, primary_key=True) # primary keys are required by SQLAlchemy
+    id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True)
     password = db.Column(db.String(100))
     name = db.Column(db.String(1000))
-    roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic'))
+    roles = db.relationship('Role', secondary=roles_users, backref=db.backref('users', lazy='dynamic')) # User is always patient or physician
     
     # to be able to link Physician OR Patient profile to User
     patient_profile = db.relationship('Patient', backref='user', uselist=False)
@@ -38,6 +41,9 @@ class User(UserMixin, db.Model):
 
 # model for roles
 class Role(db.Model):
+    """
+    Add roles and a quick description
+    """
     __tablename__ = 'role'
     id = db.Column(db.Integer(), primary_key=True)
     name = db.Column(db.String(80), unique=True, nullable=False)
@@ -45,27 +51,36 @@ class Role(db.Model):
 
 # model for physician profile
 class Physician(db.Model):
+    """
+    Adds Physician users. A physician is a user that manages
+    Patients, can start their assessments, and views results.
+    """
     __tablename__ = 'physician'
     id = db.Column(db.Integer, primary_key=True)
-    # every Physician corresponds to exactly one User entry
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True)
-    
-    # one Physician can have many Patients
-    patients = db.relationship('Patient', backref='physician', lazy=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True) # every Physician corresponds to exactly one User entry
+    patients = db.relationship('Patient', backref='physician', lazy=True) # one Physician can have many Patients
 
 # model for patient profile
 class Patient(db.Model):
+    """
+    Adds Patient users. A patient is a user that can take
+    an assessment and view their results.
+    """
     __tablename__ = 'patient'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True) # link to User
-    # each Patient belongs to exactly 1 Physician
-    physician_id = db.Column(db.Integer, db.ForeignKey('physician.id'))
+    physician_id = db.Column(db.Integer, db.ForeignKey('physician.id')) # each Patient belongs optionallu to 1 Physician
+
+    # Extra collected data: Not used in this project, but for PoC
     age = db.Column(db.Integer)
     height = db.Column(db.Integer)
     gender = db.Column(db.String(80))
     weight = db.Column(db.Integer)
 
 class AssessmentStage(enum.Enum):
+    """
+    Denotes the various states that an assessment can be in
+    """
     WAITING = "WAITING"
     GAIT = "GAIT"
     GAIT_COMPLETE = "GAIT_COMPLETE"
@@ -74,11 +89,19 @@ class AssessmentStage(enum.Enum):
 
 # model for a patient's assessment
 class PatientAssessment(db.Model):
+    """
+    The object that stores a patient's assessment while it's
+    running, as well as the results once it's completed.
+    """
 
     @staticmethod
     def generate_unique_join_code() -> str:
         """
-        Generates unique join code for the assessment
+        Generates unique join code for the assessment that
+        is not shared by any other running assessment.
+
+        Returns:
+            str: 6-digit code to allow the watch to join
         """
         code = f"{random.randint(0, 999999):06d}"
         while db.session.query(PatientAssessment).filter(PatientAssessment.join_code == code and PatientAssessment.is_running == True).first() is not None:
@@ -88,36 +111,37 @@ class PatientAssessment(db.Model):
     __tablename__ = 'patientassessment'
     id = db.Column(db.Integer, primary_key=True)
 
-    # Calculated at end
-    score = db.Column(db.Integer)
-    memory_accuracy = db.Column(db.Float)
-    avg_reaction_time = db.Column(db.Float)
-    reaction_records = db.Column(JSON) # store reaction times as a list
-
-    # Stored at beginning
-    total_rounds = db.Column(db.Integer)
-    num_shapes = db.Column(db.Integer)
-    date_taken = db.Column(db.DateTime, default=db.func.current_timestamp()) # track when test was completed
-    difficulty = db.Column(db.String(20), nullable=False)
-    memorization_time = db.Column(db.Integer)
-    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id')) # link to Patient
-
-    # Needed to access during running assessments
+    # Automatically set when object initialized, used to find running assessments
     is_running = db.Column(db.Boolean, default=True)
-    join_code = db.Column(db.String(6), nullable=False, default=generate_unique_join_code)
-    watch_connected = db.Column(db.Boolean)
+    join_code = db.Column(db.String(6), nullable=False, default=generate_unique_join_code) # Code unique to running assessments
+    watch_connected = db.Column(db.Boolean) # True once watch is connected
     current_step = db.Column(db.Integer, default = 0) # Index in STEP_ORDER
 
-    # For time synchronization
-    SYNC_CALLS = 10
-    ADDITIONAL_DELAY = 6
-    watch_synchronized = db.Column(db.Integer, default=False)
-    browser_synchronized = db.Column(db.Integer, default=False)
-    test_start = db.Column(db.DateTime, default=datetime.now())
+    # Stored at beginning
+    total_rounds = db.Column(db.Integer) # Total number of memory rounds
+    num_shapes = db.Column(db.Integer) # Number of memory shapes
+    date_taken = db.Column(db.DateTime, default=db.func.current_timestamp()) # Track when test was completed
+    difficulty = db.Column(db.String(20), nullable=False) # Either "Easy" or "Hard"
+    memorization_time = db.Column(db.Integer) # Count in seconds of amount of time for user to memorize shapes
+    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id')) # Link to Patient
+
+    # Calculated at end
+    score = db.Column(db.Integer) # Number of correct guesses
+    memory_accuracy = db.Column(db.Float) # Float value of score / total_rounds
+    avg_reaction_time = db.Column(db.Float) # ms count of reaction time
+    reaction_records = db.Column(JSON) # Stores reaction times as a list
+
+    # For time synchronization between watch and frontend
+    SYNC_CALLS = 10 # Number of calls required to sync both
+    ADDITIONAL_DELAY = 6 # Additional number of seconds to delay showing images as buffer
+    watch_synchronized = db.Column(db.Integer, default=0) # Count of times watch has measured latency since last reset
+    browser_synchronized = db.Column(db.Integer, default=0) # Count of times browser has measured latency since last reset
+    test_start = db.Column(db.DateTime, default=datetime.now()) # Time at which the next memory test will occur
     
     # set relationship with Patient so that we can access the associated Patient object from PatientAssessment
     patient = db.relationship('Patient', backref='assessments')
 
+    # Proper ordering for steps
     STEP_ORDER = [
         AssessmentStage.WAITING, 
         AssessmentStage.GAIT, 
@@ -153,13 +177,16 @@ class PatientAssessment(db.Model):
         self.current_step = min(self.current_step + 1, len(PatientAssessment.STEP_ORDER) - 1)
         session.commit()
 
-    def get_current_step(self):
+    def get_current_step(self) -> str:
         """
         Returns string value of current assessment step
+
+        Returns:
+            str: String value of current step
         """
         return PatientAssessment.STEP_ORDER[self.current_step].value
         
-    def increment_synchronization(self, device: str) -> None:
+    def increment_synchronization(self, device: str):
         """
         Increments the count of the synchronization attempts for a given device
 
@@ -177,14 +204,17 @@ class PatientAssessment(db.Model):
         """
         Checks whether a future time to plan RT test can be scheduled.
         Depends on browser and watch having synchronized enough times
-        and there not being an existing test start time.
+        and there not being an existing future test start time.
         """
         return (self.browser_synchronized >= PatientAssessment.SYNC_CALLS and self.watch_synchronized >= PatientAssessment.SYNC_CALLS) \
             or self.test_start > datetime.now()
 
-    def get_test_start(self):
+    def get_test_start(self) -> int:
         """
         Sets and gets future RT test start time
+
+        Returns:
+            int: Number of ms until next test's starting time
         """
         # If exists, simply return
         if self.test_start > datetime.now():
@@ -205,7 +235,7 @@ class PatientAssessment(db.Model):
         
     def run_celery_tasks(self):
         """
-        Runs all celery tasks on available data.
+        Queues all celery tasks on available data.
         """
         from app.celery_tasks.tasks import memory_analysis, identify_peaks
         for stage_data in db.session.query(AssessmentStageData).filter_by(stage=AssessmentStage.GAIT, assessment_id=self.id).all():
@@ -216,11 +246,15 @@ class PatientAssessment(db.Model):
 
 
 class AssessmentStageData(db.Model):
+    """
+    For a given relevant step in the PatientAssessment (RT_TEST or GAIT),
+    contains group of X, Y, Z and Timestamp data points for the test.
+    """
     __tablename__ = 'assessmentstagedata'
     id = db.Column(db.Integer, primary_key=True)
-    assessment_id = db.Column(db.Integer, db.ForeignKey('patientassessment.id'))
-    stage = db.Column(db.Enum(AssessmentStage))
-    points = db.relationship('StageDataPoint', backref='stage_data', cascade="all, delete-orphan")
+    assessment_id = db.Column(db.Integer, db.ForeignKey('patientassessment.id')) # Link to PatientAssessment
+    stage = db.Column(db.Enum(AssessmentStage)) # Marker for stage
+    points = db.relationship('StageDataPoint', backref='stage_data', cascade="all, delete-orphan") # X, Y, Z, ts measurements
     
     @classmethod
     def from_json(cls, json_data: dict[str, Any], stage: AssessmentStage, assessment_id: int) -> "AssessmentStageData":
@@ -229,6 +263,8 @@ class AssessmentStageData(db.Model):
         
         Args:
             json_data (dict[str, Any]): JSON data containing assessment stage information.
+            stage (AssessmentStage): Enum for current stage
+            assessment_id (int): ID for linking PatientAssessment
             
         Returns:
             AssessmentStageData: The created AssessmentStageData instance.
@@ -237,9 +273,11 @@ class AssessmentStageData(db.Model):
             assessment_id=assessment_id,
             stage=stage
         )
-        
+
+        # When GAIT, the first second should be discarded. The sensor is innacurate during that time
         initial_ts = None
         skip_first_second = stage == AssessmentStage.GAIT
+
         for point in json_data["data"]:
             ts = datetime.fromtimestamp(point["timestamp"] / 1000.0)
 
@@ -279,9 +317,12 @@ class AssessmentStageData(db.Model):
         }
         
 class StageDataPoint(db.Model):
+    """
+    X, Y, Z and Timestamp data point from watch measurements
+    """
     __tablename__ = 'stagedatapoint'
     id = db.Column(db.Integer, primary_key=True)
-    sensor_id = db.Column(db.Integer, db.ForeignKey('assessmentstagedata.id'))
+    sensor_id = db.Column(db.Integer, db.ForeignKey('assessmentstagedata.id')) # Link to AssessmentStageData
     timestamp = db.Column(db.DateTime(timezone=True))
     x = db.Column(db.Float)
     y = db.Column(db.Float)
@@ -290,15 +331,18 @@ class StageDataPoint(db.Model):
 # Models for Peak and Trough Indices and Zero Crossing Analysis
 
 class ZeroCrossingAnalysis(db.Model):
+    """
+    Celery DB object used for gait analysis from watch data
+    """
     __tablename__ = 'zerocrossinganalysis'
     id = db.Column(db.Integer, primary_key=True)
-    stage_data_id = db.Column(db.Integer, db.ForeignKey('assessmentstagedata.id'))
-    peak_indices = db.relationship('PeakIndex', backref='analysis', cascade="all, delete-orphan")
-    trough_indices = db.relationship('TroughIndex', backref='analysis', cascade="all, delete-orphan")
-    avg_peak_distance = db.Column(db.Float)
-    std_dev_peak_distance = db.Column(db.Float)
-    avg_trough_distance = db.Column(db.Float)
-    std_dev_trough_distance = db.Column(db.Float)
+    stage_data_id = db.Column(db.Integer, db.ForeignKey('assessmentstagedata.id')) # Link to AssessmentStageData
+    peak_indices = db.relationship('PeakIndex', backref='analysis', cascade="all, delete-orphan") # Index of peak values
+    trough_indices = db.relationship('TroughIndex', backref='analysis', cascade="all, delete-orphan") # Index of trough values
+    avg_peak_distance = db.Column(db.Float) # Average distances between detected peaks in s
+    std_dev_peak_distance = db.Column(db.Float) # Std dev between detected peaks in s
+    avg_trough_distance = db.Column(db.Float) # Average distances between detected troughs in s
+    std_dev_trough_distance = db.Column(db.Float) # Std dev between detected troughs in s
 
 class PeakIndex(db.Model):
     __tablename__ = 'peakindex'
@@ -313,12 +357,15 @@ class TroughIndex(db.Model):
     point_index  = db.Column(db.Integer)
 
 class MemoryAnalysis(db.Model):
+    """
+    Celery DB object used for memory analysis from watch data
+    """
     __tablename__ = 'memoryanalysis'
     id = db.Column(db.Integer, primary_key=True)
     assessment_stage_data_id = db.Column(db.Integer, db.ForeignKey('assessmentstagedata.id'))
-    time_to_move = db.Column(db.Float)
-    average_accl_post_threshold = db.Column(db.Float)
-    max_accl = db.Column(db.Float)
+    time_to_move = db.Column(db.Float) # Time in ms to move hand from stand-still
+    average_accl_post_threshold = db.Column(db.Float) # Average acceleration observed once user has moved in m/s2
+    max_accl = db.Column(db.Float) # Maximum acceleration in m/s2
 
 # listens for new users and adds patient or physician profile based on user role
 @event.listens_for(Session, "after_flush")

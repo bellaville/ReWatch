@@ -1,10 +1,9 @@
 ## Description
-ReWatchWeb is a web-based app which will be paired with the Samsung Galaxy Watch 7 to carry out a small set of cognitive tests meant to quickly and 
-efficiently provide an indication of whether or not a patient shows any signs of cognitive decline or impairment.
+ReWatch is a proof-of-concept platform that pairs a WearOS smartwatch application with a Flask-based web application to monitor three key biomarkers: visual short-term memory, choice reaction time, and gait variability.
 
-The web platform is where patients can register, carry out tests involving the smartwatch, and view test results and notes from their physician.
+The web platform is where patients can register, carry out tests involving the smartwatch, and visually view test results.
 
-Physicians can register on ReWatchWeb, as well as view patient test data, assing tests to patients, and make notes on patient results.
+Physicians can register on ReWatch, view assigned patients assessment history, assign new patients, and carry out assessments for patients.
 
 ## Setup
 
