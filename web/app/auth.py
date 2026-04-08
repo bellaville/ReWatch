@@ -5,14 +5,28 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app.models import User, Role
 from app.db import db
 
+"""
+Authentication blueprint routes for logging users in, registering new accounts,
+and logging out.
+"""
+
 auth = Blueprint('auth', __name__, url_prefix='/auth')
 
 @auth.route('/login')
 def login():
+    """
+    Render the login page where users can enter their email and password.
+    """
     return render_template('login.html')
 
 @auth.route('/login', methods=['POST'])
 def login_post():
+    """
+    Authenticate a submitted email/password pair and optionally remember
+    the session. If credentials are invalid, flash an error message and
+    redirect back to the login form. On success, log the user in and
+    redirect to the main index page.
+    """
     email = request.form.get('email')
     password = request.form.get('password')
     remember = True if request.form.get('remember') else False
@@ -28,10 +42,19 @@ def login_post():
 
 @auth.route('/signup')
 def signup():
+    """
+    Render the signup page where new users can register for an account.
+    """
     return render_template('signup.html')
 
 @auth.route('/signup', methods=['POST'])
 def signup_post():
+    """
+    Create a new user account with the submitted name, email, password,
+    and selected role. If the email already exists or the role selection
+    is invalid, flash an error/redirect back to the signup form. On
+    success, persist the user and redirect to the login page.
+    """
     email = request.form.get('email')
     name = request.form.get('name')
     password = request.form.get('password')
@@ -59,5 +82,9 @@ def signup_post():
 @auth.route('/logout')
 @login_required
 def logout():
+    """
+    Log out the currently authenticated user and redirect to the main
+    index page. Requires the user to be logged in.
+    """
     logout_user()
     return redirect(url_for('main.index'))
